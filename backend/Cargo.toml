@@ -1,0 +1,27 @@
+[package]
+name = "cl-backend"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.8.4"
+chrono = { version = "0.4.42", features = ["serde"] }
+dotenvy = "0.15.7"
+serde = { version = "1.0.225", features = ["derive"] }
+serde_json = "1.0.145"
+sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "postgres", "chrono", "uuid", "migrate"] }
+tokio = { version = "1.47.1", features = ["full"] }
+tower-http = { version = "0.6.6", features = ["cors"] }
+uuid = { version = "1.18.1", features = ["serde", "v4"] }
+thiserror = "1.0.66"
+utoipa = { version = "5.3", features = ["chrono", "uuid"] }
+utoipa-axum = "0.2.0"
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+dotenv = "0.15.0"
+argon2 = { version = "0.5", features = ["std"] }
+password-hash = "0.5"
+rand_core = { version = "0.6", features = ["std"] }
+time = "0.3"
+cookie = "0.18"

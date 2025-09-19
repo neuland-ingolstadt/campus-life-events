@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: cle-postgres
+    environment:
+      POSTGRES_USER: cle
+      POSTGRES_PASSWORD: cle_password
+      POSTGRES_DB: cle_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+
+

@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS audit_log CASCADE;
+DROP TABLE IF EXISTS events CASCADE;
+DROP TABLE IF EXISTS organizers CASCADE;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'audit_type') THEN
+    DROP TYPE audit_type;
+  END IF;
+END$$;

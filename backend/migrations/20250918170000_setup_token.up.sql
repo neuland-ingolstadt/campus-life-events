@@ -1,0 +1,3 @@
+ALTER TABLE organizers
+  ADD COLUMN IF NOT EXISTS setup_token TEXT UNIQUE;
+
