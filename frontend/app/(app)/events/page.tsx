@@ -3,20 +3,14 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
-import {
-	CalendarDays,
-	Clock3,
-	Pencil,
-	Plus,
-	RefreshCw,
-	Trash2
-} from 'lucide-react'
+import { Grid3X3, List, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react'
 import Link from 'next/link'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { deleteEvent, listEvents, listOrganizers } from '@/client'
 import { DataTableColumnHeader } from '@/components/data-table/column-header'
 import { DataTable } from '@/components/data-table/data-table'
 import { dateRangeFilter } from '@/components/data-table/date-range-filter'
+import { EventsCalendar } from '@/components/events-calendar'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -29,8 +23,8 @@ import {
 	AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { me } from '@/lib/auth'
 
 interface Event {
@@ -51,6 +45,7 @@ interface Organizer {
 
 export default function EventsPage() {
 	const qc = useQueryClient()
+	const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
 	const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
 	const userId = meData?.id as number | undefined
 
@@ -96,12 +91,6 @@ export default function EventsPage() {
 						<div className="font-medium text-sm leading-tight">
 							{row.original.title_de}
 						</div>
-						{row.original.title_en &&
-							row.original.title_en !== row.original.title_de && (
-								<div className="text-xs text-muted-foreground leading-tight">
-									{row.original.title_en}
-								</div>
-							)}
 						{row.original.description_de && (
 							<div className="text-xs text-muted-foreground line-clamp-1">
 								{row.original.description_de}
@@ -118,7 +107,6 @@ export default function EventsPage() {
 				),
 				cell: ({ row }) => (
 					<div className="flex items-center gap-2 text-sm">
-						<CalendarDays className="h-4 w-4 text-muted-foreground flex-shrink-0" />
 						<div>
 							<div className="font-medium">
 								{format(new Date(row.original.start_date_time), 'MMM dd, yyyy')}
@@ -143,7 +131,6 @@ export default function EventsPage() {
 				cell: ({ row }) =>
 					row.original.end_date_time ? (
 						<div className="flex items-center gap-2 text-sm">
-							<Clock3 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
 							<div>
 								<div className="font-medium">
 									{format(new Date(row.original.end_date_time), 'MMM dd, yyyy')}
@@ -172,12 +159,14 @@ export default function EventsPage() {
 				),
 				accessorFn: (row) => getOrganizerName(row.organizer_id),
 				cell: ({ getValue }) => (
-					<div className="text-sm font-medium">{getValue<string>()}</div>
+					<div className="text-xs font-medium bg-primary/5 text-primary border border-primary/20 rounded-full px-2 py-1 inline-block">
+						{getValue<string>()}
+					</div>
 				),
 				sortingFn: 'alphanumeric',
-				filterFn: (row, _id, value: number[]) => {
+				filterFn: (row, _id, value: string[]) => {
 					if (!value?.length) return true
-					return value.includes(row.original.organizer_id)
+					return value.includes(row.original.organizer_id.toString())
 				},
 				size: 150
 			},
@@ -193,7 +182,7 @@ export default function EventsPage() {
 								<div className="flex items-center gap-2">
 									<Link href={`/events/${e.id}`}>
 										<Button variant="outline" size="sm" className="h-8 px-2">
-											<Pencil className="h-4 w-4 mr-1" /> Bearbeiten
+											<Pencil className="h-4 w-4" />
 										</Button>
 									</Link>
 									<AlertDialog>
@@ -203,7 +192,7 @@ export default function EventsPage() {
 												size="sm"
 												className="h-8 px-2"
 											>
-												<Trash2 className="h-4 w-4 mr-1" /> Löschen
+												<Trash2 className="h-4 w-4" />
 											</Button>
 										</AlertDialogTrigger>
 										<AlertDialogContent>
@@ -228,7 +217,8 @@ export default function EventsPage() {
 									</AlertDialog>
 								</div>
 							) : (
-								<span className="text-muted-foreground text-xs">—</span>
+								// biome-ignore lint/complexity/noUselessFragments: soon™
+								<></>
 							)}
 						</div>
 					)
@@ -301,6 +291,21 @@ export default function EventsPage() {
 						</p>
 					</div>
 					<div className="flex gap-2 items-center">
+						<ToggleGroup
+							type="single"
+							value={viewMode}
+							onValueChange={(value) =>
+								value && setViewMode(value as 'table' | 'calendar')
+							}
+							className="border rounded-md"
+						>
+							<ToggleGroupItem value="table" aria-label="Tabellenansicht">
+								<List className="h-4 w-4" />
+							</ToggleGroupItem>
+							<ToggleGroupItem value="calendar" aria-label="Kalenderansicht">
+								<Grid3X3 className="h-4 w-4" />
+							</ToggleGroupItem>
+						</ToggleGroup>
 						<Button
 							variant="outline"
 							size="sm"
@@ -321,41 +326,41 @@ export default function EventsPage() {
 					</div>
 				</div>
 
-				{/* Data Table */}
-				<Card>
-					<CardHeader>
-						<CardTitle>Events ({events.length})</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<DataTable
-							tableId="events"
-							columns={columns}
-							data={events}
-							enableFilter
-							enablePagination
-							initialPageSize={10}
-							filterOptions={{
-								searchFilter: {
-									column: 'title_de',
-									title: 'Titel'
-								},
-								selectFilters: [
-									{
-										column: 'organizer',
-										title: 'Verein',
-										options: organizerOptions
-									}
-								],
-								dateRangeFilters: [
-									{
-										column: 'start_date_time',
-										title: 'Zeitraum'
-									}
-								]
-							}}
-						/>
-					</CardContent>
-				</Card>
+				{viewMode === 'table' ? (
+					<DataTable
+						tableId="events"
+						columns={columns}
+						data={events}
+						enableFilter
+						enablePagination
+						initialPageSize={10}
+						filterOptions={{
+							searchFilter: {
+								column: 'title_de',
+								title: 'Titel'
+							},
+							selectFilters: [
+								{
+									column: 'organizer',
+									title: 'Verein',
+									options: organizerOptions
+								}
+							],
+							dateRangeFilters: [
+								{
+									column: 'start_date_time',
+									title: 'Zeitraum'
+								}
+							]
+						}}
+					/>
+				) : (
+					<EventsCalendar
+						events={events}
+						organizers={organizersData?.data || []}
+						onDelete={onDelete}
+					/>
+				)}
 			</div>
 		</div>
 	)

@@ -5,7 +5,7 @@ use axum::{
 };
 use thiserror::Error;
 
-use crate::responses::ErrorResponse;
+use crate::{email::EmailClientError, responses::ErrorResponse};
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -15,6 +15,8 @@ pub enum AppError {
     Validation(String),
     #[error("unauthorized: {0}")]
     Unauthorized(String),
+    #[error("email error: {0}")]
+    Email(String),
     #[error(transparent)]
     Sqlx(#[from] sqlx::Error),
     #[error(transparent)]
@@ -41,6 +43,7 @@ impl AppError {
             AppError::NotFound { .. } => StatusCode::NOT_FOUND,
             AppError::Validation(_) => StatusCode::BAD_REQUEST,
             AppError::Unauthorized(_) => StatusCode::UNAUTHORIZED,
+            AppError::Email(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::Sqlx(error) => map_sqlx_error_to_status(error),
             AppError::Serde(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
@@ -51,6 +54,7 @@ impl AppError {
             AppError::NotFound { message } => message.clone(),
             AppError::Validation(message) => message.clone(),
             AppError::Unauthorized(message) => message.clone(),
+            AppError::Email(message) => message.clone(),
             AppError::Sqlx(error) => match error {
                 sqlx::Error::RowNotFound => "resource not found".to_string(),
                 _ => error
@@ -71,6 +75,18 @@ impl IntoResponse for AppError {
         let body = Json(ErrorResponse { message });
 
         (status, body).into_response()
+    }
+}
+
+impl From<EmailClientError> for AppError {
+    fn from(value: EmailClientError) -> Self {
+        match value {
+            EmailClientError::InvalidRecipient(message) => AppError::validation(message),
+            EmailClientError::IncompleteConfig(message)
+            | EmailClientError::InvalidConfig(message) => AppError::Email(message),
+            EmailClientError::Build(err) => AppError::Email(err.to_string()),
+            EmailClientError::Transport(err) => AppError::Email(err.to_string()),
+        }
     }
 }
 

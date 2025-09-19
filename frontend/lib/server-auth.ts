@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 export type AuthUser = { id: number; name: string }
 
 export async function requireUser(): Promise<AuthUser> {
-	const ck = cookies()
+	const ck = await cookies()
 	const cookieHeader = ck.toString()
 	const base = process.env.BACKEND_URL || 'http://localhost:8080'
 	const res = await fetch(`${base}/api/v1/auth/me`, {

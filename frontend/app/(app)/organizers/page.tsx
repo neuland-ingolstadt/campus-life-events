@@ -99,7 +99,7 @@ export default function OrganizersPage() {
 													<div className="flex-1 space-y-2">
 														<CardTitle className="text-xl flex items-center gap-3">
 															<Avatar className="h-10 w-10">
-																<AvatarFallback className="bg-gradient-to-br from-gray-700 to-gray-900 text-white font-semibold text-lg">
+																<AvatarFallback className=" from-primary/90 to-primary bg-gradient-to-br text-primary-foreground font-semibold text-lg">
 																	{o.name.charAt(0).toUpperCase()}
 																</AvatarFallback>
 															</Avatar>
@@ -118,16 +118,20 @@ export default function OrganizersPage() {
 											</CardHeader>
 											<CardContent className="space-y-4">
 												{isProfileIncomplete && (
-													<Alert variant="destructive" className="mb-4">
-														<AlertTriangle className="h-4 w-4" />
-														<AlertTitle>
-															Vereinsprofil vervollständigen
-														</AlertTitle>
-														<AlertDescription>
-															Dein Verein ist noch nicht vollständig. Tippe auf
-															Bearbeiten und aktualisiere deine Informationen.
-														</AlertDescription>
-													</Alert>
+													<div className="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-amber-800 dark:bg-amber-950">
+														<div className="flex items-start gap-3">
+															<AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400 mt-0.5 flex-shrink-0" />
+															<div className="flex-1">
+																<h3 className="text-sm font-medium text-orange-800 dark:text-orange-200">
+																	Vereinsprofil vervollständigen
+																</h3>
+																<p className="mt-1 text-sm text-orange-700 dark:text-orange-300">
+																	Tippe auf Bearbeiten und aktualisiere deine
+																	Informationen.
+																</p>
+															</div>
+														</div>
+													</div>
 												)}
 
 												<div className="space-y-3">
@@ -152,7 +156,7 @@ export default function OrganizersPage() {
 																	href={o.website_url}
 																	target="_blank"
 																	rel="noreferrer"
-																	className="inline-flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors"
+																	className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-blue-600 hover:bg-blue-50 transition-colors"
 																>
 																	<svg
 																		className="h-4 w-4"
@@ -172,7 +176,7 @@ export default function OrganizersPage() {
 																	Website
 																</a>
 															) : (
-																<div className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-muted-foreground">
+																<div className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-muted-foreground">
 																	<svg
 																		className="h-4 w-4"
 																		fill="none"
@@ -196,13 +200,13 @@ export default function OrganizersPage() {
 																	href={o.instagram_url}
 																	target="_blank"
 																	rel="noreferrer"
-																	className="inline-flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-pink-600 hover:bg-pink-50 dark:hover:bg-pink-950/20 transition-colors"
+																	className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-pink-600 hover:bg-pink-50 transition-colors"
 																>
 																	<Instagram className="h-4 w-4" />
 																	Instagram
 																</a>
 															) : (
-																<div className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-muted-foreground">
+																<div className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-muted-foreground">
 																	<Instagram className="h-4 w-4" />
 																	Kein Instagram
 																</div>
@@ -242,7 +246,7 @@ export default function OrganizersPage() {
 											<CardHeader className="pb-3">
 												<div className="flex items-center gap-3">
 													<Avatar className="h-10 w-10 flex-shrink-0">
-														<AvatarFallback className="bg-gradient-to-br from-gray-700 to-gray-900 text-white font-semibold text-lg">
+														<AvatarFallback className=" from-primary/90 to-primary bg-gradient-to-br text-primary-foreground font-semibold text-lg">
 															{o.name.charAt(0).toUpperCase()}
 														</AvatarFallback>
 													</Avatar>

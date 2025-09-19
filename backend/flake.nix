@@ -12,7 +12,7 @@
       let
         pkgs = import nixpkgs { inherit system; };
         naersk-lib = pkgs.callPackage naersk { };
-        name = "cl-events-backend";
+        name = "cl-backend";
 
         rustBuild = naersk-lib.buildPackage {
           src = ./.;
@@ -23,10 +23,16 @@
         dockerImage = pkgs.dockerTools.buildImage {
           name = name;
           tag = "latest";
-          copyToRoot = [ pkgs.cacert ];
+          copyToRoot = [ 
+            pkgs.cacert 
+            (pkgs.writeScriptBin "entrypoint.sh" ''
+              #!${pkgs.bash}/bin/bash
+              exec "${rustBuild}/bin/${name}" "$@"
+            '')
+          ];
           config = {
-            Entrypoint = [ "${rustBuild}/bin/${name}" ];
-            ExposedPorts = { "8000/tcp" = {}; };
+            Entrypoint = [ "/bin/entrypoint.sh" ];
+            ExposedPorts = { "8080/tcp" = {}; };
             WorkingDir = "/";  # Set working directory to root so relative paths work
             Env = [
               "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
@@ -38,7 +44,7 @@
         defaultPackage = rustBuild;
         packages = {
           default = rustBuild;
-          cl-events-backend = rustBuild;
+          cl-backend = rustBuild;
           dockerImage = dockerImage;
         };
 

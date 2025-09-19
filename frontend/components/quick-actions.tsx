@@ -36,20 +36,20 @@ export function QuickActions({
 
 	return (
 		<div className={className}>
-			<div className="grid grid-cols-3 gap-3">
+			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
 				{actions.map((action) => (
 					<Link key={action.title} href={action.href} className="block">
 						<Card className="cursor-pointer">
-							<CardContent className="px-4">
-								<div className="flex items-start gap-4">
-									<div className="rounded-full bg-muted text-primary ring-1 ring-border h-9 w-9 flex items-center justify-center">
+							<CardContent className="px-4 py-4">
+								<div className="flex items-start gap-3 sm:gap-4">
+									<div className="rounded-full from-primary/90 to-primary bg-gradient-to-br text-primary-foreground ring-1 ring-border h-10 w-10 sm:h-9 sm:w-9 flex items-center justify-center flex-shrink-0">
 										<action.icon className="h-5 w-5" />
 									</div>
-									<div className="min-w-0">
+									<div className="min-w-0 flex-1">
 										<div className="text-sm font-medium leading-tight">
 											{action.title}
 										</div>
-										<div className="text-xs text-muted-foreground">
+										<div className="text-xs text-muted-foreground mt-1">
 											{action.description}
 										</div>
 									</div>

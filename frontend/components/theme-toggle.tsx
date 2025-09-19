@@ -34,7 +34,7 @@ export function ThemeToggle() {
 			<DropdownMenuTrigger asChild>
 				<Button variant="ghost" size="sm" className="w-full justify-start">
 					<Icon className="mr-2 h-4 w-4" />
-					<span className="truncate">Thema: {activeLabel}</span>
+					<span className="truncate">Design: {activeLabel}</span>
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="start" className="w-40">

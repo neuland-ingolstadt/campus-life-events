@@ -53,6 +53,10 @@ export function DashboardSidebar() {
 	return (
 		<Sidebar variant="sidebar">
 			<SidebarHeader>
+				{/* Mobile bottom sheet handle */}
+				<div className="flex justify-center py-2 md:hidden">
+					<div className="h-1 w-8 rounded-full bg-muted-foreground/30" />
+				</div>
 				<div className="flex items-center gap-2 px-4 py-2">
 					<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
 						<NeulandPalm className="h-6 w-6" color="currentColor" />
@@ -72,9 +76,13 @@ export function DashboardSidebar() {
 						<SidebarMenu>
 							{items.map((item) => (
 								<SidebarMenuItem key={item.title}>
-									<SidebarMenuButton asChild isActive={pathname === item.url}>
+									<SidebarMenuButton
+										asChild
+										isActive={pathname === item.url}
+										size="lg"
+									>
 										<Link href={item.url}>
-											<item.icon className="h-4 w-4" />
+											<item.icon className="h-5 w-5" />
 											<span>{item.title}</span>
 										</Link>
 									</SidebarMenuButton>
@@ -84,7 +92,7 @@ export function DashboardSidebar() {
 					</SidebarGroupContent>
 				</SidebarGroup>
 			</SidebarContent>
-			<SidebarFooter>
+			<SidebarFooter className="gap-3 p-4">
 				<ThemeToggle />
 				<AuthStatus />
 			</SidebarFooter>

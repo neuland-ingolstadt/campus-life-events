@@ -19,12 +19,28 @@ declare module "react-big-calendar" {
 		onSelectSlot?: (slotInfo: any) => void;
 		selectable?: boolean;
 		style?: React.CSSProperties;
+		className?: string;
 		views?: string[];
 		defaultView?: string;
 		popup?: boolean;
 		eventPropGetter?: (event: CalendarEvent) => React.CSSProperties;
 		components?: {
 			event?: ComponentType<{ event: CalendarEvent }>;
+		};
+		messages?: {
+			allDay?: string;
+			previous?: string;
+			next?: string;
+			today?: string;
+			month?: string;
+			week?: string;
+			day?: string;
+			agenda?: string;
+			date?: string;
+			time?: string;
+			event?: string;
+			noEventsInRange?: string;
+			showMore?: (total: number) => string;
 		};
 	}
 
