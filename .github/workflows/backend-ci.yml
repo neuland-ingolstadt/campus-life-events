@@ -1,0 +1,54 @@
+name: BackendCI Tests
+
+on:
+  pull_request:
+    branches: [ 'main' ]
+    paths:
+      - "backend/src/**"
+      - "backend/tests/**"
+      - "backend/Cargo.toml"
+      - "backend/Cargo.lock"
+
+jobs:
+  test:
+    name: Run Cargo Tests
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+      
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            ~/.cargo/bin
+            ~/.rustup
+          key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}-clippy-${{ hashFiles('backend/src/**') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}-clippy-
+            ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}-
+            ${{ runner.os }}-cargo-
+      
+      - name: Run cargo fmt
+        run: cargo fmt --all -- --check
+      
+      - name: Run cargo clippy
+        run: cargo clippy -- -D warnings
+      
+      - name: Run cargo test
+        run: cargo test

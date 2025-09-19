@@ -1,0 +1,64 @@
+name: Backend Build and Deploy Docker Image
+
+on:
+  push:
+    branches: [ 'main' ]
+    paths:
+      - ".github/workflows/backend-build.yml"
+      - "backend/src/**"
+      - "backend/Cargo.toml"
+      - "backend/Cargo.lock"
+      - "backend/flake.nix"
+      - "backend/flake.lock"
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy Docker Image
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: nixbuild/nix-quick-install-action@v33
+
+      - name: Fix Nix Store Permissions
+        run: |
+          sudo mkdir -p /nix
+          sudo chown -R runner:runner /nix
+
+      - name: Cache Nix Store
+        uses: actions/cache@v4
+        with:
+          path: |
+            /nix/store
+            /nix/var/nix/db
+            /nix/var/nix/gcroots
+            /nix/var/nix/profiles
+            /nix/var/nix/temproots
+          key: nix-${{ runner.os }}-2.21.0-${{ hashFiles('backend/flake.lock') }}
+          restore-keys: |
+            nix-${{ runner.os }}-2.21.0-
+            nix-${{ runner.os }}-
+
+      - name: Build Docker image
+        run: nix build ".#dockerImage" --out-link result
+
+      - id: repository
+        name: Generate Registry String
+        uses: vishalmamidi/lowercase-action@v1
+        with:
+          string: ${{ env.REGISTRY}}/${{ github.repository }}-backend
+
+      - name: Push Docker image to GHCR
+        run: |
+          echo "Pushing to ${{ steps.repository.outputs.lowercase }}:latest"
+          skopeo copy --dest-creds ${{ github.actor }}:${{ secrets.GITHUB_TOKEN }} docker-archive:./result docker://${{ steps.repository.outputs.lowercase }}:latest
+          echo "Pushing to ${{ steps.repository.outputs.lowercase }}:build-${{ github.run_number }}"
+          skopeo copy --dest-creds ${{ github.actor }}:${{ secrets.GITHUB_TOKEN }} docker-archive:./result docker://${{ steps.repository.outputs.lowercase }}:build-${{ github.run_number }}

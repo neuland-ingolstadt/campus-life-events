@@ -3,12 +3,10 @@ use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 
 #[derive(Debug, Deserialize, ToSchema)]
+#[serde(deny_unknown_fields)]
 pub struct CreateOrganizerRequest {
     pub name: String,
-    pub description_de: Option<String>,
-    pub description_en: Option<String>,
-    pub website_url: Option<String>,
-    pub instagram_url: Option<String>,
+    pub email: String,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -18,6 +16,7 @@ pub struct UpdateOrganizerRequest {
     pub description_en: Option<String>,
     pub website_url: Option<String>,
     pub instagram_url: Option<String>,
+    pub super_user: Option<bool>,
 }
 
 impl UpdateOrganizerRequest {
@@ -27,6 +26,7 @@ impl UpdateOrganizerRequest {
             || self.description_en.is_some()
             || self.website_url.is_some()
             || self.instagram_url.is_some()
+            || self.super_user.is_some()
     }
 }
 
@@ -109,6 +109,12 @@ pub struct InitAccountRequest {
     pub token: String,
     pub email: String,
     pub password: String,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+#[serde(deny_unknown_fields)]
+pub struct SetupTokenLookupRequest {
+    pub token: String,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]

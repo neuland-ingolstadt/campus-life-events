@@ -16,6 +16,7 @@ export type AuditType = 'CREATE' | 'UPDATE' | 'DELETE';
 export type AuthUserResponse = {
     id: number;
     name: string;
+    super_user: boolean;
 };
 
 export type ChangePasswordRequest = {
@@ -37,11 +38,8 @@ export type CreateEventRequest = {
 };
 
 export type CreateOrganizerRequest = {
-    description_de?: string | null;
-    description_en?: string | null;
-    instagram_url?: string | null;
+    email: string;
     name: string;
-    website_url?: string | null;
 };
 
 export type ErrorResponse = {
@@ -75,6 +73,8 @@ export type InitAccountRequest = {
     token: string;
 };
 
+export type InviteStatus = 'PENDING' | 'EXPIRED' | 'COMPLETED';
+
 export type ListAuditLogsQuery = {
     event_id?: number | null;
     limit?: number | null;
@@ -101,8 +101,28 @@ export type Organizer = {
     id: number;
     instagram_url?: string | null;
     name: string;
+    super_user: boolean;
     updated_at: string;
     website_url?: string | null;
+};
+
+export type OrganizerWithInvite = {
+    created_at: string;
+    email?: string | null;
+    id: number;
+    invite_expires_at?: string | null;
+    invite_status: InviteStatus;
+    name: string;
+    super_user: boolean;
+    updated_at: string;
+};
+
+export type SetupTokenInfoResponse = {
+    organizer_name: string;
+};
+
+export type SetupTokenLookupRequest = {
+    token: string;
 };
 
 export type SetupTokenResponse = {
@@ -127,6 +147,7 @@ export type UpdateOrganizerRequest = {
     description_en?: string | null;
     instagram_url?: string | null;
     name?: string | null;
+    super_user?: boolean | null;
     website_url?: string | null;
 };
 
@@ -251,6 +272,29 @@ export type MeResponses = {
 };
 
 export type MeResponse = MeResponses[keyof MeResponses];
+
+export type LookupSetupTokenData = {
+    body: SetupTokenLookupRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/register-info';
+};
+
+export type LookupSetupTokenErrors = {
+    /**
+     * Invalid or expired token
+     */
+    400: unknown;
+};
+
+export type LookupSetupTokenResponses = {
+    /**
+     * Valid setup token
+     */
+    200: SetupTokenInfoResponse;
+};
+
+export type LookupSetupTokenResponse = LookupSetupTokenResponses[keyof LookupSetupTokenResponses];
 
 export type ListEventsData = {
     body?: never;
@@ -395,10 +439,26 @@ export type CreateOrganizerResponses = {
     /**
      * Organizer created
      */
-    201: Organizer;
+    201: SetupTokenResponse;
 };
 
 export type CreateOrganizerResponse = CreateOrganizerResponses[keyof CreateOrganizerResponses];
+
+export type ListOrganizersAdminData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/organizers/admin';
+};
+
+export type ListOrganizersAdminResponses = {
+    /**
+     * List organizers including invite status
+     */
+    200: Array<OrganizerWithInvite>;
+};
+
+export type ListOrganizersAdminResponse = ListOrganizersAdminResponses[keyof ListOrganizersAdminResponses];
 
 export type DeleteOrganizerData = {
     body?: never;

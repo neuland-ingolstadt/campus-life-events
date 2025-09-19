@@ -12,6 +12,7 @@ pub struct Organizer {
     pub description_en: Option<String>,
     pub website_url: Option<String>,
     pub instagram_url: Option<String>,
+    pub super_user: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -52,4 +53,68 @@ pub struct AuditLogEntry {
     pub note: Option<String>,
     pub old_data: Option<Value>,
     pub new_data: Option<Value>,
+}
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum InviteStatus {
+    Pending,
+    Expired,
+    Completed,
+}
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct OrganizerWithInvite {
+    pub id: i64,
+    pub name: String,
+    pub email: Option<String>,
+    pub super_user: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub invite_status: InviteStatus,
+    pub invite_expires_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, FromRow)]
+pub struct OrganizerInviteRow {
+    pub id: i64,
+    pub name: String,
+    pub email: Option<String>,
+    pub super_user: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub password_hash: Option<String>,
+    pub setup_token: Option<String>,
+    pub setup_token_expires_at: Option<DateTime<Utc>>,
+}
+
+impl OrganizerWithInvite {
+    pub(crate) fn from_row(row: OrganizerInviteRow) -> Self {
+        let invite_status = if row.password_hash.is_some() {
+            InviteStatus::Completed
+        } else if row.setup_token.is_some() {
+            if let Some(expires_at) = row.setup_token_expires_at {
+                if expires_at > Utc::now() {
+                    InviteStatus::Pending
+                } else {
+                    InviteStatus::Expired
+                }
+            } else {
+                InviteStatus::Expired
+            }
+        } else {
+            InviteStatus::Expired
+        };
+
+        Self {
+            id: row.id,
+            name: row.name,
+            email: row.email,
+            super_user: row.super_user,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+            invite_status,
+            invite_expires_at: row.setup_token_expires_at,
+        }
+    }
 }

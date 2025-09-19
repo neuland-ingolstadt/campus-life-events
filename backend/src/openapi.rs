@@ -2,12 +2,14 @@ use utoipa::OpenApi;
 
 use crate::{
     dto::{
-        CreateEventRequest, CreateOrganizerRequest, ListAuditLogsQuery, ListEventsQuery,
-        UpdateEventRequest, UpdateOrganizerRequest, LoginRequest, InitAccountRequest,
-        ChangePasswordRequest,
+        ChangePasswordRequest, CreateEventRequest, CreateOrganizerRequest, InitAccountRequest,
+        ListAuditLogsQuery, ListEventsQuery, LoginRequest, SetupTokenLookupRequest,
+        UpdateEventRequest, UpdateOrganizerRequest,
     },
-    models::{AuditLogEntry, Event, Organizer},
-    responses::{ErrorResponse, HealthResponse, AuthUserResponse, SetupTokenResponse},
+    models::{AuditLogEntry, Event, InviteStatus, Organizer, OrganizerWithInvite},
+    responses::{
+        AuthUserResponse, ErrorResponse, HealthResponse, SetupTokenInfoResponse, SetupTokenResponse,
+    },
     routes,
 };
 
@@ -17,6 +19,7 @@ use crate::{
         routes::health_check,
         routes::list_organizers,
         routes::create_organizer,
+        routes::list_organizers_admin,
         routes::get_organizer,
         routes::update_organizer,
         routes::delete_organizer,
@@ -28,6 +31,7 @@ use crate::{
         routes::delete_event,
         routes::list_audit_logs,
         routes::login,
+        routes::lookup_setup_token,
         routes::logout,
         routes::me,
         routes::init_account,
@@ -35,11 +39,13 @@ use crate::{
     ),
     components(schemas(
         Organizer,
+        OrganizerWithInvite,
         Event,
         CreateOrganizerRequest,
         UpdateOrganizerRequest,
         LoginRequest,
         InitAccountRequest,
+        SetupTokenLookupRequest,
         ChangePasswordRequest,
         CreateEventRequest,
         UpdateEventRequest,
@@ -49,7 +55,9 @@ use crate::{
         ErrorResponse,
         HealthResponse,
         AuthUserResponse,
-        SetupTokenResponse
+        SetupTokenResponse,
+        SetupTokenInfoResponse,
+        InviteStatus
     )),
     tags(
         (name = "Health", description = "Service availability"),

@@ -16,9 +16,15 @@ pub struct HealthResponse {
 pub struct AuthUserResponse {
     pub id: i64,
     pub name: String,
+    pub super_user: bool,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct SetupTokenResponse {
     pub setup_token: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct SetupTokenInfoResponse {
+    pub organizer_name: String,
 }

@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: cle-postgres
+    environment:
+      POSTGRES_USER: cle
+      POSTGRES_PASSWORD: cle_password
+      POSTGRES_DB: cle_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - cle-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cle -d cle_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    image: ghcr.io/neuland-ingolstadt/campus-life-events-backend:latest
+    environment:
+      DATABASE_URL: postgres://cle:cle_password@db:5432/cle_db
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+  frontend:
+    image: ghcr.io/neuland-ingolstadt/campus-life-events-frontend:latest
+    environment:
+      BACKEND_URL: http://backend:8080
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "3000:3000"
+
+volumes:
+  cle-pgdata:
