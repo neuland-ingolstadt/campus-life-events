@@ -1,37 +1,40 @@
 'use client'
 
+import { useQuery } from '@tanstack/react-query'
 import {
-	BarChart3,
-	Calendar,
-	CalendarDays,
-	Home,
-	Settings,
-	Users
+        BarChart3,
+        Calendar,
+        CalendarDays,
+        Home,
+        Settings,
+        Shield,
+        Users
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AuthStatus } from '@/components/auth-status'
 import { ThemeToggle } from '@/components/theme-toggle'
 import {
-	Sidebar,
-	SidebarContent,
-	SidebarFooter,
-	SidebarGroup,
-	SidebarGroupContent,
-	SidebarGroupLabel,
-	SidebarHeader,
-	SidebarMenu,
-	SidebarMenuButton,
-	SidebarMenuItem
+        Sidebar,
+        SidebarContent,
+        SidebarFooter,
+        SidebarGroup,
+        SidebarGroupContent,
+        SidebarGroupLabel,
+        SidebarHeader,
+        SidebarMenu,
+        SidebarMenuButton,
+        SidebarMenuItem
 } from '@/components/ui/sidebar'
+import { me } from '@/lib/auth'
 import NeulandPalm from './neuland-palm'
 
-const items = [
-	{
-		title: 'Dashboard',
-		url: '/',
-		icon: Home
-	},
+const baseItems = [
+        {
+                title: 'Dashboard',
+                url: '/',
+                icon: Home
+        },
 	{
 		title: 'Events',
 		url: '/events',
@@ -52,18 +55,30 @@ const items = [
 		url: '/analytics',
 		icon: BarChart3
 	},
-	{
-		title: 'Einstellungen',
-		url: '/settings',
-		icon: Settings
-	}
+        {
+                title: 'Einstellungen',
+                url: '/settings',
+                icon: Settings
+        }
 ]
 
 export function DashboardSidebar() {
-	const pathname = usePathname()
+        const pathname = usePathname()
+        const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
+        const isAdmin = meData?.account_type === 'ADMIN'
+        const items = isAdmin
+                ? [
+                          ...baseItems,
+                          {
+                                  title: 'Admin',
+                                  url: '/admin',
+                                  icon: Shield
+                          }
+                  ]
+                : baseItems
 
-	return (
-		<Sidebar variant="sidebar">
+        return (
+                <Sidebar variant="sidebar">
 			<SidebarHeader>
 				{/* Mobile bottom sheet handle */}
 				<div className="flex justify-center py-2 md:hidden">

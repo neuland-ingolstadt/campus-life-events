@@ -17,7 +17,6 @@ pub struct UpdateOrganizerRequest {
     pub website_url: Option<String>,
     pub instagram_url: Option<String>,
     pub location: Option<String>,
-    pub super_user: Option<bool>,
 }
 
 impl UpdateOrganizerRequest {
@@ -28,7 +27,6 @@ impl UpdateOrganizerRequest {
             || self.website_url.is_some()
             || self.instagram_url.is_some()
             || self.location.is_some()
-            || self.super_user.is_some()
     }
 }
 

@@ -81,6 +81,11 @@ pub(crate) async fn create_event(
     Json(payload): Json<CreateEventRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
+    let Some(organizer_id) = user.organizer_id() else {
+        return Err(AppError::unauthorized(
+            "admin accounts cannot create events directly",
+        ));
+    };
     let CreateEventRequest {
         title_de,
         title_en,
@@ -104,7 +109,7 @@ pub(crate) async fn create_event(
         RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, created_at, updated_at
         "#,
     )
-    .bind(user.id)
+    .bind(organizer_id)
     .bind(title_de)
     .bind(title_en)
     .bind(description_de)
@@ -209,10 +214,17 @@ pub(crate) async fn update_event(
     .fetch_one(&mut *transaction)
     .await?;
 
-    if existing_event.organizer_id != user.id {
-        return Err(AppError::unauthorized(
-            "cannot update another organizer's event",
-        ));
+    if !user.is_admin() {
+        let Some(user_organizer_id) = user.organizer_id() else {
+            return Err(AppError::unauthorized(
+                "organizer context missing for account",
+            ));
+        };
+        if existing_event.organizer_id != user_organizer_id {
+            return Err(AppError::unauthorized(
+                "cannot update another organizer's event",
+            ));
+        }
     }
 
     // Build assignments defensively to avoid any stray commas
@@ -315,10 +327,17 @@ pub(crate) async fn delete_event(
         return Err(AppError::not_found("Event not found"));
     };
 
-    if existing_event.organizer_id != user.id {
-        return Err(AppError::unauthorized(
-            "cannot delete another organizer's event",
-        ));
+    if !user.is_admin() {
+        let Some(user_organizer_id) = user.organizer_id() else {
+            return Err(AppError::unauthorized(
+                "organizer context missing for account",
+            ));
+        };
+        if existing_event.organizer_id != user_organizer_id {
+            return Err(AppError::unauthorized(
+                "cannot delete another organizer's event",
+            ));
+        }
     }
 
     sqlx::query("DELETE FROM events WHERE id = $1")

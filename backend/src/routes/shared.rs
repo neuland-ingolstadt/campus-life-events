@@ -3,12 +3,23 @@ use cookie::Cookie;
 use sqlx::Row;
 use uuid::Uuid;
 
-use crate::{app_state::AppState, error::AppError};
+use crate::{app_state::AppState, error::AppError, models::AccountType};
 
 #[derive(Clone, Debug)]
 pub(crate) struct AuthedUser {
-    pub(crate) id: i64,
-    pub(crate) super_user: bool,
+    pub(crate) account_id: i64,
+    pub(crate) account_type: AccountType,
+    pub(crate) organizer_id: Option<i64>,
+}
+
+impl AuthedUser {
+    pub(crate) fn is_admin(&self) -> bool {
+        matches!(self.account_type, AccountType::Admin)
+    }
+
+    pub(crate) fn organizer_id(&self) -> Option<i64> {
+        self.organizer_id
+    }
 }
 
 pub(crate) async fn current_user_from_headers(
@@ -24,9 +35,9 @@ pub(crate) async fn current_user_from_headers(
 
     let rec = sqlx::query(
         r#"
-        SELECT o.id, o.super_user
+        SELECT a.id as account_id, a.account_type, a.organizer_id
         FROM sessions s
-        JOIN organizers o ON o.id = s.organizer_id
+        JOIN accounts a ON a.id = s.account_id
         WHERE s.id = $1 AND s.expires_at > NOW()
         "#,
     )
@@ -39,8 +50,9 @@ pub(crate) async fn current_user_from_headers(
     };
 
     Ok(AuthedUser {
-        id: row.try_get("id").unwrap_or_default(),
-        super_user: row.try_get("super_user").unwrap_or(false),
+        account_id: row.try_get("account_id").unwrap_or_default(),
+        account_type: row.try_get("account_type")?,
+        organizer_id: row.try_get("organizer_id").ok(),
     })
 }
 

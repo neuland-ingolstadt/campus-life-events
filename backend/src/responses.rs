@@ -1,6 +1,8 @@
 use serde::Serialize;
 use utoipa::ToSchema;
 
+use crate::models::AccountType;
+
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ErrorResponse {
     pub message: String,
@@ -16,7 +18,8 @@ pub struct HealthResponse {
 pub struct AuthUserResponse {
     pub id: i64,
     pub name: String,
-    pub super_user: bool,
+    pub account_type: AccountType,
+    pub organizer_id: Option<i64>,
 }
 
 #[derive(Debug, Serialize, ToSchema)]

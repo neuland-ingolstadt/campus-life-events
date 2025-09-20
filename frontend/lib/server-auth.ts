@@ -1,7 +1,13 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import type { AccountType } from '@/client/types.gen'
 
-export type AuthUser = { id: number; name: string }
+export type AuthUser = {
+        id: number
+        name: string
+        account_type: AccountType
+        organizer_id?: number | null
+}
 
 export async function requireUser(): Promise<AuthUser> {
 	const ck = await cookies()

@@ -12,6 +12,7 @@ use tracing::instrument;
 use crate::{app_state::AppState, error::AppError, models::Organizer};
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct EventWithOrganizer {
     pub id: i64,
     pub organizer_id: i64,
@@ -202,7 +203,7 @@ pub(crate) async fn get_organizer_events_ical(
     // First, verify the organizer exists
     let organizer = sqlx::query_as::<_, Organizer>(
         r#"
-        SELECT id, name, description_de, description_en, website_url, instagram_url, super_user, created_at, updated_at
+        SELECT id, name, description_de, description_en, website_url, instagram_url, created_at, updated_at
         FROM organizers
         WHERE id = $1
         "#

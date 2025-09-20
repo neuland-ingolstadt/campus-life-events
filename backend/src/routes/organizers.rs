@@ -12,7 +12,7 @@ use crate::{
     app_state::AppState,
     dto::{CreateOrganizerRequest, UpdateOrganizerRequest},
     error::AppError,
-    models::{Organizer, OrganizerInviteRow, OrganizerWithInvite},
+    models::{AccountType, Organizer, OrganizerInviteRow, OrganizerWithInvite},
     responses::SetupTokenResponse,
 };
 
@@ -30,7 +30,7 @@ pub(crate) async fn list_organizers(
 ) -> Result<Json<Vec<Organizer>>, AppError> {
     let organizers = sqlx::query_as::<_, Organizer>(
         r#"
-        SELECT id, name, description_de, description_en, website_url, instagram_url, location, super_user, created_at, updated_at
+        SELECT id, name, description_de, description_en, website_url, instagram_url, location, created_at, updated_at
         FROM organizers
         ORDER BY name
         "#,
@@ -55,19 +55,31 @@ pub(crate) async fn create_organizer(
     Json(payload): Json<CreateOrganizerRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
-    if !user.super_user {
+    if !user.is_admin() {
         return Err(AppError::unauthorized("insufficient permissions"));
     }
 
     let token = generate_setup_token_value();
     let mut tx = state.db.begin().await?;
-    sqlx::query(
+    let organizer_id: i64 = sqlx::query_scalar(
         r#"
-        INSERT INTO organizers (name, email, setup_token, setup_token_expires_at)
-        VALUES ($1, $2, $3, NOW() + INTERVAL '7 days')
+        INSERT INTO organizers (name)
+        VALUES ($1)
+        RETURNING id
         "#,
     )
     .bind(&payload.name)
+    .fetch_one(&mut *tx)
+    .await?;
+
+    sqlx::query(
+        r#"
+        INSERT INTO accounts (account_type, organizer_id, email, setup_token, setup_token_expires_at)
+        VALUES ($1, $2, $3, $4, NOW() + INTERVAL '7 days')
+        "#,
+    )
+    .bind(AccountType::Organizer)
+    .bind(organizer_id)
     .bind(&payload.email)
     .bind(&token)
     .execute(&mut *tx)
@@ -109,24 +121,24 @@ pub(crate) async fn list_organizers_admin(
     headers: HeaderMap,
 ) -> Result<Json<Vec<OrganizerWithInvite>>, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
-    if !user.super_user {
+    if !user.is_admin() {
         return Err(AppError::unauthorized("insufficient permissions"));
     }
 
     let rows = sqlx::query_as::<_, OrganizerInviteRow>(
         r#"
         SELECT
-            id,
-            name,
-            email,
-            super_user,
-            created_at,
-            updated_at,
-            password_hash,
-            setup_token,
-            setup_token_expires_at
-        FROM organizers
-        ORDER BY created_at DESC
+            o.id AS organizer_id,
+            o.name AS organizer_name,
+            o.created_at AS organizer_created_at,
+            o.updated_at AS organizer_updated_at,
+            a.email,
+            a.password_hash,
+            a.setup_token,
+            a.setup_token_expires_at
+        FROM organizers o
+        LEFT JOIN accounts a ON a.organizer_id = o.id AND a.account_type = 'ORGANIZER'
+        ORDER BY o.created_at DESC
         "#,
     )
     .fetch_all(&state.db)
@@ -154,7 +166,7 @@ pub(crate) async fn get_organizer(
 ) -> Result<Json<Organizer>, AppError> {
     let organizer = sqlx::query_as::<_, Organizer>(
         r#"
-        SELECT id, name, description_de, description_en, website_url, instagram_url, location, super_user, created_at, updated_at
+        SELECT id, name, description_de, description_en, website_url, instagram_url, location, created_at, updated_at
         FROM organizers
         WHERE id = $1
         "#,
@@ -182,8 +194,8 @@ pub(crate) async fn update_organizer(
     Json(payload): Json<UpdateOrganizerRequest>,
 ) -> Result<Json<Organizer>, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
-    let editing_self = user.id == id;
-    if !editing_self && !user.super_user {
+    let editing_self = user.organizer_id() == Some(id);
+    if !editing_self && !user.is_admin() {
         return Err(AppError::unauthorized("cannot update another organizer"));
     }
     let has_updates = payload.has_updates();
@@ -194,15 +206,10 @@ pub(crate) async fn update_organizer(
         website_url,
         instagram_url,
         location,
-        super_user,
     } = payload;
 
     if !has_updates {
         return Err(AppError::validation("No fields supplied for update"));
-    }
-
-    if super_user.is_some() && !user.super_user {
-        return Err(AppError::unauthorized("insufficient permissions"));
     }
 
     // Build assignments defensively to avoid any stray commas
@@ -229,12 +236,9 @@ pub(crate) async fn update_organizer(
     if let Some(location) = location {
         builder.push(", location = ").push_bind(location);
     }
-    if let Some(super_user) = super_user {
-        builder.push(", super_user = ").push_bind(super_user);
-    }
 
     builder.push(" WHERE id = ").push_bind(id);
-    builder.push(" RETURNING id, name, description_de, description_en, website_url, instagram_url, location, super_user, created_at, updated_at");
+    builder.push(" RETURNING id, name, description_de, description_en, website_url, instagram_url, location, created_at, updated_at");
 
     let organizer = builder
         .build_query_as::<Organizer>()
@@ -258,8 +262,8 @@ pub(crate) async fn delete_organizer(
     Path(id): Path<i64>,
 ) -> Result<StatusCode, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
-    let deleting_self = user.id == id;
-    if !deleting_self && !user.super_user {
+    let deleting_self = user.organizer_id() == Some(id);
+    if !deleting_self && !user.is_admin() {
         return Err(AppError::unauthorized("cannot delete another organizer"));
     }
     let result = sqlx::query("DELETE FROM organizers WHERE id = $1")
@@ -288,7 +292,8 @@ pub(crate) async fn generate_setup_token(
     Path(id): Path<i64>,
 ) -> Result<Json<SetupTokenResponse>, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
-    if user.id != id {
+    let target_is_self = user.organizer_id() == Some(id);
+    if !target_is_self && !user.is_admin() {
         return Err(AppError::unauthorized(
             "cannot generate token for another organizer",
         ));
@@ -296,11 +301,11 @@ pub(crate) async fn generate_setup_token(
     let token = generate_setup_token_value();
     let result = sqlx::query(
         r#"
-        UPDATE organizers
+        UPDATE accounts
         SET setup_token = $1,
             setup_token_expires_at = NOW() + INTERVAL '7 days',
             updated_at = NOW()
-        WHERE id = $2
+        WHERE organizer_id = $2 AND account_type = 'ORGANIZER'
         "#,
     )
     .bind(&token)

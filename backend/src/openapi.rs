@@ -6,7 +6,7 @@ use crate::{
         ListAuditLogsQuery, ListEventsQuery, LoginRequest, SetupTokenLookupRequest,
         UpdateEventRequest, UpdateOrganizerRequest,
     },
-    models::{AuditLogEntry, Event, InviteStatus, Organizer, OrganizerWithInvite},
+    models::{AccountType, AuditLogEntry, Event, InviteStatus, Organizer, OrganizerWithInvite},
     responses::{
         AuthUserResponse, ErrorResponse, HealthResponse, SetupTokenInfoResponse, SetupTokenResponse,
     },
@@ -57,7 +57,8 @@ use crate::{
         AuthUserResponse,
         SetupTokenResponse,
         SetupTokenInfoResponse,
-        InviteStatus
+        InviteStatus,
+        AccountType
     )),
     tags(
         (name = "Health", description = "Service availability"),

@@ -25,14 +25,21 @@ pub(crate) async fn list_audit_logs(
     Query(mut query_params): Query<ListAuditLogsQuery>,
 ) -> Result<Json<Vec<AuditLogEntry>>, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
-    if let Some(requested) = query_params.organizer_id {
-        if requested != user.id {
+    if !user.is_admin() {
+        let Some(organizer_id) = user.organizer_id() else {
             return Err(AppError::unauthorized(
-                "cannot view other organizers' audit logs",
+                "organizer context missing for account",
             ));
+        };
+        if let Some(requested) = query_params.organizer_id {
+            if requested != organizer_id {
+                return Err(AppError::unauthorized(
+                    "cannot view other organizers' audit logs",
+                ));
+            }
+        } else {
+            query_params.organizer_id = Some(organizer_id);
         }
-    } else {
-        query_params.organizer_id = Some(user.id);
     }
     let mut builder = QueryBuilder::<Postgres>::new(
         "SELECT id, event_id, organizer_id, type, at, note, old_data, new_data FROM audit_log",

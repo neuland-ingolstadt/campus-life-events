@@ -13,9 +13,16 @@ pub struct Organizer {
     pub website_url: Option<String>,
     pub instagram_url: Option<String>,
     pub location: Option<String>,
-    pub super_user: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, ToSchema, PartialEq, Eq)]
+#[sqlx(type_name = "account_type", rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum AccountType {
+    Admin,
+    Organizer,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, ToSchema)]
@@ -71,7 +78,6 @@ pub struct OrganizerWithInvite {
     pub id: i64,
     pub name: String,
     pub email: Option<String>,
-    pub super_user: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub invite_status: InviteStatus,
@@ -80,12 +86,11 @@ pub struct OrganizerWithInvite {
 
 #[derive(Debug, Clone, FromRow)]
 pub struct OrganizerInviteRow {
-    pub id: i64,
-    pub name: String,
+    pub organizer_id: i64,
+    pub organizer_name: String,
+    pub organizer_created_at: DateTime<Utc>,
+    pub organizer_updated_at: DateTime<Utc>,
     pub email: Option<String>,
-    pub super_user: bool,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
     pub password_hash: Option<String>,
     pub setup_token: Option<String>,
     pub setup_token_expires_at: Option<DateTime<Utc>>,
@@ -110,12 +115,11 @@ impl OrganizerWithInvite {
         };
 
         Self {
-            id: row.id,
-            name: row.name,
+            id: row.organizer_id,
+            name: row.organizer_name,
             email: row.email,
-            super_user: row.super_user,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
+            created_at: row.organizer_created_at,
+            updated_at: row.organizer_updated_at,
             invite_status,
             invite_expires_at: row.setup_token_expires_at,
         }

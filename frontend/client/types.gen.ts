@@ -13,10 +13,13 @@ export type AuditLogEntry = {
 
 export type AuditType = 'CREATE' | 'UPDATE' | 'DELETE';
 
+export type AccountType = 'ADMIN' | 'ORGANIZER';
+
 export type AuthUserResponse = {
+    account_type: AccountType;
     id: number;
     name: string;
-    super_user: boolean;
+    organizer_id?: number | null;
 };
 
 export type ChangePasswordRequest = {
@@ -105,7 +108,6 @@ export type Organizer = {
     instagram_url?: string | null;
     location?: string | null;
     name: string;
-    super_user: boolean;
     updated_at: string;
     website_url?: string | null;
 };
@@ -117,7 +119,6 @@ export type OrganizerWithInvite = {
     invite_expires_at?: string | null;
     invite_status: InviteStatus;
     name: string;
-    super_user: boolean;
     updated_at: string;
 };
 
@@ -153,7 +154,6 @@ export type UpdateOrganizerRequest = {
     instagram_url?: string | null;
     location?: string | null;
     name?: string | null;
-    super_user?: boolean | null;
     website_url?: string | null;
 };
 

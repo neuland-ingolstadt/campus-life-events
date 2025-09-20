@@ -17,6 +17,7 @@ use crate::{
     app_state::AppState,
     dto::{ChangePasswordRequest, InitAccountRequest, LoginRequest, SetupTokenLookupRequest},
     error::AppError,
+    models::AccountType,
     responses::{AuthUserResponse, SetupTokenInfoResponse},
 };
 
@@ -38,7 +39,20 @@ pub(crate) async fn login(
     Json(payload): Json<LoginRequest>,
 ) -> Result<Response, AppError> {
     let rec = sqlx::query(
-        r#"SELECT id, name, password_hash, super_user FROM organizers WHERE email = $1"#,
+        r#"
+        SELECT
+            a.id,
+            a.account_type,
+            a.password_hash,
+            a.organizer_id,
+            a.email AS account_email,
+            o.name AS organizer_name,
+            adm.name AS admin_name
+        FROM accounts a
+        LEFT JOIN organizers o ON o.id = a.organizer_id
+        LEFT JOIN admins adm ON adm.account_id = a.id
+        WHERE a.email = $1
+        "#,
     )
     .bind(&payload.email)
     .fetch_optional(&state.db)
@@ -50,9 +64,27 @@ pub(crate) async fn login(
     };
 
     let id: i64 = row.try_get("id").unwrap_or_default();
-    let name: String = row.try_get::<String, _>("name").unwrap_or_default();
+    let account_type: AccountType = row.try_get("account_type")?;
+    let organizer_id: Option<i64> = row.try_get("organizer_id").ok();
+    let name: String = match account_type {
+        AccountType::Admin => row
+            .try_get::<Option<String>, _>("admin_name")?
+            .or_else(|| {
+                row.try_get::<Option<String>, _>("account_email")
+                    .ok()
+                    .flatten()
+            })
+            .unwrap_or_default(),
+        AccountType::Organizer => row
+            .try_get::<Option<String>, _>("organizer_name")?
+            .or_else(|| {
+                row.try_get::<Option<String>, _>("account_email")
+                    .ok()
+                    .flatten()
+            })
+            .unwrap_or_default(),
+    };
     let stored_hash: Option<String> = row.try_get("password_hash").ok();
-    let super_user: bool = row.try_get("super_user").unwrap_or(false);
     let Some(stored_hash) = stored_hash else {
         tracing::warn!(
             "Failed login attempt for email: {} (no password hash)",
@@ -76,7 +108,7 @@ pub(crate) async fn login(
     let session_id = Uuid::new_v4();
     // 24 hours expiry
     let expires_at = Utc::now() + Duration::hours(24);
-    sqlx::query(r#"INSERT INTO sessions (id, organizer_id, expires_at) VALUES ($1, $2, $3)"#)
+    sqlx::query(r#"INSERT INTO sessions (id, account_id, expires_at) VALUES ($1, $2, $3)"#)
         .bind(session_id)
         .bind(id)
         .bind(expires_at)
@@ -96,7 +128,8 @@ pub(crate) async fn login(
     let body = Json(AuthUserResponse {
         id,
         name,
-        super_user,
+        account_type,
+        organizer_id,
     });
     let mut resp = (StatusCode::OK, body).into_response();
     resp.headers_mut().append(
@@ -147,7 +180,8 @@ pub(crate) async fn init_account(
     let PendingSetupToken {
         id,
         name,
-        super_user,
+        account_type,
+        organizer_id,
     } = pending;
 
     ensure_password_requirements(&payload.password)?;
@@ -160,7 +194,7 @@ pub(crate) async fn init_account(
 
     sqlx::query(
         r#"
-        UPDATE organizers
+        UPDATE accounts
         SET email = $1,
             password_hash = $2,
             setup_token = NULL,
@@ -178,7 +212,7 @@ pub(crate) async fn init_account(
     // Create session
     let session_id = Uuid::new_v4();
     let expires_at = Utc::now() + Duration::hours(24);
-    sqlx::query(r#"INSERT INTO sessions (id, organizer_id, expires_at) VALUES ($1, $2, $3)"#)
+    sqlx::query(r#"INSERT INTO sessions (id, account_id, expires_at) VALUES ($1, $2, $3)"#)
         .bind(session_id)
         .bind(id)
         .bind(expires_at)
@@ -196,7 +230,8 @@ pub(crate) async fn init_account(
     let body = Json(AuthUserResponse {
         id,
         name,
-        super_user,
+        account_type,
+        organizer_id,
     });
     let mut resp = (StatusCode::OK, body).into_response();
     resp.headers_mut().append(
@@ -260,9 +295,17 @@ pub(crate) async fn me(
         .map_err(|_| AppError::unauthorized("invalid session format"))?;
     let rec = sqlx::query(
         r#"
-        SELECT o.id, o.name, o.super_user
+        SELECT
+            a.id,
+            a.account_type,
+            a.organizer_id,
+            a.email AS account_email,
+            o.name AS organizer_name,
+            adm.name AS admin_name
         FROM sessions s
-        JOIN organizers o ON o.id = s.organizer_id
+        JOIN accounts a ON a.id = s.account_id
+        LEFT JOIN organizers o ON o.id = a.organizer_id
+        LEFT JOIN admins adm ON adm.account_id = a.id
         WHERE s.id = $1 AND s.expires_at > NOW()
         "#,
     )
@@ -275,12 +318,31 @@ pub(crate) async fn me(
     };
 
     let id: i64 = row.try_get("id").unwrap_or_default();
-    let name: String = row.try_get("name").unwrap_or_default();
-    let super_user: bool = row.try_get("super_user").unwrap_or(false);
+    let account_type: AccountType = row.try_get("account_type")?;
+    let organizer_id: Option<i64> = row.try_get("organizer_id").ok();
+    let name: String = match account_type {
+        AccountType::Admin => row
+            .try_get::<Option<String>, _>("admin_name")?
+            .or_else(|| {
+                row.try_get::<Option<String>, _>("account_email")
+                    .ok()
+                    .flatten()
+            })
+            .unwrap_or_default(),
+        AccountType::Organizer => row
+            .try_get::<Option<String>, _>("organizer_name")?
+            .or_else(|| {
+                row.try_get::<Option<String>, _>("account_email")
+                    .ok()
+                    .flatten()
+            })
+            .unwrap_or_default(),
+    };
     Ok(Json(AuthUserResponse {
         id,
         name,
-        super_user,
+        account_type,
+        organizer_id,
     }))
 }
 
@@ -298,8 +360,8 @@ pub(crate) async fn change_password(
     Json(payload): Json<ChangePasswordRequest>,
 ) -> Result<StatusCode, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
-    let rec = sqlx::query(r#"SELECT password_hash FROM organizers WHERE id = $1"#)
-        .bind(user.id)
+    let rec = sqlx::query(r#"SELECT password_hash FROM accounts WHERE id = $1"#)
+        .bind(user.account_id)
         .fetch_one(&state.db)
         .await?;
 
@@ -323,14 +385,14 @@ pub(crate) async fn change_password(
         .to_string();
 
     let mut tx = state.db.begin().await?;
-    sqlx::query(r#"UPDATE organizers SET password_hash = $1, updated_at = NOW() WHERE id = $2"#)
+    sqlx::query(r#"UPDATE accounts SET password_hash = $1, updated_at = NOW() WHERE id = $2"#)
         .bind(&new_hash)
-        .bind(user.id)
+        .bind(user.account_id)
         .execute(&mut *tx)
         .await?;
     // Invalidate all existing sessions for this user (session rotation)
-    sqlx::query(r#"DELETE FROM sessions WHERE organizer_id = $1"#)
-        .bind(user.id)
+    sqlx::query(r#"DELETE FROM sessions WHERE account_id = $1"#)
+        .bind(user.account_id)
         .execute(&mut *tx)
         .await?;
     tx.commit().await?;
@@ -341,7 +403,8 @@ pub(crate) async fn change_password(
 struct PendingSetupToken {
     id: i64,
     name: String,
-    super_user: bool,
+    account_type: AccountType,
+    organizer_id: Option<i64>,
 }
 
 async fn ensure_pending_setup_token(
@@ -350,9 +413,19 @@ async fn ensure_pending_setup_token(
 ) -> Result<PendingSetupToken, AppError> {
     let row = sqlx::query(
         r#"
-        SELECT id, name, password_hash, super_user, setup_token_expires_at
-        FROM organizers
-        WHERE setup_token = $1
+        SELECT
+            a.id,
+            a.account_type,
+            a.password_hash,
+            a.organizer_id,
+            a.setup_token_expires_at,
+            a.email AS account_email,
+            o.name AS organizer_name,
+            adm.name AS admin_name
+        FROM accounts a
+        LEFT JOIN organizers o ON o.id = a.organizer_id
+        LEFT JOIN admins adm ON adm.account_id = a.id
+        WHERE a.setup_token = $1
         "#,
     )
     .bind(token)
@@ -376,10 +449,31 @@ async fn ensure_pending_setup_token(
         return Err(AppError::validation("account already initialized"));
     }
 
+    let account_type: AccountType = row.try_get("account_type")?;
+    let name = match account_type {
+        AccountType::Admin => row
+            .try_get::<Option<String>, _>("admin_name")?
+            .or_else(|| {
+                row.try_get::<Option<String>, _>("account_email")
+                    .ok()
+                    .flatten()
+            })
+            .unwrap_or_default(),
+        AccountType::Organizer => row
+            .try_get::<Option<String>, _>("organizer_name")?
+            .or_else(|| {
+                row.try_get::<Option<String>, _>("account_email")
+                    .ok()
+                    .flatten()
+            })
+            .unwrap_or_default(),
+    };
+
     Ok(PendingSetupToken {
         id: row.try_get("id")?,
-        name: row.try_get::<String, _>("name")?,
-        super_user: row.try_get("super_user")?,
+        name,
+        account_type,
+        organizer_id: row.try_get("organizer_id").ok(),
     })
 }
 

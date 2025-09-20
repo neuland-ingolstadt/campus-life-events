@@ -22,9 +22,9 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
 import { me } from '@/lib/auth'
 
 export default function OrganizersPage() {
-	const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
-	const userId = meData?.id as number | undefined
-	const isSuperUser = meData?.super_user ?? false
+        const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
+        const organizerId = meData?.organizer_id ?? undefined
+        const isAdmin = meData?.account_type === 'ADMIN'
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['organizers'],
 		queryFn: () => listOrganizers()
@@ -33,7 +33,10 @@ export default function OrganizersPage() {
 	const [viewing, setViewing] = useState<Organizer | null>(null)
 
 	// Get current user's organizer profile
-	const currentUserOrganizer = organizers.find((o) => o.id === userId)
+        const currentUserOrganizer =
+                organizerId !== undefined
+                        ? organizers.find((o) => o.id === organizerId)
+                        : undefined
 
 	// Check if organizer profile is incomplete (same logic as dashboard)
 	const isProfileIncomplete =
@@ -52,16 +55,16 @@ export default function OrganizersPage() {
 			</header>
 
 			<div className="flex-1 p-4 md:p-8 space-y-4 pt-6">
-				{isSuperUser && (
-					<div className="flex justify-end mb-6">
-						<Link href="/organizers/manage">
-							<Button size="sm" className="flex items-center gap-2">
-								<Settings className="h-4 w-4" />
-								Vereine verwalten
-							</Button>
-						</Link>
-					</div>
-				)}
+                                {isAdmin && (
+                                        <div className="flex justify-end mb-6">
+                                                <Link href="/admin">
+                                                        <Button size="sm" className="flex items-center gap-2">
+                                                                <Settings className="h-4 w-4" />
+                                                                Admin-Bereich
+                                                        </Button>
+                                                </Link>
+                                        </div>
+                                )}
 				{isLoading ? (
 					<div className="space-y-2">
 						{Array.from({ length: 3 }).map((_, idx) => (
@@ -76,8 +79,9 @@ export default function OrganizersPage() {
 				) : (
 					<div className="space-y-14	">
 						{/* Your organizer first with edit only */}
-						{organizers.find((o) => o.id === userId) && (
-							<div className="space-y-4">
+                                                {organizerId !== undefined &&
+                                                        organizers.find((o) => o.id === organizerId) && (
+                                                        <div className="space-y-4">
 								<div className="flex items-center gap-3">
 									<div className="h-8 w-8 bg-muted rounded-lg flex items-center justify-center">
 										<User2Icon className="h-6 w-6" />
@@ -90,9 +94,9 @@ export default function OrganizersPage() {
 									</div>
 								</div>
 
-								{organizers
-									.filter((o) => o.id === userId)
-									.map((o) => (
+                                                                {organizers
+                                                                        .filter((o) => o.id === organizerId)
+                                                                        .map((o) => (
 										<Card key={o.id}>
 											<CardHeader>
 												<div className="flex flex-row items-start justify-between gap-4">
