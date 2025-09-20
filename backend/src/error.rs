@@ -17,6 +17,8 @@ pub enum AppError {
     Unauthorized(String),
     #[error("email error: {0}")]
     Email(String),
+    #[error("internal server error: {0}")]
+    Internal(String),
     #[error(transparent)]
     Sqlx(#[from] sqlx::Error),
     #[error(transparent)]
@@ -38,12 +40,17 @@ impl AppError {
         Self::Unauthorized(msg.into())
     }
 
+    pub fn internal(msg: impl Into<String>) -> Self {
+        Self::Internal(msg.into())
+    }
+
     fn status_code(&self) -> StatusCode {
         match self {
             AppError::NotFound { .. } => StatusCode::NOT_FOUND,
             AppError::Validation(_) => StatusCode::BAD_REQUEST,
             AppError::Unauthorized(_) => StatusCode::UNAUTHORIZED,
             AppError::Email(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::Sqlx(error) => map_sqlx_error_to_status(error),
             AppError::Serde(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
@@ -55,6 +62,7 @@ impl AppError {
             AppError::Validation(message) => message.clone(),
             AppError::Unauthorized(message) => message.clone(),
             AppError::Email(message) => message.clone(),
+            AppError::Internal(message) => message.clone(),
             AppError::Sqlx(error) => match error {
                 sqlx::Error::RowNotFound => "resource not found".to_string(),
                 _ => error

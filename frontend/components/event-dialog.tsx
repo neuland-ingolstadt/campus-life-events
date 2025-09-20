@@ -51,9 +51,10 @@ const eventSchema = z.object({
 	}),
 	end_date_time: z.date().optional(),
 	event_url: z.string().url().optional().or(z.literal('')),
+	location: z.string().optional(),
 	publish_app: z.boolean(),
 	publish_newsletter: z.boolean(),
-	audit_note: z.string().optional()
+	publish_in_ical: z.boolean()
 })
 
 type EventFormValues = z.infer<typeof eventSchema>
@@ -72,8 +73,8 @@ export function EventDialog({
 	open,
 	onOpenChange,
 	event,
-	organizers,
-	currentOrganizerId,
+	organizers: _organizers,
+	currentOrganizerId: _currentOrganizerId,
 	onSave,
 	isLoading = false
 }: EventDialogProps) {
@@ -92,9 +93,10 @@ export function EventDialog({
 			start_date_time: new Date(),
 			end_date_time: undefined,
 			event_url: '',
+			location: '',
 			publish_app: true,
 			publish_newsletter: true,
-			audit_note: ''
+			publish_in_ical: true
 		}
 	})
 
@@ -118,9 +120,10 @@ export function EventDialog({
 				start_date_time: startDateTime,
 				end_date_time: endDateTime,
 				event_url: event.event_url || '',
+				location: event.location || '',
 				publish_app: event.publish_app,
 				publish_newsletter: event.publish_newsletter,
-				audit_note: ''
+				publish_in_ical: event.publish_in_ical
 			})
 		} else {
 			form.reset({
@@ -131,9 +134,10 @@ export function EventDialog({
 				start_date_time: new Date(),
 				end_date_time: undefined,
 				event_url: '',
+				location: '',
 				publish_app: true,
 				publish_newsletter: true,
-				audit_note: ''
+				publish_in_ical: true
 			})
 			setStartDate(new Date())
 			setEndDate(undefined)
@@ -165,9 +169,9 @@ export function EventDialog({
 			start_date_time: startDateTime.toISOString(),
 			end_date_time: endDateTime?.toISOString(),
 			event_url: values.event_url || undefined,
+			location: values.location || undefined,
 			description_de: values.description_de || undefined,
-			description_en: values.description_en || undefined,
-			audit_note: values.audit_note || undefined
+			description_en: values.description_en || undefined
 		}
 
 		onSave(eventData)
@@ -344,7 +348,27 @@ export function EventDialog({
 							)}
 						/>
 
-						<div className="grid grid-cols-2 gap-4">
+						<FormField
+							control={form.control}
+							name="location"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Veranstaltungsort</FormLabel>
+									<FormControl>
+										<Input
+											placeholder="z.B. Hörsaal A, Raum 101, Online"
+											{...field}
+										/>
+									</FormControl>
+									<FormDescription>
+										Optionaler Veranstaltungsort oder Raum
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+
+						<div className="grid grid-cols-1 gap-4">
 							<FormField
 								control={form.control}
 								name="publish_app"
@@ -387,27 +411,27 @@ export function EventDialog({
 									</FormItem>
 								)}
 							/>
+							<FormField
+								control={form.control}
+								name="publish_in_ical"
+								render={({ field }) => (
+									<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+										<div className="space-y-0.5">
+											<FormLabel className="text-base">iCal-Kalender</FormLabel>
+											<FormDescription>
+												In iCal-Kalendern anzeigen
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
 						</div>
-
-						<FormField
-							control={form.control}
-							name="audit_note"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Audit-Notiz</FormLabel>
-									<FormControl>
-										<Textarea
-											placeholder="Optionale Notiz für das Prüfprotokoll"
-											{...field}
-										/>
-									</FormControl>
-									<FormDescription>
-										Diese Notiz wird im Audit-Log gespeichert
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
 
 						<DialogFooter>
 							<Button

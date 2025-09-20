@@ -137,16 +137,24 @@ impl EmailClient {
         &self,
         organizer_name: &str,
         registration_url: &str,
-        setup_token: &str,
+        _setup_token: &str,
     ) -> String {
         format!(
             "Hallo {organizer_name},\n\n\
-Du wurdest zur Campus Life Events Plattform eingeladen.\n\
+Du wurdest zur Campus Life Events Plattform der THI StudVer eingeladen.\n\
+Als zentrale Plattform für die Veranstaltungen der Vereine an der THI bietet sie dir die Möglichkeit, deine Veranstaltungen zu planen und zu verwalten.\n\n\
+Was dich erwartet:\n\
+- Einfache Veranstaltungsverwaltung: Erstelle und verwalte deine Events intuitiv\n\
+- Campus Life Newsletter: Automatische Integration in den wöchentlichen Newsletter für alle Studierenden\n\
+- Neuland Next App Integration: Deine Veranstaltungen werden direkt in der App präsentiert\n\
+- Moderne Benutzeroberfläche: Der bisherige Moodle-Kurs wird durch diese neue Plattform ersetzt\n\
+- Echtzeit-Updates: Sofortige Synchronisation zwischen allen Plattformen\n\
 Bitte richte dein Konto über folgenden Link ein (gültig für 7 Tage):\n\
 {registration_url}\n\n\
-Falls der Link nicht funktioniert, kannst du das Token auch manuell eingeben:\n\
-{setup_token}\n\n\
-Viele Grüße\nCampus Life Events Team\n"
+Viele Grüße\nDas THI StudVer Team\n\n\
+Campus Life Events ist ein Projekt der THI StudVer und wird von Neuland Ingolstadt e.V. entwickelt und betrieben.",
+            organizer_name = organizer_name,
+            registration_url = registration_url
         )
     }
 }

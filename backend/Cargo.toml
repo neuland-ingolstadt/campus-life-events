@@ -29,3 +29,4 @@ password_policy = "0.1"
 lettre = { version = "0.11", default-features = false, features = ["builder", "smtp-transport", "tokio1", "tokio1-rustls", "rustls-native-certs", "aws-lc-rs"] }
 base64 = "0.22"
 rand = "0.8"
+icalendar = "0.12"

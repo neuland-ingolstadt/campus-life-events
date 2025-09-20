@@ -31,7 +31,8 @@ const organizerSchema = z.object({
 	description_de: z.string().optional(),
 	description_en: z.string().optional(),
 	website_url: z.string().url().optional().or(z.literal('')),
-	instagram_url: z.string().url().optional().or(z.literal(''))
+	instagram_url: z.string().url().optional().or(z.literal('')),
+	location: z.string().optional()
 })
 
 type OrganizerFormValues = z.infer<typeof organizerSchema>
@@ -58,7 +59,8 @@ export function OrganizerDialog({
 			description_de: '',
 			description_en: '',
 			website_url: '',
-			instagram_url: ''
+			instagram_url: '',
+			location: ''
 		}
 	})
 
@@ -69,7 +71,8 @@ export function OrganizerDialog({
 				description_de: organizer.description_de || '',
 				description_en: organizer.description_en || '',
 				website_url: organizer.website_url || '',
-				instagram_url: organizer.instagram_url || ''
+				instagram_url: organizer.instagram_url || '',
+				location: organizer.location || ''
 			})
 		} else {
 			form.reset({
@@ -77,7 +80,8 @@ export function OrganizerDialog({
 				description_de: '',
 				description_en: '',
 				website_url: '',
-				instagram_url: ''
+				instagram_url: '',
+				location: ''
 			})
 		}
 	}, [organizer, form])
@@ -87,6 +91,7 @@ export function OrganizerDialog({
 			...values,
 			website_url: values.website_url || undefined,
 			instagram_url: values.instagram_url || undefined,
+			location: values.location || undefined,
 			description_de: values.description_de || undefined,
 			description_en: values.description_en || undefined
 		}
@@ -158,6 +163,26 @@ export function OrganizerDialog({
 								)}
 							/>
 						</div>
+
+						<FormField
+							control={form.control}
+							name="location"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Standort</FormLabel>
+									<FormControl>
+										<Input
+											placeholder="z.B. Hauptgebäude, Raum 101"
+											{...field}
+										/>
+									</FormControl>
+									<FormDescription>
+										Optionaler Standort oder Raum des Vereins
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
 
 						<FormField
 							control={form.control}

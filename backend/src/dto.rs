@@ -16,6 +16,7 @@ pub struct UpdateOrganizerRequest {
     pub description_en: Option<String>,
     pub website_url: Option<String>,
     pub instagram_url: Option<String>,
+    pub location: Option<String>,
     pub super_user: Option<bool>,
 }
 
@@ -26,6 +27,7 @@ impl UpdateOrganizerRequest {
             || self.description_en.is_some()
             || self.website_url.is_some()
             || self.instagram_url.is_some()
+            || self.location.is_some()
             || self.super_user.is_some()
     }
 }
@@ -40,11 +42,13 @@ pub struct CreateEventRequest {
     pub start_date_time: DateTime<Utc>,
     pub end_date_time: Option<DateTime<Utc>>,
     pub event_url: Option<String>,
+    pub location: Option<String>,
     #[serde(default = "default_true")]
     pub publish_app: bool,
     #[serde(default = "default_true")]
     pub publish_newsletter: bool,
-    pub audit_note: Option<String>,
+    #[serde(default = "default_true")]
+    pub publish_in_ical: bool,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -57,9 +61,10 @@ pub struct UpdateEventRequest {
     pub start_date_time: Option<DateTime<Utc>>,
     pub end_date_time: Option<DateTime<Utc>>,
     pub event_url: Option<String>,
+    pub location: Option<String>,
     pub publish_app: Option<bool>,
     pub publish_newsletter: Option<bool>,
-    pub audit_note: Option<String>,
+    pub publish_in_ical: Option<bool>,
 }
 
 impl UpdateEventRequest {
@@ -71,8 +76,10 @@ impl UpdateEventRequest {
             || self.start_date_time.is_some()
             || self.end_date_time.is_some()
             || self.event_url.is_some()
+            || self.location.is_some()
             || self.publish_app.is_some()
             || self.publish_newsletter.is_some()
+            || self.publish_in_ical.is_some()
     }
 }
 

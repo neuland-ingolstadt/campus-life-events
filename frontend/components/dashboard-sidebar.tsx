@@ -1,6 +1,13 @@
 'use client'
 
-import { BarChart3, Calendar, Home, Settings, Users } from 'lucide-react'
+import {
+	BarChart3,
+	Calendar,
+	CalendarDays,
+	Home,
+	Settings,
+	Users
+} from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AuthStatus } from '@/components/auth-status'
@@ -34,6 +41,11 @@ const items = [
 		title: 'Vereine',
 		url: '/organizers',
 		icon: Users
+	},
+	{
+		title: 'iCal Abonnements',
+		url: '/ical',
+		icon: CalendarDays
 	},
 	{
 		title: 'Analysen',

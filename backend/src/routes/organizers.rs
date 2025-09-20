@@ -30,7 +30,7 @@ pub(crate) async fn list_organizers(
 ) -> Result<Json<Vec<Organizer>>, AppError> {
     let organizers = sqlx::query_as::<_, Organizer>(
         r#"
-        SELECT id, name, description_de, description_en, website_url, instagram_url, super_user, created_at, updated_at
+        SELECT id, name, description_de, description_en, website_url, instagram_url, location, super_user, created_at, updated_at
         FROM organizers
         ORDER BY name
         "#,
@@ -154,7 +154,7 @@ pub(crate) async fn get_organizer(
 ) -> Result<Json<Organizer>, AppError> {
     let organizer = sqlx::query_as::<_, Organizer>(
         r#"
-        SELECT id, name, description_de, description_en, website_url, instagram_url, super_user, created_at, updated_at
+        SELECT id, name, description_de, description_en, website_url, instagram_url, location, super_user, created_at, updated_at
         FROM organizers
         WHERE id = $1
         "#,
@@ -193,6 +193,7 @@ pub(crate) async fn update_organizer(
         description_en,
         website_url,
         instagram_url,
+        location,
         super_user,
     } = payload;
 
@@ -225,12 +226,15 @@ pub(crate) async fn update_organizer(
     if let Some(instagram_url) = instagram_url {
         builder.push(", instagram_url = ").push_bind(instagram_url);
     }
+    if let Some(location) = location {
+        builder.push(", location = ").push_bind(location);
+    }
     if let Some(super_user) = super_user {
         builder.push(", super_user = ").push_bind(super_user);
     }
 
     builder.push(" WHERE id = ").push_bind(id);
-    builder.push(" RETURNING id, name, description_de, description_en, website_url, instagram_url, super_user, created_at, updated_at");
+    builder.push(" RETURNING id, name, description_de, description_en, website_url, instagram_url, location, super_user, created_at, updated_at");
 
     let organizer = builder
         .build_query_as::<Organizer>()

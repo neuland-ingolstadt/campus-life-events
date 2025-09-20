@@ -12,6 +12,7 @@ pub struct Organizer {
     pub description_en: Option<String>,
     pub website_url: Option<String>,
     pub instagram_url: Option<String>,
+    pub location: Option<String>,
     pub super_user: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -37,8 +38,10 @@ pub struct Event {
     pub start_date_time: DateTime<Utc>,
     pub end_date_time: Option<DateTime<Utc>>,
     pub event_url: Option<String>,
+    pub location: Option<String>,
     pub publish_app: bool,
     pub publish_newsletter: bool,
+    pub publish_in_ical: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

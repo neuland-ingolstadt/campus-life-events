@@ -25,12 +25,13 @@ export type ChangePasswordRequest = {
 };
 
 export type CreateEventRequest = {
-    audit_note?: string | null;
     description_de?: string | null;
     description_en?: string | null;
     end_date_time?: string | null;
     event_url?: string | null;
+    location?: string | null;
     publish_app?: boolean;
+    publish_in_ical?: boolean;
     publish_newsletter?: boolean;
     start_date_time: string;
     title_de: string;
@@ -53,8 +54,10 @@ export type Event = {
     end_date_time?: string | null;
     event_url?: string | null;
     id: number;
+    location?: string | null;
     organizer_id: number;
     publish_app: boolean;
+    publish_in_ical: boolean;
     publish_newsletter: boolean;
     start_date_time: string;
     title_de: string;
@@ -100,6 +103,7 @@ export type Organizer = {
     description_en?: string | null;
     id: number;
     instagram_url?: string | null;
+    location?: string | null;
     name: string;
     super_user: boolean;
     updated_at: string;
@@ -130,12 +134,13 @@ export type SetupTokenResponse = {
 };
 
 export type UpdateEventRequest = {
-    audit_note?: string | null;
     description_de?: string | null;
     description_en?: string | null;
     end_date_time?: string | null;
     event_url?: string | null;
+    location?: string | null;
     publish_app?: boolean | null;
+    publish_in_ical?: boolean | null;
     publish_newsletter?: boolean | null;
     start_date_time?: string | null;
     title_de?: string | null;
@@ -146,6 +151,7 @@ export type UpdateOrganizerRequest = {
     description_de?: string | null;
     description_en?: string | null;
     instagram_url?: string | null;
+    location?: string | null;
     name?: string | null;
     super_user?: boolean | null;
     website_url?: string | null;

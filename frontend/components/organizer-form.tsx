@@ -24,7 +24,8 @@ const organizerSchema = z.object({
 	description_de: z.string().optional(),
 	description_en: z.string().optional(),
 	website_url: z.string().url().optional().or(z.literal('')),
-	instagram_url: z.string().url().optional().or(z.literal(''))
+	instagram_url: z.string().url().optional().or(z.literal('')),
+	location: z.string().optional()
 })
 
 export type OrganizerFormValues = z.infer<typeof organizerSchema>
@@ -45,7 +46,8 @@ export function OrganizerForm({
 			description_de: '',
 			description_en: '',
 			website_url: '',
-			instagram_url: ''
+			instagram_url: '',
+			location: ''
 		}
 	})
 
@@ -56,7 +58,8 @@ export function OrganizerForm({
 				description_de: organizer.description_de || '',
 				description_en: organizer.description_en || '',
 				website_url: organizer.website_url || '',
-				instagram_url: organizer.instagram_url || ''
+				instagram_url: organizer.instagram_url || '',
+				location: organizer.location || ''
 			})
 		} else {
 			form.reset({
@@ -64,7 +67,8 @@ export function OrganizerForm({
 				description_de: '',
 				description_en: '',
 				website_url: '',
-				instagram_url: ''
+				instagram_url: '',
+				location: ''
 			})
 		}
 	}, [organizer, form])
@@ -74,6 +78,7 @@ export function OrganizerForm({
 			...values,
 			website_url: values.website_url || undefined,
 			instagram_url: values.instagram_url || undefined,
+			location: values.location || undefined,
 			description_de: values.description_de || undefined,
 			description_en: values.description_en || undefined
 		}
@@ -150,43 +155,65 @@ export function OrganizerForm({
 				</div>
 
 				<div>
-					<h2 className="text-xl font-bold tracking-tight">Links</h2>
-					<div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+					<h2 className="text-xl font-bold tracking-tight">Standort & Links</h2>
+					<div className="mt-3 space-y-6">
 						<FormField
 							control={form.control}
-							name="website_url"
+							name="location"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>Website-URL</FormLabel>
-									<FormControl>
-										<Input placeholder="https://example.com" {...field} />
-									</FormControl>
-									<FormDescription>
-										Optionale Website-URL des Vereins
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="instagram_url"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Instagram-URL</FormLabel>
+									<FormLabel>Standort</FormLabel>
 									<FormControl>
 										<Input
-											placeholder="https://instagram.com/username"
+											placeholder="z.B. Hauptgebäude, Raum 101"
 											{...field}
 										/>
 									</FormControl>
 									<FormDescription>
-										Optionale Instagram-Profil-URL
+										Optionaler Standort oder Raum des Vereins
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
 							)}
 						/>
+
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<FormField
+								control={form.control}
+								name="website_url"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Website-URL</FormLabel>
+										<FormControl>
+											<Input placeholder="https://example.com" {...field} />
+										</FormControl>
+										<FormDescription>
+											Optionale Website-URL des Vereins
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="instagram_url"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Instagram-URL</FormLabel>
+										<FormControl>
+											<Input
+												placeholder="https://instagram.com/username"
+												{...field}
+											/>
+										</FormControl>
+										<FormDescription>
+											Optionale Instagram-Profil-URL
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+						</div>
 					</div>
 				</div>
 

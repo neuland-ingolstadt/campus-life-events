@@ -32,7 +32,7 @@ pub(crate) async fn list_events(
     Query(query_params): Query<ListEventsQuery>,
 ) -> Result<Json<Vec<Event>>, AppError> {
     let mut builder = QueryBuilder::<Postgres>::new(
-        "SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, publish_app, publish_newsletter, created_at, updated_at FROM events",
+        "SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, created_at, updated_at FROM events",
     );
 
     if query_params.organizer_id.is_some() || query_params.upcoming_only.unwrap_or(false) {
@@ -89,18 +89,19 @@ pub(crate) async fn create_event(
         start_date_time,
         end_date_time,
         event_url,
+        location,
         publish_app,
         publish_newsletter,
-        audit_note,
+        publish_in_ical,
     } = payload;
 
     let mut transaction = state.db.begin().await?;
 
     let event = sqlx::query_as::<_, Event>(
         r#"
-        INSERT INTO events (organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, publish_app, publish_newsletter)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, publish_app, publish_newsletter, created_at, updated_at
+        INSERT INTO events (organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, created_at, updated_at
         "#,
     )
     .bind(user.id)
@@ -111,8 +112,10 @@ pub(crate) async fn create_event(
     .bind(start_date_time)
     .bind(end_date_time)
     .bind(event_url)
+    .bind(location)
     .bind(publish_app)
     .bind(publish_newsletter)
+    .bind(publish_in_ical)
     .fetch_one(&mut *transaction)
     .await?;
 
@@ -121,7 +124,6 @@ pub(crate) async fn create_event(
         event.id,
         event.organizer_id,
         AuditType::Create,
-        audit_note.as_ref(),
         None,
         Some(&event),
     )
@@ -146,7 +148,7 @@ pub(crate) async fn get_event(
 ) -> Result<Json<Event>, AppError> {
     let event = sqlx::query_as::<_, Event>(
         r#"
-        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, publish_app, publish_newsletter, created_at, updated_at
+        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, created_at, updated_at
         FROM events
         WHERE id = $1
         "#,
@@ -184,9 +186,10 @@ pub(crate) async fn update_event(
         start_date_time,
         end_date_time,
         event_url,
+        location,
         publish_app,
         publish_newsletter,
-        audit_note,
+        publish_in_ical,
     } = payload;
 
     if !has_updates {
@@ -197,7 +200,7 @@ pub(crate) async fn update_event(
 
     let existing_event = sqlx::query_as::<_, Event>(
         r#"
-        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, publish_app, publish_newsletter, created_at, updated_at
+        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, created_at, updated_at
         FROM events
         WHERE id = $1
         "#,
@@ -241,6 +244,9 @@ pub(crate) async fn update_event(
     if let Some(event_url) = event_url {
         builder.push(", event_url = ").push_bind(event_url);
     }
+    if let Some(location) = location {
+        builder.push(", location = ").push_bind(location);
+    }
     if let Some(publish_app) = publish_app {
         builder.push(", publish_app = ").push_bind(publish_app);
     }
@@ -249,9 +255,14 @@ pub(crate) async fn update_event(
             .push(", publish_newsletter = ")
             .push_bind(publish_newsletter);
     }
+    if let Some(publish_in_ical) = publish_in_ical {
+        builder
+            .push(", publish_in_ical = ")
+            .push_bind(publish_in_ical);
+    }
 
     builder.push(" WHERE id = ").push_bind(id);
-    builder.push(" RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, publish_app, publish_newsletter, created_at, updated_at");
+    builder.push(" RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, created_at, updated_at");
 
     let updated_event = builder
         .build_query_as::<Event>()
@@ -263,7 +274,6 @@ pub(crate) async fn update_event(
         updated_event.id,
         updated_event.organizer_id,
         AuditType::Update,
-        audit_note.as_ref(),
         Some(&existing_event),
         Some(&updated_event),
     )
@@ -292,7 +302,7 @@ pub(crate) async fn delete_event(
 
     let existing_event = sqlx::query_as::<_, Event>(
         r#"
-        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, publish_app, publish_newsletter, created_at, updated_at
+        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, created_at, updated_at
         FROM events
         WHERE id = $1
         "#,
@@ -321,7 +331,6 @@ pub(crate) async fn delete_event(
         existing_event.id,
         existing_event.organizer_id,
         AuditType::Delete,
-        None,
         Some(&existing_event),
         None,
     )
@@ -337,7 +346,6 @@ async fn record_audit(
     event_id: i64,
     organizer_id: i64,
     audit_type: AuditType,
-    note: Option<&String>,
     old_data: Option<&Event>,
     new_data: Option<&Event>,
 ) -> Result<(), AppError> {
@@ -352,14 +360,13 @@ async fn record_audit(
 
     sqlx::query(
         r#"
-        INSERT INTO audit_log (event_id, organizer_id, type, note, old_data, new_data)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO audit_log (event_id, organizer_id, type, old_data, new_data)
+        VALUES ($1, $2, $3, $4, $5)
         "#,
     )
     .bind(event_id)
     .bind(organizer_id)
     .bind(audit_type)
-    .bind(note.cloned())
     .bind(old_json)
     .bind(new_json)
     .execute(&mut **transaction)
