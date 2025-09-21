@@ -1,138 +1,74 @@
 # Campus Life Events Dashboard
 
-A modern, clean dashboard for managing campus events and organizers built with Next.js, TypeScript, and shadcn/ui.
+The dashboard is a Next.js 15 application that gives administrators a focused view of campus events, organizers, and audit data. It consumes the Campus Life Events backend API and provides workflows for scheduling, publishing, and reviewing activity.
 
-## Features
+## Architecture at a glance
 
-- **Dashboard Overview**: Statistics and recent activity overview
-- **Events Management**: Create, edit, delete, and view all events
-- **Organizers Management**: Manage event organizers and their information
-- **Analytics**: Visual charts and statistics about events and organizers
-- **Settings**: Application configuration and preferences
-- **Responsive Design**: Works on desktop, tablet, and mobile devices
+- **Framework**: Next.js App Router with React 19 and TypeScript.
+- **State & data**: TanStack Query for client-side caching layered on top of server actions that proxy to the backend API.
+- **UI system**: shadcn/ui primitives, Tailwind CSS v4, and a small collection of custom components in `components/`.
+- **Generated API client**: `client/` is created from the backend OpenAPI spec via `@hey-api/openapi-ts` so fetchers stay in sync with the Rust models.
+- **Authentication helpers**: `lib/server-auth.ts` reads the `BACKEND_URL` environment variable to exchange credentials with the backend.
 
-## Tech Stack
+## Directory tour
 
-- **Frontend**: Next.js 15, React 19, TypeScript
-- **UI Components**: shadcn/ui with Radix UI primitives
-- **Styling**: Tailwind CSS
-- **Data Fetching**: TanStack Query (React Query)
-- **Charts**: Recharts
-- **Forms**: React Hook Form with Zod validation
-- **API Client**: Hey API (OpenAPI TypeScript client)
+```
+frontend/
+├── app/                 # Route groups, layouts, and page logic
+│   └── (app)/           # Authenticated dashboard routes
+├── components/          # Reusable UI widgets and layout primitives
+├── hooks/               # React hooks for shared UI behaviour
+├── lib/                 # Utility helpers (auth, formatting, constants)
+├── client/              # Generated OpenAPI TypeScript client
+├── public/              # Static assets
+└── types/               # Shared TypeScript definitions
+```
 
-## Getting Started
+## Environment configuration
 
-1. Install dependencies:
+Create a `.env.local` file in this directory when running the dashboard outside of Docker:
+
+```bash
+BACKEND_URL=http://localhost:8080
+# Optional: expose commit metadata in the UI when deploying
+NEXT_PUBLIC_COMMIT_HASH=local-dev
+```
+
+`BACKEND_URL` should point to a reachable instance of the Axum API. When using Docker Compose from the repository root, this variable is injected automatically by the compose file.
+
+## Local development
+
+1. Install Node.js 20 LTS (or use a compatible runtime like Bun — a `bun.lock` is included for convenience).
+2. Install dependencies with your preferred package manager, e.g.:
+
    ```bash
    npm install
    ```
 
-2. Start the development server:
+3. Start the development server:
+
    ```bash
    npm run dev
    ```
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser
+   The dashboard is available at [http://localhost:3000](http://localhost:3000). Ensure the backend API is running on the URL specified in `BACKEND_URL`.
 
-## API Integration
+## Working with the generated client
 
-The dashboard connects to the backend API at `http://localhost:8080`. Make sure the backend is running before using the dashboard.
-
-### Available Endpoints
-
-- `GET /api/v1/events` - List all events
-- `POST /api/v1/events` - Create a new event
-- `PUT /api/v1/events/{id}` - Update an event
-- `DELETE /api/v1/events/{id}` - Delete an event
-- `GET /api/v1/organizers` - List all organizers
-- `POST /api/v1/organizers` - Create a new organizer
-- `PUT /api/v1/organizers/{id}` - Update an organizer
-- `DELETE /api/v1/organizers/{id}` - Delete an organizer
-- `GET /api/v1/audit-logs` - List audit log entries
-
-## Project Structure
-
-```
-frontend/
-├── app/                    # Next.js app directory
-│   ├── page.tsx           # Dashboard home page
-│   ├── events/            # Events management pages
-│   ├── organizers/        # Organizers management pages
-│   ├── analytics/         # Analytics dashboard
-│   └── settings/          # Settings page
-├── components/            # Reusable UI components
-│   ├── ui/               # shadcn/ui components
-│   ├── dashboard-sidebar.tsx
-│   ├── event-dialog.tsx
-│   └── organizer-dialog.tsx
-├── client/               # Generated API client
-└── lib/                  # Utility functions
-```
-
-## Features Overview
-
-### Dashboard
-- Real-time statistics (total events, upcoming events, organizers, published events)
-- Recent events overview
-- Upcoming events preview
-
-### Events Management
-- Create new events with German and English titles/descriptions
-- Set start and end dates/times
-- Configure publication settings (app, newsletter)
-- Add external event URLs
-- Search and filter events
-- Bulk operations
-
-### Organizers Management
-- Create and manage organizer profiles
-- Add descriptions in multiple languages
-- Link to websites and social media
-- View event statistics per organizer
-
-### Analytics
-- Event creation trends
-- Organizer activity distribution
-- Audit log visualization
-- Publication status statistics
-
-### Settings
-- API configuration
-- Notification preferences
-- Data export/import
-- System information
-
-## Development
-
-### Code Generation
-
-The API client is automatically generated from the OpenAPI specification:
+Regenerate the strongly typed API bindings whenever the backend's OpenAPI schema changes:
 
 ```bash
 npm run openapi-ts
 ```
 
-### Linting
+The command pulls `api-docs/openapi.json` from the running backend (configure the source in `openapi-ts.config.ts`) and rewrites the TypeScript client inside `client/`.
 
-```bash
-npm run lint
-```
+## Quality checks
 
-### Building
+| Task | Command |
+| --- | --- |
+| Lint source with Biome | `npm run lint` |
+| Format files | `npm run fmt` |
+| Production build smoke test | `npm run build` |
 
-```bash
-npm run build
-```
-
-## Contributing
-
-1. Follow the existing code style and patterns
-2. Use TypeScript for type safety
-3. Write meaningful component and function names
-4. Add proper error handling
-5. Test your changes thoroughly
-
-## License
-
-This project is part of the Campus Life Events system.
+All commands run locally without Docker. The `Dockerfile` in this folder builds a standalone production image that expects the same `BACKEND_URL` environment variable at runtime.
