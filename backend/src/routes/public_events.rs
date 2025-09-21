@@ -18,7 +18,7 @@ use sqlx::{Postgres, QueryBuilder};
 #[utoipa::path(
     get,
     path = "/api/v1/public/events",
-    tag = "Public Events",
+    tag = "Public",
     params(ListEventsQuery),
     responses((status = 200, description = "List public events", body = [PublicEventResponse]))
 )]
@@ -80,7 +80,7 @@ pub(crate) async fn list_public_events(
 #[utoipa::path(
     get,
     path = "/api/v1/public/organizers",
-    tag = "Public Events",
+    tag = "Public",
     responses((status = 200, description = "List public organizers", body = [PublicOrganizerResponse]))
 )]
 #[instrument(skip(state))]
@@ -117,7 +117,7 @@ pub(crate) async fn list_public_organizers(
 #[utoipa::path(
     get,
     path = "/api/v1/public/events/{id}",
-    tag = "Public Events",
+    tag = "Public",
     params(("id" = i64, Path, description = "Event identifier")),
     responses((status = 200, description = "Public event details", body = PublicEventResponse), (status = 404, description = "Event not found or not published"))
 )]
@@ -161,7 +161,7 @@ pub(crate) async fn get_public_event(
 #[utoipa::path(
     get,
     path = "/api/v1/public/organizers/{id}",
-    tag = "Public Events",
+    tag = "Public",
     params(("id" = i64, Path, description = "Organizer identifier")),
     responses((status = 200, description = "Public organizer details", body = PublicOrganizerResponse), (status = 404, description = "Organizer not found"))
 )]
