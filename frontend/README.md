@@ -38,17 +38,17 @@ NEXT_PUBLIC_COMMIT_HASH=local-dev
 
 ## Local development
 
-1. Install Node.js 20 LTS (or use a compatible runtime like Bun — a `bun.lock` is included for convenience).
-2. Install dependencies with your preferred package manager, e.g.:
+1. Install Bun (recommended) or Node.js 20 LTS.
+2. Install dependencies:
 
    ```bash
-   npm install
+   bun install
    ```
 
 3. Start the development server:
 
    ```bash
-   npm run dev
+   bun run dev
    ```
 
    The dashboard is available at [http://localhost:3000](http://localhost:3000). Ensure the backend API is running on the URL specified in `BACKEND_URL`.
@@ -58,7 +58,7 @@ NEXT_PUBLIC_COMMIT_HASH=local-dev
 Regenerate the strongly typed API bindings whenever the backend's OpenAPI schema changes:
 
 ```bash
-npm run openapi-ts
+bun run openapi-ts
 ```
 
 The command pulls `api-docs/openapi.json` from the running backend (configure the source in `openapi-ts.config.ts`) and rewrites the TypeScript client inside `client/`.
@@ -67,8 +67,8 @@ The command pulls `api-docs/openapi.json` from the running backend (configure th
 
 | Task | Command |
 | --- | --- |
-| Lint source with Biome | `npm run lint` |
-| Format files | `npm run fmt` |
-| Production build smoke test | `npm run build` |
+| Lint source with Biome | `bun run lint` |
+| Format files | `bun run fmt` |
+| Production build smoke test | `bun run build` |
 
 All commands run locally without Docker. The `Dockerfile` in this folder builds a standalone production image that expects the same `BACKEND_URL` environment variable at runtime.

@@ -6,31 +6,41 @@ Campus Life Events is a monorepo that bundles the backend API and the admin dash
 
 | Path | Description |
 | --- | --- |
-| `backend/` | Axum + SQLx REST API that stores events, organizers, audit logs, authentication data, and iCal feeds. |
+| `backend/` | Axum + SQLx REST API that stores events, organizers, audit logs, authentication data, and iCal feeds. Includes docker-compose.yml for local PostgreSQL. |
 | `frontend/` | Next.js 15 dashboard for managing content and interacting with the API. |
-| `docker-compose.yml` | Launches PostgreSQL, the backend, and the frontend with sensible defaults for evaluation. |
 | `nginx/` | Reverse-proxy assets used for the production container image. |
 
 Each service folder contains a dedicated README with deep-dive instructions, architecture notes, and developer workflows.
 
-## Quick start with Docker Compose
+## Quick start with local development
 
-1. Ensure Docker Engine 24+ and Docker Compose v2 are installed.
-2. Clone the repository and start the stack:
+1. Clone the repository and start the database:
 
    ```bash
    git clone <repo-url>
-   cd campus-life-events
-   docker compose up --build
+   cd campus-life-events/backend
+   docker compose up -d
    ```
 
-   The compose file launches three containers:
-   - `db` (PostgreSQL 16) seeded with the `cle_db` database
-   - `backend` (Rust/Axum API) with automatic SQLx migrations
-   - `frontend` (Next.js dashboard) proxying API calls to the backend
+   This launches PostgreSQL 16 with the `cle_db` database.
 
-3. Visit [http://localhost:3000](http://localhost:3000) for the dashboard and [http://localhost:8080/swagger-ui](http://localhost:8080/swagger-ui) for interactive API docs.
-4. When finished, stop the services with `docker compose down`. Add `-v` to also remove the PostgreSQL volume (`cle-pgdata`).
+2. Start the backend API:
+
+   ```bash
+   cd backend
+   cargo run
+   ```
+
+3. Start the frontend dashboard:
+
+   ```bash
+   cd frontend
+   bun install
+   bun run dev
+   ```
+
+4. Visit [http://localhost:3000](http://localhost:3000) for the dashboard and [http://localhost:8080/swagger-ui](http://localhost:8080/swagger-ui) for interactive API docs.
+5. When finished, stop the database with `cd backend && docker compose down`. Add `-v` to also remove the PostgreSQL volume (`pgdatae`).
 
 ## Developing services individually
 
@@ -39,4 +49,4 @@ You can work on each service without Docker if you prefer native tooling:
 - [Frontend deep dive](frontend/README.md) explains the Next.js architecture, environment variables, and development scripts.
 - [Backend deep dive](backend/README.md) covers the Axum API, database schema management, and optional email infrastructure.
 
-For any workflow (Compose or native), make sure the backend API is reachable by the frontend dashboard at `http://localhost:8080` or adjust the documented environment variables accordingly.
+For any workflow, make sure the backend API is reachable by the frontend dashboard at `http://localhost:8080` or adjust the documented environment variables accordingly.

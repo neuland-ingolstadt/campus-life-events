@@ -18,21 +18,21 @@ This service exposes the REST and OpenAPI interface that powers the Campus Life 
 - PostgreSQL 16 locally or via Docker
 - (Optional) `sqlx-cli` for managing migrations from the command line
 
-A lightweight compose file is provided to run PostgreSQL only:
+A compose file is provided to run PostgreSQL only:
 
 ```bash
 cd backend
 docker compose up -d
 ```
 
-It exposes the database on `postgres://cle:cle_password@localhost:54322/cle_db`.
+It exposes the database on `postgres://cle:cle_password@localhost:5422/cle_db`.
 
 ### Environment variables
 
 Create an `.env.local` file to mirror the values expected by `dotenvy` when the server boots:
 
 ```bash
-DATABASE_URL=postgres://cle:cle_password@localhost:54322/cle_db
+DATABASE_URL=postgres://cle:cle_password@localhost:5422/cle_db
 ALLOWED_ORIGINS=http://localhost:3000
 # Optional SMTP configuration
 SMTP_HOST=smtp.example.com
