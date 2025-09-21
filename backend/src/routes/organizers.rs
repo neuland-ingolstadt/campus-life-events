@@ -28,12 +28,13 @@ use super::shared::{current_user_from_headers, generate_setup_token_value};
 pub(crate) async fn list_organizers(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<Organizer>>, AppError> {
-    let organizers = sqlx::query_as::<_, Organizer>(
+    let organizers = sqlx::query_as!(
+        Organizer,
         r#"
         SELECT id, name, description_de, description_en, website_url, instagram_url, location, created_at, updated_at
         FROM organizers
         ORDER BY name
-        "#,
+        "#
     )
     .fetch_all(&state.db)
     .await?;
@@ -61,18 +62,19 @@ pub(crate) async fn create_organizer(
 
     let token = generate_setup_token_value();
     let mut tx = state.db.begin().await?;
-    let organizer = sqlx::query_as::<_, Organizer>(
+    let organizer = sqlx::query_as!(
+        Organizer,
         r#"
         INSERT INTO organizers (name)
         VALUES ($1)
         RETURNING id, name, description_de, description_en, website_url, instagram_url, location, created_at, updated_at
         "#,
+        &payload.name
     )
-    .bind(&payload.name)
     .fetch_one(&mut *tx)
     .await?;
 
-    sqlx::query(
+    sqlx::query!(
         r#"
         INSERT INTO accounts (
             account_type,
@@ -82,14 +84,14 @@ pub(crate) async fn create_organizer(
             setup_token,
             setup_token_expires_at
         )
-        VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '7 days')
+        VALUES ($1::account_type, $2, $3, $4, $5, NOW() + INTERVAL '7 days')
         "#,
+        AccountType::Organizer as AccountType,
+        organizer.id,
+        &organizer.name,
+        &payload.email,
+        &token
     )
-    .bind(AccountType::Organizer)
-    .bind(organizer.id)
-    .bind(&organizer.name)
-    .bind(&payload.email)
-    .bind(&token)
     .execute(&mut *tx)
     .await?;
 
@@ -136,7 +138,8 @@ pub(crate) async fn list_organizers_admin(
         return Err(AppError::unauthorized("insufficient permissions"));
     }
 
-    let rows = sqlx::query_as::<_, OrganizerInviteRow>(
+    let rows = sqlx::query_as!(
+        OrganizerInviteRow,
         r#"
         SELECT
             o.id AS organizer_id,
@@ -151,7 +154,7 @@ pub(crate) async fn list_organizers_admin(
         LEFT JOIN accounts a
             ON a.organizer_id = o.id AND a.account_type = 'ORGANIZER'
         ORDER BY o.created_at DESC
-        "#,
+        "#
     )
     .fetch_all(&state.db)
     .await?;
@@ -176,14 +179,15 @@ pub(crate) async fn get_organizer(
     State(state): State<AppState>,
     Path(id): Path<i64>,
 ) -> Result<Json<Organizer>, AppError> {
-    let organizer = sqlx::query_as::<_, Organizer>(
+    let organizer = sqlx::query_as!(
+        Organizer,
         r#"
         SELECT id, name, description_de, description_en, website_url, instagram_url, location, created_at, updated_at
         FROM organizers
         WHERE id = $1
         "#,
+        id
     )
-    .bind(id)
     .fetch_one(&state.db)
     .await?;
 
@@ -278,8 +282,7 @@ pub(crate) async fn delete_organizer(
     if !deleting_self && !user.is_admin() {
         return Err(AppError::unauthorized("cannot delete another organizer"));
     }
-    let result = sqlx::query("DELETE FROM organizers WHERE id = $1")
-        .bind(id)
+    let result = sqlx::query!("DELETE FROM organizers WHERE id = $1", id)
         .execute(&state.db)
         .await?;
 
@@ -310,7 +313,7 @@ pub(crate) async fn generate_setup_token(
         ));
     }
     let token = generate_setup_token_value();
-    let result = sqlx::query(
+    let result = sqlx::query!(
         r#"
         UPDATE accounts
         SET setup_token = $1,
@@ -319,9 +322,9 @@ pub(crate) async fn generate_setup_token(
         WHERE organizer_id = $2
             AND account_type = 'ORGANIZER'
         "#,
+        &token,
+        id
     )
-    .bind(&token)
-    .bind(id)
     .execute(&state.db)
     .await?;
     if result.rows_affected() == 0 {

@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO accounts (\n            account_type,\n            organizer_id,\n            display_name,\n            email,\n            setup_token,\n            setup_token_expires_at\n        )\n        VALUES ($1::account_type, $2, $3, $4, $5, NOW() + INTERVAL '7 days')\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "account_type",
+            "kind": {
+              "Enum": [
+                "ADMIN",
+                "ORGANIZER"
+              ]
+            }
+          }
+        },
+        "Int8",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "26c71f8f300d7c68a23eadecdd4cab6810732925641793cd1d8d854ae2a14682"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE accounts\n        SET setup_token = $1,\n            setup_token_expires_at = NOW() + INTERVAL '7 days',\n            updated_at = NOW()\n        WHERE organizer_id = $2\n            AND account_type = 'ORGANIZER'\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "385e6a07f0e9b7fd866515bb0f176fb06b55d40d4c18a0bc38e6e22a4e093bfe"
+}

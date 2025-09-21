@@ -74,6 +74,20 @@ cargo test
 
 Running tests requires the database specified in `DATABASE_URL` to be reachable. Use the provided compose service or a local PostgreSQL instance.
 
+### SQLx offline metadata
+
+Queries are validated at compile time with [`sqlx::query!`](https://docs.rs/sqlx/latest/sqlx/macro.query.html) macros. After changing SQL you must regenerate the cached metadata so that `SQLX_OFFLINE=true cargo check` works without a live database connection:
+
+```bash
+# Update the metadata file (requires a reachable database defined in DATABASE_URL)
+cargo sqlx prepare -- --all-targets
+
+# In CI or other environments without Postgres available
+SQLX_OFFLINE=true cargo check
+```
+
+The generated files live in the `.sqlx/` directory and are committed to version control.
+
 ## Operational notes
 
 - CORS origins are controlled via the `ALLOWED_ORIGINS` variable (comma-separated list). Defaults cover local dashboard development.

@@ -23,14 +23,15 @@ pub(crate) async fn get_public_event(
     State(state): State<AppState>,
     Path(id): Path<i64>,
 ) -> Result<Json<Event>, AppError> {
-    let event = sqlx::query_as::<_, Event>(
+    let event = sqlx::query_as!(
+        Event,
         r#"
         SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
         FROM events
         WHERE id = $1 AND publish_web = true
         "#,
+        id
     )
-    .bind(id)
     .fetch_optional(&state.db)
     .await?;
 
@@ -52,14 +53,15 @@ pub(crate) async fn get_public_organizer(
     State(state): State<AppState>,
     Path(id): Path<i64>,
 ) -> Result<Json<Organizer>, AppError> {
-    let organizer = sqlx::query_as::<_, Organizer>(
+    let organizer = sqlx::query_as!(
+        Organizer,
         r#"
         SELECT id, name, description_de, description_en, website_url, instagram_url, location, created_at, updated_at
         FROM organizers
         WHERE id = $1
         "#,
+        id
     )
-    .bind(id)
     .fetch_optional(&state.db)
     .await?;
 

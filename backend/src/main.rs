@@ -18,7 +18,7 @@ use tower_http::{cors::CorsLayer, set_header::SetResponseHeaderLayer};
 use tracing::info;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
+use utoipa_swagger_ui::{Config, SwaggerUi, SyntaxHighlight};
 
 use crate::{
     app_state::AppState,
@@ -100,8 +100,17 @@ async fn main() {
     // that's compatible with the current Axum version. These can be added later
     // with proper middleware implementations.
 
+    let swagger_config = Config::new(["/api/api-docs/openapi.json"])
+        .display_operation_id(true)
+        .display_request_duration(true)
+        .filter(true)
+        .persist_authorization(true)
+        .try_it_out_enabled(true)
+        .with_syntax_highlight(SyntaxHighlight::default().theme("obsidian"));
+
     let swagger_router: Router<AppState> = SwaggerUi::new("/api/swagger-ui")
         .url("/api/api-docs/openapi.json", ApiDoc::openapi())
+        .config(swagger_config)
         .into();
 
     let api = Router::new()

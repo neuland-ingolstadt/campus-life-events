@@ -13,7 +13,6 @@ use base64::{Engine as _, engine::general_purpose};
 use chrono::{DateTime, Duration, Utc};
 use password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString};
 use password_policy::{COMMON_PASSWORDS, HighSecurityPolicy, PasswordPolicy};
-use sqlx::Row;
 use tracing::{error, info, instrument, warn};
 use uuid::Uuid;
 
@@ -45,14 +44,14 @@ pub(crate) async fn login(
     State(state): State<AppState>,
     Json(payload): Json<LoginRequest>,
 ) -> Result<Response, AppError> {
-    let rec = sqlx::query(
+    let rec = sqlx::query!(
         r#"
-        SELECT id, display_name, password_hash, account_type, organizer_id
+        SELECT id, display_name, password_hash, account_type as "account_type: AccountType", organizer_id
         FROM accounts
         WHERE email = $1
         "#,
+        &payload.email
     )
-    .bind(&payload.email)
     .fetch_optional(&state.db)
     .await?;
 
@@ -61,12 +60,11 @@ pub(crate) async fn login(
         return Err(AppError::unauthorized("invalid e-mail or password"));
     };
 
-    let id: i64 = row.try_get("id").unwrap_or_default();
-    let display_name: String = row.try_get::<String, _>("display_name").unwrap_or_default();
-    let stored_hash: Option<String> = row.try_get("password_hash").ok();
-    let account_type: AccountType = row.try_get("account_type")?;
-    let organizer_id: Option<i64> = row.try_get("organizer_id").ok();
-    let Some(stored_hash) = stored_hash else {
+    let id = row.id;
+    let display_name = row.display_name;
+    let account_type = row.account_type;
+    let organizer_id = row.organizer_id;
+    let Some(stored_hash) = row.password_hash else {
         tracing::warn!(
             "Failed login attempt for email: {} (no password hash)",
             payload.email
@@ -89,12 +87,14 @@ pub(crate) async fn login(
     let session_id = Uuid::new_v4();
     // 24 hours expiry
     let expires_at = Utc::now() + Duration::hours(24);
-    sqlx::query(r#"INSERT INTO sessions (id, account_id, expires_at) VALUES ($1, $2, $3)"#)
-        .bind(session_id)
-        .bind(id)
-        .bind(expires_at)
-        .execute(&state.db)
-        .await?;
+    sqlx::query!(
+        r#"INSERT INTO sessions (id, account_id, expires_at) VALUES ($1, $2, $3)"#,
+        session_id,
+        id,
+        expires_at
+    )
+    .execute(&state.db)
+    .await?;
 
     let attrs = session_cookie_attributes();
     let cookie_str = format!(
@@ -182,7 +182,7 @@ pub(crate) async fn init_account(
         .map_err(|_| AppError::validation("failed to hash password"))?
         .to_string();
 
-    sqlx::query(
+    sqlx::query!(
         r#"
         UPDATE accounts
         SET email = $1,
@@ -192,22 +192,24 @@ pub(crate) async fn init_account(
             updated_at = NOW()
         WHERE id = $3
         "#,
+        &payload.email,
+        hash,
+        account_id
     )
-    .bind(&payload.email)
-    .bind(&hash)
-    .bind(account_id)
     .execute(&state.db)
     .await?;
 
     // Create session
     let session_id = Uuid::new_v4();
     let expires_at = Utc::now() + Duration::hours(24);
-    sqlx::query(r#"INSERT INTO sessions (id, account_id, expires_at) VALUES ($1, $2, $3)"#)
-        .bind(session_id)
-        .bind(account_id)
-        .bind(expires_at)
-        .execute(&state.db)
-        .await?;
+    sqlx::query!(
+        r#"INSERT INTO sessions (id, account_id, expires_at) VALUES ($1, $2, $3)"#,
+        session_id,
+        account_id,
+        expires_at
+    )
+    .execute(&state.db)
+    .await?;
 
     let attrs = session_cookie_attributes();
     let cookie_str = format!(
@@ -267,8 +269,7 @@ pub(crate) async fn logout(
     if let Some(session_id) = get_cookie(&headers, "session_id") {
         if let Ok(uuid) = Uuid::parse_str(&session_id) {
             tracing::info!("User logout for session: {}", session_id);
-            let _ = sqlx::query("DELETE FROM sessions WHERE id = $1")
-                .bind(uuid)
+            let _ = sqlx::query!("DELETE FROM sessions WHERE id = $1", uuid)
                 .execute(&state.db)
                 .await?;
         }
@@ -305,15 +306,15 @@ pub(crate) async fn me(
 
     let uuid = Uuid::parse_str(&session_id)
         .map_err(|_| AppError::unauthorized("invalid session format"))?;
-    let rec = sqlx::query(
+    let rec = sqlx::query!(
         r#"
-        SELECT a.id, a.display_name, a.account_type, a.organizer_id
+        SELECT a.id, a.display_name, a.account_type as "account_type: AccountType", a.organizer_id
         FROM sessions s
         JOIN accounts a ON a.id = s.account_id
         WHERE s.id = $1 AND s.expires_at > NOW()
         "#,
+        uuid
     )
-    .bind(uuid)
     .fetch_optional(&state.db)
     .await?;
 
@@ -321,10 +322,10 @@ pub(crate) async fn me(
         return Err(AppError::unauthorized("invalid or expired session"));
     };
 
-    let account_id: i64 = row.try_get("id").unwrap_or_default();
-    let display_name: String = row.try_get::<String, _>("display_name").unwrap_or_default();
-    let account_type: AccountType = row.try_get("account_type")?;
-    let organizer_id: Option<i64> = row.try_get("organizer_id").ok();
+    let account_id = row.id;
+    let display_name = row.display_name;
+    let account_type = row.account_type;
+    let organizer_id = row.organizer_id;
     Ok(Json(AuthUserResponse {
         account_id,
         display_name,
@@ -347,13 +348,14 @@ pub(crate) async fn change_password(
     Json(payload): Json<ChangePasswordRequest>,
 ) -> Result<StatusCode, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
-    let rec = sqlx::query(r#"SELECT password_hash FROM accounts WHERE id = $1"#)
-        .bind(user.account_id)
-        .fetch_one(&state.db)
-        .await?;
+    let rec = sqlx::query!(
+        r#"SELECT password_hash FROM accounts WHERE id = $1"#,
+        user.account_id
+    )
+    .fetch_one(&state.db)
+    .await?;
 
-    let stored_hash: Option<String> = rec.try_get("password_hash").ok();
-    let Some(stored) = stored_hash else {
+    let Some(stored) = rec.password_hash else {
         return Err(AppError::validation("account not initialized"));
     };
 
@@ -372,16 +374,20 @@ pub(crate) async fn change_password(
         .to_string();
 
     let mut tx = state.db.begin().await?;
-    sqlx::query(r#"UPDATE accounts SET password_hash = $1, updated_at = NOW() WHERE id = $2"#)
-        .bind(&new_hash)
-        .bind(user.account_id)
-        .execute(&mut *tx)
-        .await?;
+    sqlx::query!(
+        r#"UPDATE accounts SET password_hash = $1, updated_at = NOW() WHERE id = $2"#,
+        &new_hash,
+        user.account_id
+    )
+    .execute(&mut *tx)
+    .await?;
     // Invalidate all existing sessions for this user (session rotation)
-    sqlx::query(r#"DELETE FROM sessions WHERE account_id = $1"#)
-        .bind(user.account_id)
-        .execute(&mut *tx)
-        .await?;
+    sqlx::query!(
+        "DELETE FROM sessions WHERE account_id = $1",
+        user.account_id
+    )
+    .execute(&mut *tx)
+    .await?;
     tx.commit().await?;
 
     Ok(StatusCode::NO_CONTENT)
@@ -414,14 +420,14 @@ async fn ensure_pending_setup_token(
         );
     }
 
-    let row = sqlx::query(
+    let row = sqlx::query!(
         r#"
-        SELECT id, display_name, password_hash, account_type, organizer_id, setup_token_expires_at
+        SELECT id, display_name, password_hash, account_type as "account_type: AccountType", organizer_id, setup_token_expires_at as "setup_token_expires_at?: DateTime<Utc>"
         FROM accounts
         WHERE setup_token = $1
         "#,
+        &normalized_token
     )
-    .bind(&normalized_token)
     .fetch_optional(&state.db)
     .await?;
 
@@ -429,24 +435,22 @@ async fn ensure_pending_setup_token(
         return Err(AppError::validation("invalid setup token"));
     };
 
-    let expires_at: Option<DateTime<Utc>> = row.try_get("setup_token_expires_at")?;
-    match expires_at {
+    match row.setup_token_expires_at {
         Some(when) if when > Utc::now() => {}
         _ => {
             return Err(AppError::validation("setup token expired"));
         }
     }
 
-    let existing: Option<String> = row.try_get("password_hash")?;
-    if existing.is_some() {
+    if row.password_hash.is_some() {
         return Err(AppError::validation("account already initialized"));
     }
 
     Ok(PendingSetupToken {
-        account_id: row.try_get("id")?,
-        display_name: row.try_get::<String, _>("display_name")?,
-        account_type: row.try_get("account_type")?,
-        organizer_id: row.try_get("organizer_id").ok(),
+        account_id: row.id,
+        display_name: row.display_name,
+        account_type: row.account_type,
+        organizer_id: row.organizer_id,
     })
 }
 
@@ -525,20 +529,20 @@ pub(crate) async fn request_password_reset(
     // Always return 204 to prevent email enumeration attacks
     // Even if the email doesn't exist, we don't reveal that information
 
-    let rec = sqlx::query(
+    let rec = sqlx::query!(
         r#"
         SELECT id, display_name, email
         FROM accounts
         WHERE email = $1 AND password_hash IS NOT NULL
         "#,
+        &payload.email
     )
-    .bind(&payload.email)
     .fetch_optional(&state.db)
     .await?;
 
     if let Some(row) = rec {
-        let account_id: i64 = row.try_get("id")?;
-        let display_name: String = row.try_get::<String, _>("display_name")?;
+        let account_id = row.id;
+        let display_name = row.display_name;
 
         // Generate a secure reset token (32 random bytes = 256 bits of entropy)
         let mut token_bytes = [0u8; 32];
@@ -549,18 +553,20 @@ pub(crate) async fn request_password_reset(
         let expires_at = Utc::now() + Duration::minutes(10);
 
         // Invalidate any existing reset tokens for this account
-        sqlx::query("DELETE FROM password_reset_tokens WHERE account_id = $1")
-            .bind(account_id)
-            .execute(&state.db)
-            .await?;
+        sqlx::query!(
+            "DELETE FROM password_reset_tokens WHERE account_id = $1",
+            account_id
+        )
+        .execute(&state.db)
+        .await?;
 
         // Insert new reset token
-        sqlx::query(
-            r#"INSERT INTO password_reset_tokens (account_id, token, expires_at) VALUES ($1, $2, $3)"#
+        sqlx::query!(
+            r#"INSERT INTO password_reset_tokens (account_id, token, expires_at) VALUES ($1, $2, $3)"#,
+            account_id,
+            &reset_token,
+            expires_at
         )
-        .bind(account_id)
-        .bind(&reset_token)
-        .bind(expires_at)
         .execute(&state.db)
         .await?;
 
@@ -604,15 +610,15 @@ pub(crate) async fn reset_password(
     Json(payload): Json<ResetPasswordRequest>,
 ) -> Result<StatusCode, AppError> {
     // Validate the reset token
-    let rec = sqlx::query(
+    let rec = sqlx::query!(
         r#"
-        SELECT prt.id, prt.account_id, prt.expires_at, a.display_name
+        SELECT prt.id, prt.account_id, prt.expires_at as "expires_at: DateTime<Utc>", a.display_name
         FROM password_reset_tokens prt
         JOIN accounts a ON a.id = prt.account_id
         WHERE prt.token = $1 AND prt.expires_at > NOW() AND prt.used_at IS NULL
         "#,
+        &payload.token
     )
-    .bind(&payload.token)
     .fetch_optional(&state.db)
     .await?;
 
@@ -620,9 +626,9 @@ pub(crate) async fn reset_password(
         return Err(AppError::validation("Invalid or expired reset token"));
     };
 
-    let token_id: i64 = row.try_get("id")?;
-    let account_id: i64 = row.try_get("account_id")?;
-    let display_name: String = row.try_get::<String, _>("display_name")?;
+    let token_id = row.id;
+    let account_id = row.account_id;
+    let display_name = row.display_name;
 
     // Validate new password
     ensure_password_requirements(&payload.new_password)?;
@@ -638,21 +644,24 @@ pub(crate) async fn reset_password(
     let mut tx = state.db.begin().await?;
 
     // Update the password
-    sqlx::query(r#"UPDATE accounts SET password_hash = $1, updated_at = NOW() WHERE id = $2"#)
-        .bind(&new_hash)
-        .bind(account_id)
-        .execute(&mut *tx)
-        .await?;
+    sqlx::query!(
+        r#"UPDATE accounts SET password_hash = $1, updated_at = NOW() WHERE id = $2"#,
+        &new_hash,
+        account_id
+    )
+    .execute(&mut *tx)
+    .await?;
 
     // Mark the reset token as used
-    sqlx::query(r#"UPDATE password_reset_tokens SET used_at = NOW() WHERE id = $1"#)
-        .bind(token_id)
-        .execute(&mut *tx)
-        .await?;
+    sqlx::query!(
+        "UPDATE password_reset_tokens SET used_at = NOW() WHERE id = $1",
+        token_id
+    )
+    .execute(&mut *tx)
+    .await?;
 
     // Invalidate all existing sessions for this user (session rotation)
-    sqlx::query(r#"DELETE FROM sessions WHERE account_id = $1"#)
-        .bind(account_id)
+    sqlx::query!("DELETE FROM sessions WHERE account_id = $1", account_id)
         .execute(&mut *tx)
         .await?;
 

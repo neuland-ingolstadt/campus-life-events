@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO audit_log (event_id, organizer_id, user_id, type, old_data, new_data)\n        VALUES ($1, $2, $3, $4::audit_type, $5, $6)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8",
+        {
+          "Custom": {
+            "name": "audit_type",
+            "kind": {
+              "Enum": [
+                "CREATE",
+                "UPDATE",
+                "DELETE"
+              ]
+            }
+          }
+        },
+        "Jsonb",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6338219e33aa026e99a875a38c8e5ef40ab046ae158eae902b1cb98c5191f100"
+}

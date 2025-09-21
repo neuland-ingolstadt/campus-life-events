@@ -45,10 +45,10 @@ jobs:
             ${{ runner.os }}-cargo-
       
       - name: Run cargo fmt
-        run: cargo fmt --all -- --check
+        run: SQLX_OFFLINE=true cargo fmt --all -- --check
       
       - name: Run cargo clippy (zero warnings policy)
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: SQLX_OFFLINE=true  cargo clippy --all-targets --all-features -- -D warnings
       
       - name: Run cargo test
-        run: cargo test
+        run: SQLX_OFFLINE=true  cargo test

@@ -121,26 +121,27 @@ pub(crate) async fn create_event(
 
     let mut transaction = state.db.begin().await?;
 
-    let event = sqlx::query_as::<_, Event>(
+    let event = sqlx::query_as!(
+        Event,
         r#"
         INSERT INTO events (organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
         "#,
+        organizer_id,
+        title_de,
+        title_en,
+        description_de,
+        description_en,
+        start_date_time,
+        end_date_time,
+        event_url,
+        location,
+        publish_app,
+        publish_newsletter,
+        publish_in_ical,
+        publish_web
     )
-    .bind(organizer_id)
-    .bind(title_de)
-    .bind(title_en)
-    .bind(description_de)
-    .bind(description_en)
-    .bind(start_date_time)
-    .bind(end_date_time)
-    .bind(event_url)
-    .bind(location)
-    .bind(publish_app)
-    .bind(publish_newsletter)
-    .bind(publish_in_ical)
-    .bind(publish_web)
     .fetch_one(&mut *transaction)
     .await?;
 
@@ -173,14 +174,15 @@ pub(crate) async fn get_event(
     headers: HeaderMap,
     Path(id): Path<i64>,
 ) -> Result<Json<Event>, AppError> {
-    let event = sqlx::query_as::<_, Event>(
+    let event = sqlx::query_as!(
+        Event,
         r#"
         SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
         FROM events
         WHERE id = $1
         "#,
+        id
     )
-    .bind(id)
     .fetch_optional(&state.db)
     .await?;
 
@@ -251,14 +253,15 @@ pub(crate) async fn update_event(
 
     let mut transaction = state.db.begin().await?;
 
-    let existing_event = sqlx::query_as::<_, Event>(
+    let existing_event = sqlx::query_as!(
+        Event,
         r#"
         SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
         FROM events
         WHERE id = $1
         "#,
+        id
     )
-    .bind(id)
     .fetch_one(&mut *transaction)
     .await?;
 
@@ -370,14 +373,15 @@ pub(crate) async fn delete_event(
     };
     let mut transaction = state.db.begin().await?;
 
-    let existing_event = sqlx::query_as::<_, Event>(
+    let existing_event = sqlx::query_as!(
+        Event,
         r#"
         SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
         FROM events
         WHERE id = $1
         "#,
+        id
     )
-    .bind(id)
     .fetch_optional(&mut *transaction)
     .await?;
 
@@ -394,8 +398,7 @@ pub(crate) async fn delete_event(
         ));
     }
 
-    sqlx::query("DELETE FROM events WHERE id = $1")
-        .bind(id)
+    sqlx::query!("DELETE FROM events WHERE id = $1", id)
         .execute(&mut *transaction)
         .await?;
 
@@ -433,18 +436,18 @@ async fn record_audit(
         None => None,
     };
 
-    sqlx::query(
+    sqlx::query!(
         r#"
         INSERT INTO audit_log (event_id, organizer_id, user_id, type, old_data, new_data)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        VALUES ($1, $2, $3, $4::audit_type, $5, $6)
         "#,
+        event_id,
+        organizer_id,
+        user_id,
+        audit_type as AuditType,
+        old_json,
+        new_json
     )
-    .bind(event_id)
-    .bind(organizer_id)
-    .bind(user_id)
-    .bind(audit_type)
-    .bind(old_json)
-    .bind(new_json)
     .execute(&mut **transaction)
     .await?;
 

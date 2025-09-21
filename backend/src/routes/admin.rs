@@ -37,7 +37,8 @@ pub(crate) async fn list_admins(
         return Err(AppError::unauthorized("insufficient permissions"));
     }
 
-    let rows = sqlx::query_as::<_, AdminInviteRow>(
+    let rows = sqlx::query_as!(
+        AdminInviteRow,
         r#"
         SELECT
             id AS account_id,
@@ -51,7 +52,7 @@ pub(crate) async fn list_admins(
         FROM accounts
         WHERE account_type = 'ADMIN'
         ORDER BY created_at DESC
-        "#,
+        "#
     )
     .fetch_all(&state.db)
     .await?;
@@ -88,7 +89,7 @@ pub(crate) async fn invite_admin(
     let token = generate_setup_token_value();
     let mut tx = state.db.begin().await?;
 
-    sqlx::query(
+    sqlx::query!(
         r#"
         INSERT INTO accounts (
             account_type,
@@ -97,13 +98,13 @@ pub(crate) async fn invite_admin(
             setup_token,
             setup_token_expires_at
         )
-        VALUES ($1, $2, $3, $4, NOW() + INTERVAL '7 days')
+        VALUES ($1::account_type, $2, $3, $4, NOW() + INTERVAL '7 days')
         "#,
+        AccountType::Admin as AccountType,
+        &payload.display_name,
+        &payload.email,
+        &token
     )
-    .bind(AccountType::Admin)
-    .bind(&payload.display_name)
-    .bind(&payload.email)
-    .bind(&token)
     .execute(&mut *tx)
     .await?;
 

@@ -16,6 +16,26 @@ use crate::{
 
 #[derive(OpenApi)]
 #[openapi(
+    info(
+        title = "Campus Life Events API",
+        description = "Campus Life Events REST API for managing organizers, events, and administrative workflows.",
+        terms_of_service = "https://github.com/neuland-ingolstadt/campus-life-events",
+        contact(
+            name = "Campus Life Events",
+            url = "https://github.com/neuland-ingolstadt/campus-life-events",
+            email = "info@neuland-ingolstadt.de"
+        ),
+        license(
+            name = "GNU Affero General Public License v3.0 or later",
+            identifier = "AGPL-3.0-or-later",
+            url = "https://www.gnu.org/licenses/agpl-3.0-standalone.html"
+        ),
+        version = "1.0.0"
+    ),
+    servers(
+        (url = "http://localhost:8080", description = "Local development"),
+        (url = "https://cl.neuland-ingolstadt.de", description = "Production")
+    ),
     paths(
         routes::health::health_check,
         routes::organizers::list_organizers,

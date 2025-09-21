@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT prt.id, prt.account_id, prt.expires_at as \"expires_at: DateTime<Utc>\", a.display_name\n        FROM password_reset_tokens prt\n        JOIN accounts a ON a.id = prt.account_id\n        WHERE prt.token = $1 AND prt.expires_at > NOW() AND prt.used_at IS NULL\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "account_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "expires_at: DateTime<Utc>",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 3,
+        "name": "display_name",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "4f1882c3b8790f8e7af5b2971d82c0ab0c3a708dbbfc3e22265caad83713f4c7"
+}

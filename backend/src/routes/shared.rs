@@ -1,6 +1,5 @@
 use axum::http::HeaderMap;
 use cookie::Cookie;
-use sqlx::Row;
 use uuid::Uuid;
 
 use crate::{app_state::AppState, error::AppError, models::AccountType};
@@ -33,15 +32,15 @@ pub(crate) async fn current_user_from_headers(
     let uuid = Uuid::parse_str(&session_id)
         .map_err(|_| AppError::unauthorized("invalid session format"))?;
 
-    let rec = sqlx::query(
+    let rec = sqlx::query!(
         r#"
-        SELECT a.id, a.account_type, a.organizer_id
+        SELECT a.id, a.account_type as "account_type: AccountType", a.organizer_id
         FROM sessions s
         JOIN accounts a ON a.id = s.account_id
         WHERE s.id = $1 AND s.expires_at > NOW()
         "#,
+        uuid
     )
-    .bind(uuid)
     .fetch_optional(&state.db)
     .await?;
 
@@ -50,9 +49,9 @@ pub(crate) async fn current_user_from_headers(
     };
 
     Ok(AuthedUser {
-        account_id: row.try_get("id").unwrap_or_default(),
-        account_type: row.try_get("account_type")?,
-        organizer_id: row.try_get("organizer_id").ok(),
+        account_id: row.id,
+        account_type: row.account_type,
+        organizer_id: row.organizer_id,
     })
 }
 

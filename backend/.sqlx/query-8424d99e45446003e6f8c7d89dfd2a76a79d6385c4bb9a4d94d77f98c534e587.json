@@ -1,0 +1,124 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO events (organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web)\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)\n        RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "organizer_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "title_de",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "title_en",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "description_de",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "description_en",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "start_date_time",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 7,
+        "name": "end_date_time",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "event_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "location",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "publish_app",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 11,
+        "name": "publish_newsletter",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 12,
+        "name": "publish_in_ical",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 13,
+        "name": "publish_web",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 14,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 15,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Timestamptz",
+        "Timestamptz",
+        "Text",
+        "Text",
+        "Bool",
+        "Bool",
+        "Bool",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "8424d99e45446003e6f8c7d89dfd2a76a79d6385c4bb9a4d94d77f98c534e587"
+}

@@ -1,0 +1,70 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT id, name, description_de, description_en, website_url, instagram_url, location, created_at, updated_at\n        FROM organizers\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "description_de",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "description_en",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "website_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "instagram_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "location",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "afe1fd79fc159d72aca43e7edbdee9aded4e0815e20ab45537a730364fcabaa0"
+}

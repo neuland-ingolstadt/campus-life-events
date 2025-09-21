@@ -132,9 +132,10 @@ pub(crate) async fn get_all_events_ical(
     State(state): State<AppState>,
     headers: HeaderMap,
 ) -> Result<impl IntoResponse, AppError> {
-    let events_with_organizers = sqlx::query_as::<_, EventWithOrganizerRow>(
+    let events_with_organizers = sqlx::query_as!(
+        EventWithOrganizerRow,
         r#"
-        SELECT 
+        SELECT
             e.id, e.title_de, e.title_en, e.description_de, e.description_en,
             e.start_date_time, e.end_date_time, e.event_url, e.location,
             o.location as organizer_location
@@ -142,7 +143,7 @@ pub(crate) async fn get_all_events_ical(
         JOIN organizers o ON e.organizer_id = o.id
         WHERE e.publish_in_ical = true
         ORDER BY e.start_date_time ASC
-        "#,
+        "#
     )
     .fetch_all(&state.db)
     .await?;
@@ -188,14 +189,15 @@ pub(crate) async fn get_organizer_events_ical(
     Path(organizer_id): Path<i64>,
 ) -> Result<impl IntoResponse, AppError> {
     // First, verify the organizer exists
-    let organizer = sqlx::query_as::<_, Organizer>(
+    let organizer = sqlx::query_as!(
+        Organizer,
         r#"
         SELECT id, name, description_de, description_en, website_url, instagram_url, location, created_at, updated_at
         FROM organizers
         WHERE id = $1
-        "#
+        "#,
+        organizer_id
     )
-    .bind(organizer_id)
     .fetch_optional(&state.db)
     .await?;
 
@@ -203,9 +205,10 @@ pub(crate) async fn get_organizer_events_ical(
         return Err(AppError::not_found("Organizer not found"));
     };
 
-    let events_with_organizers = sqlx::query_as::<_, EventWithOrganizerRow>(
+    let events_with_organizers = sqlx::query_as!(
+        EventWithOrganizerRow,
         r#"
-        SELECT 
+        SELECT
             e.id, e.title_de, e.title_en, e.description_de, e.description_en,
             e.start_date_time, e.end_date_time, e.event_url, e.location,
             o.location as organizer_location
@@ -214,8 +217,8 @@ pub(crate) async fn get_organizer_events_ical(
         WHERE e.organizer_id = $1 AND e.publish_app = true
         ORDER BY e.start_date_time ASC
         "#,
+        organizer_id
     )
-    .bind(organizer_id)
     .fetch_all(&state.db)
     .await?;
 
