@@ -1,0 +1,70 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            o.id AS organizer_id,\n            o.name AS organizer_name,\n            a.email AS account_email,\n            o.newsletter AS newsletter,\n            o.created_at,\n            o.updated_at,\n            a.password_hash,\n            a.setup_token,\n            a.setup_token_expires_at\n        FROM organizers o\n        LEFT JOIN accounts a\n            ON a.organizer_id = o.id AND a.account_type = 'ORGANIZER'\n        WHERE o.id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "organizer_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "organizer_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "account_email",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "newsletter",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 6,
+        "name": "password_hash",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "setup_token",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "setup_token_expires_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "2c4b7149de213862deaad346c3ec9f7063dc47d11f70bd191093328b611ea093"
+}
