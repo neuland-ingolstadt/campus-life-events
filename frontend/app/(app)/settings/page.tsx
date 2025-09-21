@@ -92,6 +92,7 @@ export default function SettingsPage() {
 								<Input
 									id={currentId}
 									type="password"
+									autoComplete="current-password"
 									value={current}
 									onChange={(e) => {
 										setCurrent(e.target.value)
@@ -106,6 +107,7 @@ export default function SettingsPage() {
 								<Input
 									id={nextId}
 									type="password"
+									autoComplete="new-password"
 									value={nextPw}
 									onChange={(e) => {
 										setNextPw(e.target.value)

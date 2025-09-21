@@ -17,7 +17,8 @@ export function UnifiedFooter({
 	const links = {
 		impressum: 'https://neuland-ingolstadt.de/legal/impressum',
 		privacy: 'https://neuland-ingolstadt.de/legal/datenschutz',
-		studver: 'https://studverthi.de'
+		studver: 'https://studverthi.de',
+		status: 'http://status.neuland.app/status/app'
 	}
 
 	const getFooterClasses = () => {
@@ -128,6 +129,14 @@ export function UnifiedFooter({
 					>
 						StudVer
 					</Link>
+					<Link
+						href={links.status}
+						className={linkClass}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						System Status
+					</Link>
 				</div>
 			)
 		}
@@ -159,6 +168,15 @@ export function UnifiedFooter({
 					rel="noopener noreferrer"
 				>
 					StudVer
+				</Link>
+				<span>•</span>
+				<Link
+					href={links.status}
+					className={linkClass}
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					System Status
 				</Link>
 			</div>
 		)
