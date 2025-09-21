@@ -15,12 +15,11 @@ export function ShareButtons({ eventTitle }: ShareButtonsProps) {
 	}
 
 	const handleInstagramShare = () => {
-		// Instagram doesn't have a direct share URL, so we'll copy the link with a message
-		const message = `Check out this campus event: ${eventTitle}`
-		navigator.clipboard.writeText(`${message}\n${window.location.href}`)
-		toast.success(
-			'Event-Info wurde kopiert! Füge es in deine Instagram Story ein.'
-		)
+		const shareUrl = `https://www.instagram.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`
+		const newWindow = window.open(shareUrl, '_blank', 'noopener,noreferrer')
+		if (!newWindow) {
+			handleCopyLink()
+		}
 	}
 
 	const handleWhatsAppShare = () => {

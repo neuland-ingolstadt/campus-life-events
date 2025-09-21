@@ -1,5 +1,5 @@
-import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
+import { formatInTimeZone } from 'date-fns-tz'
 import { Clock, ExternalLink, MapPin, Share2, Users } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { PublicFooter } from '@/components/public-footer'
@@ -86,13 +86,18 @@ export default async function PublicEventPage({
 		: null
 
 	const formatDateTime = (date: string) => {
-		return format(new Date(date), "EEEE, d. MMMM yyyy 'um' HH:mm", {
-			locale: de
-		})
+		return formatInTimeZone(
+			new Date(date),
+			'Europe/Berlin',
+			"EEEE, d. MMMM yyyy 'um' HH:mm",
+			{
+				locale: de
+			}
+		)
 	}
 
 	const formatTime = (date: string) => {
-		return format(new Date(date), 'HH:mm')
+		return formatInTimeZone(new Date(date), 'Europe/Berlin', 'HH:mm')
 	}
 
 	return (

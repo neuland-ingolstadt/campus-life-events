@@ -105,7 +105,7 @@ async fn main() {
         .display_request_duration(true)
         .filter(true)
         .persist_authorization(true)
-        .try_it_out_enabled(true)
+        .try_it_out_enabled(false)
         .with_syntax_highlight(SyntaxHighlight::default().theme("obsidian"));
 
     let swagger_router: Router<AppState> = SwaggerUi::new("/api/swagger-ui")

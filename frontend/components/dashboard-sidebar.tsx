@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { AuthStatus } from '@/components/auth-status'
 import { ThemeToggle } from '@/components/theme-toggle'
 import {
@@ -25,7 +25,8 @@ import {
 	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuButton,
-	SidebarMenuItem
+	SidebarMenuItem,
+	useSidebar
 } from '@/components/ui/sidebar'
 import { me } from '@/lib/auth'
 import NeulandPalm from './neuland-palm'
@@ -34,6 +35,12 @@ export function DashboardSidebar() {
 	const pathname = usePathname()
 	const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
 	const isAdmin = meData?.account_type === 'ADMIN'
+	const { isMobile, setOpenMobile } = useSidebar()
+	const handleNavigation = useCallback(() => {
+		if (isMobile) {
+			setOpenMobile(false)
+		}
+	}, [isMobile, setOpenMobile])
 
 	const items = useMemo(() => {
 		const base = [
@@ -111,7 +118,7 @@ export function DashboardSidebar() {
 										isActive={pathname === item.url}
 										size="lg"
 									>
-										<Link href={item.url}>
+										<Link href={item.url} onClick={handleNavigation}>
 											<item.icon className="h-5 w-5" />
 											<span>{item.title}</span>
 										</Link>

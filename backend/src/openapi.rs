@@ -32,10 +32,6 @@ use crate::{
         ),
         version = "1.0.0"
     ),
-    servers(
-        (url = "http://localhost:8080", description = "Local development"),
-        (url = "https://cl.neuland-ingolstadt.de", description = "Production")
-    ),
     paths(
         routes::health::health_check,
         routes::organizers::list_organizers,
