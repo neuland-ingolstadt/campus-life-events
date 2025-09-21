@@ -23,8 +23,18 @@ const organizerSchema = z.object({
 	name: z.string().min(1, 'Name ist erforderlich'),
 	description_de: z.string().optional(),
 	description_en: z.string().optional(),
-	website_url: z.string().url().optional().or(z.literal('')),
-	instagram_url: z.string().url().optional().or(z.literal('')),
+	website_url: z
+		.string()
+		.optional()
+		.refine((val) => !val || z.string().url().safeParse(val).success, {
+			message: 'Bitte gib eine gültige URL ein'
+		}),
+	instagram_url: z
+		.string()
+		.optional()
+		.refine((val) => !val || z.string().url().safeParse(val).success, {
+			message: 'Bitte gib eine gültige URL ein'
+		}),
 	location: z.string().optional()
 })
 

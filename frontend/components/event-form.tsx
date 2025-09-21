@@ -35,11 +35,17 @@ const eventSchema = z.object({
 	description_en: z.string().optional(),
 	start_date_time: z.date({ message: 'Startdatum ist erforderlich' }),
 	end_date_time: z.date().optional(),
-	event_url: z.string().url().optional().or(z.literal('')),
+	event_url: z
+		.string()
+		.optional()
+		.refine((val) => !val || z.string().url().safeParse(val).success, {
+			message: 'Bitte gib eine gültige URL ein'
+		}),
 	location: z.string().optional(),
 	publish_app: z.boolean(),
 	publish_newsletter: z.boolean(),
-	publish_in_ical: z.boolean()
+	publish_in_ical: z.boolean(),
+	publish_web: z.boolean()
 })
 
 export type EventFormValues = z.infer<typeof eventSchema>
@@ -97,7 +103,8 @@ export function EventForm({
 				location: event.location || '',
 				publish_app: event.publish_app,
 				publish_newsletter: event.publish_newsletter,
-				publish_in_ical: event.publish_in_ical
+				publish_in_ical: event.publish_in_ical,
+				publish_web: event.publish_web
 			})
 		} else {
 			form.reset({
@@ -111,7 +118,8 @@ export function EventForm({
 				location: '',
 				publish_app: true,
 				publish_newsletter: true,
-				publish_in_ical: true
+				publish_in_ical: true,
+				publish_web: true
 			})
 			setStartDate(new Date())
 			setEndDate(undefined)
@@ -281,7 +289,7 @@ export function EventForm({
 							)}
 						/>
 
-						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 							<FormField
 								control={form.control}
 								name="publish_app"
@@ -337,6 +345,28 @@ export function EventForm({
 											</FormLabel>
 											<FormDescription className="text-xs">
 												Dieses Event in iCal-Kalendern anzeigen.
+											</FormDescription>
+										</div>
+										<FormControl>
+											<Switch
+												checked={field.value}
+												onCheckedChange={field.onChange}
+											/>
+										</FormControl>
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="publish_web"
+								render={({ field }) => (
+									<FormItem className="flex items-center justify-between rounded-md border p-4">
+										<div className="space-y-1">
+											<FormLabel className="text-sm font-medium">
+												Öffentlich teilen
+											</FormLabel>
+											<FormDescription className="text-xs">
+												Event über öffentlichen Link teilen.
 											</FormDescription>
 										</div>
 										<FormControl>

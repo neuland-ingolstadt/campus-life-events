@@ -1,5 +1,6 @@
 'use client'
 
+import type { Organizer } from '@/client/types.gen'
 import {
 	Dialog,
 	DialogContent,
@@ -11,7 +12,7 @@ import {
 type Props = {
 	open: boolean
 	onOpenChange: (open: boolean) => void
-	organizer: any | null
+	organizer: Organizer | null
 }
 
 export function OrganizerViewDialog({ open, onOpenChange, organizer }: Props) {

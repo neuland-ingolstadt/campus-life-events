@@ -3,6 +3,9 @@
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useId, useState } from 'react'
+import Beams from '@/components/Beams'
+import NeulandPalm from '@/components/neuland-palm'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -73,7 +76,7 @@ function RegisterForm({ token }: { token: string }) {
 		lookupSetupToken(token)
 			.then((data) => {
 				if (cancelled) return
-				setClubName(data.organizer_name)
+				setClubName(data.account_name)
 				setTokenStatus('valid')
 			})
 			.catch((err) => {
@@ -94,43 +97,104 @@ function RegisterForm({ token }: { token: string }) {
 	if (!token) {
 		return (
 			<div className="min-h-screen w-full flex flex-col">
-				<div className="flex-1 grid place-items-center p-6">
-					<Card className="w-full max-w-sm shadow-lg">
-						<CardHeader>
-							<CardTitle className="text-center">
-								Einrichtungslink fehlt
-							</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<Alert className="mb-4">
-								<AlertDescription>
-									Diesem Einrichtungslink fehlt ein Token. Bitte verwende den
-									Einladungslink, den du erhalten hast.
-								</AlertDescription>
-							</Alert>
-							<div className="flex justify-center">
-								<Button asChild>
-									<Link href="/login">Zum Login</Link>
-								</Button>
-							</div>
-						</CardContent>
-					</Card>
+				<div className="lg:hidden flex  p-4 bg-neutral-100 dark:bg-[#010101] border-b">
+					<div className="flex items-center gap-3">
+						<NeulandPalm className="h-8 w-8" color="currentColor" />
+						<div className="flex flex-col">
+							<h1 className="text-lg font-semibold">Campus Life Events</h1>
+							<p className="text-xs text-muted-foreground">
+								made by Neuland for StudVer at THI
+							</p>
+						</div>
+					</div>
 				</div>
-				{/* Footer */}
-				<footer className="border-t px-6 py-4 text-sm text-muted-foreground flex items-center justify-center gap-4 flex-wrap">
-					<span>© {new Date().getFullYear()} Neuland Ingolstadt e.V.</span>
-					<span>•</span>
-					<Link href="/imprint" className="hover:underline">
-						Impressum
-					</Link>
-					<span>•</span>
-					<Link href="/privacy" className="hover:underline">
-						Datenschutz
-					</Link>
-					<span>•</span>
-					<Link href="https://studver.thi.de" className="hover:underline">
-						StudVer
-					</Link>
+				<div className="flex-1 grid lg:grid-cols-2">
+					<div className="hidden lg:block relative">
+						<div className="absolute inset-0">
+							<Beams
+								beamWidth={2}
+								beamHeight={15}
+								beamNumber={12}
+								lightColor="#ffffff"
+								speed={2}
+								noiseIntensity={1.75}
+								scale={0.2}
+								rotation={30}
+							/>
+						</div>
+						<div className="absolute inset-0 flex items-center justify-center rounded-2xl">
+							<Card className="max-w-md mx-10 shadow-lg bg-background/50 backdrop-blur-sm border-border/50 rounded-2xl p-6 dark">
+								<CardContent className="p-6 text-center flex flex-col items-center justify-center">
+									<NeulandPalm
+										className="h-20 w-20 mb-6"
+										color="currentColor"
+									/>
+									<h1 className="text-4xl font-bold text-primary">
+										Campus Life Events
+									</h1>
+									<p className="mt-4 text-sm text-foreground/90 font-medium">
+										made by Neuland for StudVer at THI
+									</p>
+								</CardContent>
+							</Card>
+						</div>
+					</div>
+					<div className="flex items-center justify-center p-6 bg-neutral-100 dark:bg-[#010101]">
+						<Card className="w-full max-w-sm shadow-lg">
+							<CardHeader>
+								<CardTitle className="text-center text-xl">
+									Einrichtungslink fehlt
+								</CardTitle>
+							</CardHeader>
+							<CardContent>
+								<Alert className="mb-4">
+									<AlertDescription>
+										Diesem Einrichtungslink fehlt ein Token. Bitte verwende den
+										Einladungslink, den du erhalten hast.
+									</AlertDescription>
+								</Alert>
+								<div className="flex justify-center">
+									<Button asChild>
+										<Link href="/login">Zum Login</Link>
+									</Button>
+								</div>
+							</CardContent>
+						</Card>
+					</div>
+				</div>
+				<footer className="px-6 py-4 text-sm text-muted-foreground flex items-center justify-between gap-4 flex-wrap bg-black">
+					<div className="flex items-center gap-4 flex-wrap">
+						<span>
+							© {`${new Date().getFullYear()} `}
+							<Link
+								href="https://neuland-ingolstadt.de"
+								className="hover:underline"
+							>
+								Neuland Ingolstadt e.V.
+							</Link>
+						</span>
+						<span>•</span>
+						<Link
+							href="https://neuland-ingolstadt.de/legal/impressum"
+							className="hover:underline"
+						>
+							Impressum
+						</Link>
+						<span>•</span>
+						<Link
+							href="https://neuland-ingolstadt.de/legal/datenschutz"
+							className="hover:underline"
+						>
+							Datenschutz
+						</Link>
+						<span>•</span>
+						<Link href="https://studver.thi.de" className="hover:underline">
+							StudVer
+						</Link>
+					</div>
+					<div className="flex items-center">
+						<ThemeToggle />
+					</div>
 				</footer>
 			</div>
 		)
@@ -139,41 +203,99 @@ function RegisterForm({ token }: { token: string }) {
 	if (tokenStatus === 'invalid') {
 		return (
 			<div className="min-h-screen w-full flex flex-col">
-				<div className="flex-1 grid place-items-center p-6">
-					<Card className="w-full max-w-sm shadow-lg">
-						<CardHeader>
-							<CardTitle className="text-center">Einladung ungültig</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<Alert variant="destructive" className="mb-4">
-								<AlertDescription>
-									{tokenError ??
-										'Dieser Einrichtungslink ist ungültig oder abgelaufen. Bitte fordere einen neuen Link an.'}
-								</AlertDescription>
-							</Alert>
-							<div className="flex justify-center">
-								<Button asChild>
-									<Link href="/login">Zum Login</Link>
-								</Button>
-							</div>
-						</CardContent>
-					</Card>
+				<div className="lg:hidden flex items-center justify-center p-4 bg-neutral-100 dark:bg-[#010101] border-b">
+					<div className="flex items-center gap-3">
+						<NeulandPalm className="h-8 w-8" color="currentColor" />
+						<h1 className="text-xl font-bold">Campus Life Events</h1>
+					</div>
 				</div>
-				{/* Footer */}
-				<footer className="border-t px-6 py-4 text-sm text-muted-foreground flex items-center justify-center gap-4 flex-wrap">
-					<span>© {new Date().getFullYear()} Neuland Ingolstadt e.V.</span>
-					<span>•</span>
-					<Link href="/imprint" className="hover:underline">
-						Impressum
-					</Link>
-					<span>•</span>
-					<Link href="/privacy" className="hover:underline">
-						Datenschutz
-					</Link>
-					<span>•</span>
-					<Link href="https://studver.thi.de" className="hover:underline">
-						StudVer
-					</Link>
+				<div className="flex-1 grid lg:grid-cols-2">
+					<div className="hidden lg:block relative">
+						<div className="absolute inset-0">
+							<Beams
+								beamWidth={2}
+								beamHeight={15}
+								beamNumber={12}
+								lightColor="#ffffff"
+								speed={2}
+								noiseIntensity={1.75}
+								scale={0.2}
+								rotation={30}
+							/>
+						</div>
+						<div className="absolute inset-0 flex items-center justify-center rounded-2xl">
+							<Card className="max-w-md mx-10 shadow-lg bg-background/50 backdrop-blur-sm border-border/50 rounded-2xl p-6 dark">
+								<CardContent className="p-6 text-center flex flex-col items-center justify-center">
+									<NeulandPalm
+										className="h-20 w-20 mb-6"
+										color="currentColor"
+									/>
+									<h1 className="text-4xl font-bold text-primary">
+										Campus Life Events
+									</h1>
+									<p className="mt-4 text-sm text-foreground/90 font-medium">
+										made by Neuland for StudVer at THI
+									</p>
+								</CardContent>
+							</Card>
+						</div>
+					</div>
+					<div className="flex items-center justify-center p-6 bg-neutral-100 dark:bg-[#010101]">
+						<Card className="w-full max-w-sm shadow-lg">
+							<CardHeader>
+								<CardTitle className="text-center text-xl">
+									Einladung ungültig
+								</CardTitle>
+							</CardHeader>
+							<CardContent>
+								<Alert variant="destructive" className="mb-4">
+									<AlertDescription>
+										{tokenError ??
+											'Dieser Einrichtungslink ist ungültig oder abgelaufen. Bitte fordere einen neuen Link an.'}
+									</AlertDescription>
+								</Alert>
+								<div className="flex justify-center">
+									<Button asChild>
+										<Link href="/login">Zum Login</Link>
+									</Button>
+								</div>
+							</CardContent>
+						</Card>
+					</div>
+				</div>
+				<footer className="px-6 py-4 text-sm text-muted-foreground flex items-center justify-between gap-4 flex-wrap bg-black">
+					<div className="flex items-center gap-4 flex-wrap">
+						<span>
+							© {`${new Date().getFullYear()} `}
+							<Link
+								href="https://neuland-ingolstadt.de"
+								className="hover:underline"
+							>
+								Neuland Ingolstadt e.V.
+							</Link>
+						</span>
+						<span>•</span>
+						<Link
+							href="https://neuland-ingolstadt.de/legal/impressum"
+							className="hover:underline"
+						>
+							Impressum
+						</Link>
+						<span>•</span>
+						<Link
+							href="https://neuland-ingolstadt.de/legal/datenschutz"
+							className="hover:underline"
+						>
+							Datenschutz
+						</Link>
+						<span>•</span>
+						<Link href="https://studver.thi.de" className="hover:underline">
+							StudVer
+						</Link>
+					</div>
+					<div className="flex items-center">
+						<ThemeToggle />
+					</div>
 				</footer>
 			</div>
 		)
@@ -218,32 +340,63 @@ function RegisterForm({ token }: { token: string }) {
 	return (
 		<TooltipProvider>
 			<div className="min-h-screen w-full flex flex-col">
+				<div className="lg:hidden flex items-center justify-center p-4 bg-neutral-100 dark:bg-[#010101] border-b">
+					<div className="flex items-center gap-3">
+						<NeulandPalm className="h-8 w-8" color="currentColor" />
+						<h1 className="text-xl font-bold">Campus Life Events</h1>
+					</div>
+				</div>
 				<div className="flex-1 grid lg:grid-cols-2">
-					{/* Left side - Welcome section (hidden on small screens) */}
-					{tokenStatus === 'valid' && clubName && (
-						<div className="hidden lg:block relative bg-gradient-to-br from-blue-50/50 via-background to-background dark:from-blue-950/20">
-							<div className="absolute inset-0 flex items-center justify-center">
-								<div className="max-w-md px-10 text-center">
-									<h1 className="text-3xl font-bold text-blue-900 dark:text-blue-100">
-										Willkommen
-									</h1>
-									<p className="mt-2 text-3xl font-semibold text-blue-700 dark:text-blue-300">
-										{clubName}
-									</p>
-									<p className="mt-4 text-muted-foreground">
-										Richte dein Konto ein, um deinen Verein zu verwalten.
-									</p>
-								</div>
-							</div>
+					<div className="hidden lg:block relative">
+						<div className="absolute inset-0">
+							<Beams
+								beamWidth={2}
+								beamHeight={15}
+								beamNumber={12}
+								lightColor="#ffffff"
+								speed={2}
+								noiseIntensity={1.75}
+								scale={0.2}
+								rotation={30}
+							/>
 						</div>
-					)}
+						<div className="absolute inset-0 flex items-center justify-center rounded-2xl">
+							<Card className="max-w-md mx-10 shadow-lg bg-background/50 backdrop-blur-sm border-border/50 rounded-2xl p-6 dark">
+								<CardContent className="p-6 text-center flex flex-col items-center justify-center">
+									<NeulandPalm
+										className="h-20 w-20 mb-6"
+										color="currentColor"
+									/>
+									<h1 className="text-4xl font-bold text-primary">
+										Campus Life Events
+									</h1>
+									<p className="mt-4 text-sm text-foreground/90 font-medium">
+										made by Neuland for StudVer at THI
+									</p>
+									{tokenStatus === 'valid' && clubName && (
+										<div className="mt-6 p-4 bg-primary/10 rounded-lg">
+											<p className="text-sm font-semibold text-primary">
+												Willkommen
+											</p>
+											<p className="text-lg font-bold text-foreground">
+												{clubName}
+											</p>
+											<p className="text-xs text-foreground/70 mt-1">
+												Richte dein Konto ein
+											</p>
+										</div>
+									)}
+								</CardContent>
+							</Card>
+						</div>
+					</div>
 
-					{/* Right side - Form */}
-					<div className="flex items-center justify-center p-6">
+					<div className="flex items-center justify-center p-6 bg-neutral-100 dark:bg-[#010101]">
 						<Card className="w-full max-w-sm shadow-lg">
-							<CardHeader className="text-center">
-								<CardTitle>Richte dein Konto ein</CardTitle>
-								{/* Show welcome section on small screens */}
+							<CardHeader>
+								<CardTitle className="text-center text-xl">
+									Richte dein Konto ein
+								</CardTitle>
 								{tokenStatus === 'valid' && clubName && (
 									<div className="lg:hidden mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
 										<div className="flex items-center justify-center gap-2">
@@ -355,21 +508,39 @@ function RegisterForm({ token }: { token: string }) {
 						</Card>
 					</div>
 				</div>
-				{/* Footer */}
-				<footer className="border-t px-6 py-4 text-sm text-muted-foreground flex items-center justify-center gap-4 flex-wrap">
-					<span>© {new Date().getFullYear()} Neuland Ingolstadt e.V.</span>
-					<span>•</span>
-					<Link href="/imprint" className="hover:underline">
-						Impressum
-					</Link>
-					<span>•</span>
-					<Link href="/privacy" className="hover:underline">
-						Datenschutz
-					</Link>
-					<span>•</span>
-					<Link href="https://studver.thi.de" className="hover:underline">
-						StudVer
-					</Link>
+				<footer className="px-6 py-4 text-sm text-muted-foreground flex items-center justify-between gap-4 flex-wrap bg-black">
+					<div className="flex items-center gap-4 flex-wrap">
+						<span>
+							© {`${new Date().getFullYear()} `}
+							<Link
+								href="https://neuland-ingolstadt.de"
+								className="hover:underline"
+							>
+								Neuland Ingolstadt e.V.
+							</Link>
+						</span>
+						<span>•</span>
+						<Link
+							href="https://neuland-ingolstadt.de/legal/impressum"
+							className="hover:underline"
+						>
+							Impressum
+						</Link>
+						<span>•</span>
+						<Link
+							href="https://neuland-ingolstadt.de/legal/datenschutz"
+							className="hover:underline"
+						>
+							Datenschutz
+						</Link>
+						<span>•</span>
+						<Link href="https://studver.thi.de" className="hover:underline">
+							StudVer
+						</Link>
+					</div>
+					<div className="flex items-center">
+						<ThemeToggle />
+					</div>
 				</footer>
 			</div>
 		</TooltipProvider>
@@ -388,6 +559,12 @@ export default function RegisterPage() {
 		<Suspense
 			fallback={
 				<div className="min-h-screen w-full flex flex-col">
+					<div className="lg:hidden flex items-center justify-center p-4 bg-neutral-100 dark:bg-[#010101] border-b">
+						<div className="flex items-center gap-3">
+							<NeulandPalm className="h-8 w-8" color="currentColor" />
+							<h1 className="text-xl font-bold">Campus Life Events</h1>
+						</div>
+					</div>
 					<div className="flex-1 grid place-items-center p-6">
 						<Card className="w-full max-w-sm shadow-lg">
 							<CardHeader>
@@ -402,21 +579,39 @@ export default function RegisterPage() {
 							</CardContent>
 						</Card>
 					</div>
-					{/* Footer */}
-					<footer className="border-t px-6 py-4 text-sm text-muted-foreground flex items-center justify-center gap-4 flex-wrap">
-						<span>© {new Date().getFullYear()} Neuland Ingolstadt e.V.</span>
-						<span>•</span>
-						<Link href="/imprint" className="hover:underline">
-							Impressum
-						</Link>
-						<span>•</span>
-						<Link href="/privacy" className="hover:underline">
-							Datenschutz
-						</Link>
-						<span>•</span>
-						<Link href="https://studver.thi.de" className="hover:underline">
-							StudVer
-						</Link>
+					<footer className="px-6 py-4 text-sm text-muted-foreground flex items-center justify-between gap-4 flex-wrap bg-black">
+						<div className="flex items-center gap-4 flex-wrap">
+							<span>
+								© {`${new Date().getFullYear()} `}
+								<Link
+									href="https://neuland-ingolstadt.de"
+									className="hover:underline"
+								>
+									Neuland Ingolstadt e.V.
+								</Link>
+							</span>
+							<span>•</span>
+							<Link
+								href="https://neuland-ingolstadt.de/legal/impressum"
+								className="hover:underline"
+							>
+								Impressum
+							</Link>
+							<span>•</span>
+							<Link
+								href="https://neuland-ingolstadt.de/legal/datenschutz"
+								className="hover:underline"
+							>
+								Datenschutz
+							</Link>
+							<span>•</span>
+							<Link href="https://studver.thi.de" className="hover:underline">
+								StudVer
+							</Link>
+						</div>
+						<div className="flex items-center">
+							<ThemeToggle />
+						</div>
 					</footer>
 				</div>
 			}

@@ -9,13 +9,32 @@ use lettre::{
 use thiserror::Error;
 
 const DEFAULT_REGISTRATION_BASE_URL: &str = "http://localhost:3000/register";
+const DEFAULT_RESET_BASE_URL: &str = "http://localhost:3000/reset-password";
 const INVITE_SUBJECT: &str = "Willkommen bei Campus Life Events";
+const WELCOME_SUBJECT: &str = "Willkommen bei Campus Life Events - Dein Konto ist aktiviert!";
+const PASSWORD_RESET_SUBJECT: &str = "Passwort zurücksetzen - Campus Life Events";
+
+/// Generate and log registration URL for debugging purposes when SMTP is not configured
+pub fn log_registration_url(token: &str) {
+    let registration_base_url = env::var("REGISTRATION_BASE_URL")
+        .unwrap_or_else(|_| DEFAULT_REGISTRATION_BASE_URL.to_string());
+
+    let trimmed = registration_base_url.trim_end_matches('?');
+    let url = if trimmed.contains('?') {
+        format!("{trimmed}&token={token}")
+    } else {
+        format!("{trimmed}?token={token}")
+    };
+
+    eprintln!("⚠️  SMTP not configured - Registration URL: {url}");
+}
 
 #[derive(Clone)]
 pub struct EmailClient {
     mailer: AsyncSmtpTransport<Tokio1Executor>,
     from: Mailbox,
     registration_base_url: String,
+    reset_base_url: String,
 }
 
 #[derive(Debug, Error)]
@@ -42,6 +61,8 @@ impl EmailClient {
         let from_name = env::var("SMTP_FROM_NAME").ok();
         let registration_base_url = env::var("REGISTRATION_BASE_URL")
             .unwrap_or_else(|_| DEFAULT_REGISTRATION_BASE_URL.to_string());
+        let reset_base_url =
+            env::var("RESET_BASE_URL").unwrap_or_else(|_| DEFAULT_RESET_BASE_URL.to_string());
 
         let required = [
             ("SMTP_HOST", host.as_ref()),
@@ -57,6 +78,7 @@ impl EmailClient {
             .collect();
 
         if missing.len() == required.len() {
+            eprintln!("⚠️  SMTP configuration missing - email sending disabled");
             return Ok(None);
         }
 
@@ -96,6 +118,7 @@ impl EmailClient {
             mailer,
             from,
             registration_base_url,
+            reset_base_url,
         }))
     }
 
@@ -124,13 +147,102 @@ impl EmailClient {
             .map_err(EmailClientError::Transport)
     }
 
+    pub async fn send_new_admin_invite(
+        &self,
+        recipient_email: &str,
+        display_name: &str,
+        setup_token: &str,
+    ) -> Result<(), EmailClientError> {
+        let recipient = Mailbox::from_str(recipient_email)
+            .map_err(|_| EmailClientError::InvalidRecipient(recipient_email.to_string()))?;
+
+        let registration_url = self.registration_url(setup_token);
+        let body = self.render_admin_invite_template(display_name, &registration_url);
+
+        let message = Message::builder()
+            .from(self.from.clone())
+            .to(recipient)
+            .subject(INVITE_SUBJECT)
+            .body(body)?;
+
+        self.mailer
+            .send(message)
+            .await
+            .map(|_| ())
+            .map_err(EmailClientError::Transport)
+    }
+
+    pub async fn send_welcome_email(
+        &self,
+        recipient_email: &str,
+        display_name: &str,
+        account_type: &str,
+    ) -> Result<(), EmailClientError> {
+        let recipient = Mailbox::from_str(recipient_email)
+            .map_err(|_| EmailClientError::InvalidRecipient(recipient_email.to_string()))?;
+
+        let body = self.render_welcome_template(display_name, account_type);
+
+        let message = Message::builder()
+            .from(self.from.clone())
+            .to(recipient)
+            .subject(WELCOME_SUBJECT)
+            .body(body)?;
+
+        self.mailer
+            .send(message)
+            .await
+            .map(|_| ())
+            .map_err(EmailClientError::Transport)
+    }
+
+    pub async fn send_password_reset_email(
+        &self,
+        recipient_email: &str,
+        display_name: &str,
+        reset_token: &str,
+    ) -> Result<(), EmailClientError> {
+        let recipient = Mailbox::from_str(recipient_email)
+            .map_err(|_| EmailClientError::InvalidRecipient(recipient_email.to_string()))?;
+
+        let reset_url = self.reset_url(reset_token);
+        let body = self.render_password_reset_template(display_name, &reset_url, reset_token);
+
+        let message = Message::builder()
+            .from(self.from.clone())
+            .to(recipient)
+            .subject(PASSWORD_RESET_SUBJECT)
+            .body(body)?;
+
+        self.mailer
+            .send(message)
+            .await
+            .map(|_| ())
+            .map_err(EmailClientError::Transport)
+    }
+
     fn registration_url(&self, token: &str) -> String {
         let trimmed = self.registration_base_url.trim_end_matches('?');
-        if trimmed.contains('?') {
+        let url = if trimmed.contains('?') {
             format!("{trimmed}&token={token}")
         } else {
             format!("{trimmed}?token={token}")
-        }
+        };
+
+        println!("Registration URL: {url}");
+        url
+    }
+
+    fn reset_url(&self, token: &str) -> String {
+        let trimmed = self.reset_base_url.trim_end_matches('?');
+        let url = if trimmed.contains('?') {
+            format!("{trimmed}&token={token}")
+        } else {
+            format!("{trimmed}?token={token}")
+        };
+
+        println!("Reset URL: {url}");
+        url
     }
 
     fn render_invite_template(
@@ -151,10 +263,62 @@ Was dich erwartet:\n\
 - Echtzeit-Updates: Sofortige Synchronisation zwischen allen Plattformen\n\
 Bitte richte dein Konto über folgenden Link ein (gültig für 7 Tage):\n\
 {registration_url}\n\n\
-Viele Grüße\nDas THI StudVer Team\n\n\
-Campus Life Events ist ein Projekt der THI StudVer und wird von Neuland Ingolstadt e.V. entwickelt und betrieben.",
-            organizer_name = organizer_name,
-            registration_url = registration_url
+Viele Grüße\nDas Neuland und StudVer Team\n\n\
+Campus Life Events ist ein Projekt der THI StudVer und wird von Neuland Ingolstadt e.V. entwickelt und betrieben."
+        )
+    }
+
+    fn render_admin_invite_template(&self, display_name: &str, registration_url: &str) -> String {
+        format!(
+            "Hallo {display_name},\n\n\
+du wurdest als Administrator*in für Campus Life Events eingeladen.\n\
+Über den Adminbereich kannst du Vereine verwalten, neue Accounts einladen und das Audit-Log einsehen.\n\n\
+Bitte richte dein Konto über folgenden Link ein (gültig für 7 Tage):\n\
+{registration_url}\n\n\
+Viele Grüße\nDas Neuland und StudVer Team\n\n\
+Campus Life Events ist ein Projekt der THI StudVer und wird von Neuland Ingolstadt e.V. entwickelt und betrieben."
+        )
+    }
+
+    fn render_welcome_template(&self, display_name: &str, account_type: &str) -> String {
+        let role_description = match account_type {
+            "Admin" => {
+                "Als Administrator*in kannst du Vereine verwalten, neue Accounts einladen und das Audit-Log einsehen."
+            }
+            "Organizer" => {
+                "Als Organisator*in kannst du Veranstaltungen für deinen Verein erstellen und verwalten."
+            }
+            _ => "Du kannst die Plattform entsprechend deiner Berechtigung nutzen.",
+        };
+
+        format!(
+            "Hallo {display_name},\n\n\
+herzlich willkommen bei Campus Life Events! 🎉\n\n\
+Dein Konto wurde erfolgreich aktiviert und du kannst dich jetzt in die Plattform einloggen.\n\n\
+{role_description}\n\n\
+Du kannst dich jederzeit über die Login-Seite anmelden und die Plattform nutzen.\n\n\
+Bei Fragen oder Problemen wende dich gerne an uns\n\n\
+Viele Grüße\nDas Neuland und StudVer Team\n\n\
+Campus Life Events ist ein Projekt der THI StudVer und wird von Neuland Ingolstadt e.V. entwickelt und betrieben."
+        )
+    }
+
+    fn render_password_reset_template(
+        &self,
+        display_name: &str,
+        reset_url: &str,
+        _reset_token: &str,
+    ) -> String {
+        format!(
+            "Hallo {display_name},\n\n\
+            du hast eine Anfrage zum Zurücksetzen deines Passworts für Campus Life Events gestellt.\n\n\
+            Um dein Passwort zurückzusetzen, klicke auf folgenden Link (gültig für 10 Minuten):\n\
+            {reset_url}\n\n\
+            Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren.\n\
+            Dein Passwort bleibt unverändert.\n\n\
+            Aus Sicherheitsgründen ist dieser Link nur für 10 Minuten gültig.\n\n\
+            Viele Grüße\nDas Neuland und StudVer Team\n\n\
+            Campus Life Events ist ein Projekt der THI StudVer und wird von Neuland Ingolstadt e.V. entwickelt und betrieben."
         )
     }
 }

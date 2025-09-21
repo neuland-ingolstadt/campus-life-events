@@ -11,6 +11,10 @@ import { useQuery } from '@tanstack/react-query'
 import { Pencil, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback } from 'react'
+import type {
+	Event as ApiEvent,
+	Organizer as ApiOrganizer
+} from '@/client/types.gen'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -34,12 +38,20 @@ interface EventComponentProps {
 			organizerName: string
 		}
 	}
-	userId?: number
+	organizerId?: number
+	isAdmin: boolean
 	onDelete: (id: number) => Promise<void>
 }
 
-function EventComponent({ event, userId, onDelete }: EventComponentProps) {
-	const isOwnEvent = userId && userId === event.resource.organizer_id
+function EventComponent({
+	event,
+	organizerId,
+	isAdmin,
+	onDelete
+}: EventComponentProps) {
+	const isOwnEvent =
+		isAdmin ||
+		(organizerId !== undefined && organizerId === event.resource.organizer_id)
 
 	return (
 		<div className="flex flex-col">
@@ -95,25 +107,9 @@ function EventComponent({ event, userId, onDelete }: EventComponentProps) {
 	)
 }
 
-interface Event {
-	id: number
-	title_de: string
-	title_en?: string
-	description_de?: string
-	description_en?: string
-	start_date_time: string
-	end_date_time?: string
-	organizer_id: number
-}
-
-interface Organizer {
-	id: number
-	name: string
-}
-
 interface EventsCalendarProps {
-	events: Event[]
-	organizers: Organizer[]
+	events: ApiEvent[]
+	organizers: ApiOrganizer[]
 	onDelete: (id: number) => Promise<void>
 }
 
@@ -123,12 +119,15 @@ export function EventsCalendar({
 	onDelete
 }: EventsCalendarProps) {
 	const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
-	const userId = meData?.id as number | undefined
+	const organizerId = meData?.organizer_id ?? undefined
+	const isAdmin = meData?.account_type === 'ADMIN'
+
+	// State for calendar view and date
 
 	const getOrganizerName = useCallback(
 		(organizerId: number) => {
 			const organizer = organizers.find(
-				(org: Organizer) => org.id === organizerId
+				(org: ApiOrganizer) => org.id === organizerId
 			)
 			return organizer?.name || 'Unbekannter Verein'
 		},
@@ -151,8 +150,10 @@ export function EventsCalendar({
 
 	const eventStyleGetter = (event: CalendarEvent) => {
 		const isOwnEvent =
-			userId &&
-			userId === (event.resource as { organizer_id: number }).organizer_id
+			isAdmin ||
+			(organizerId !== undefined &&
+				organizerId ===
+					(event.resource as { organizer_id: number }).organizer_id)
 		return {
 			backgroundColor: isOwnEvent ? '#3b82f6' : '#6b7280',
 			borderColor: isOwnEvent ? '#2563eb' : '#4b5563',
@@ -173,7 +174,6 @@ export function EventsCalendar({
 				endAccessor="end"
 				style={{ height: '100%' }}
 				views={['month', 'week', 'day', 'agenda']}
-				defaultView="month"
 				popup
 				eventPropGetter={eventStyleGetter}
 				components={{
@@ -184,7 +184,8 @@ export function EventsCalendar({
 									resource: { organizer_id: number; organizerName: string }
 								}
 							}
-							userId={userId}
+							organizerId={organizerId}
+							isAdmin={isAdmin}
 							onDelete={onDelete}
 						/>
 					)

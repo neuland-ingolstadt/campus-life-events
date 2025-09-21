@@ -14,7 +14,6 @@ use crate::{app_state::AppState, error::AppError, models::Organizer};
 #[derive(Debug, Clone)]
 struct EventWithOrganizer {
     pub id: i64,
-    pub organizer_id: i64,
     pub title_de: String,
     pub title_en: String,
     pub description_de: Option<String>,
@@ -23,12 +22,6 @@ struct EventWithOrganizer {
     pub end_date_time: Option<DateTime<Utc>>,
     pub event_url: Option<String>,
     pub location: Option<String>,
-    pub publish_app: bool,
-    pub publish_newsletter: bool,
-    pub publish_in_ical: bool,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub organizer_name: String,
     pub organizer_location: Option<String>,
 }
 
@@ -91,7 +84,6 @@ impl EventWithOrganizer {
 #[derive(Debug, Clone, sqlx::FromRow)]
 struct EventWithOrganizerRow {
     pub id: i64,
-    pub organizer_id: i64,
     pub title_de: String,
     pub title_en: String,
     pub description_de: Option<String>,
@@ -100,12 +92,6 @@ struct EventWithOrganizerRow {
     pub end_date_time: Option<DateTime<Utc>>,
     pub event_url: Option<String>,
     pub location: Option<String>,
-    pub publish_app: bool,
-    pub publish_newsletter: bool,
-    pub publish_in_ical: bool,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub organizer_name: String,
     pub organizer_location: Option<String>,
 }
 
@@ -113,7 +99,6 @@ impl From<EventWithOrganizerRow> for EventWithOrganizer {
     fn from(row: EventWithOrganizerRow) -> Self {
         Self {
             id: row.id,
-            organizer_id: row.organizer_id,
             title_de: row.title_de,
             title_en: row.title_en,
             description_de: row.description_de,
@@ -122,12 +107,6 @@ impl From<EventWithOrganizerRow> for EventWithOrganizer {
             end_date_time: row.end_date_time,
             event_url: row.event_url,
             location: row.location,
-            publish_app: row.publish_app,
-            publish_newsletter: row.publish_newsletter,
-            publish_in_ical: row.publish_in_ical,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
-            organizer_name: row.organizer_name,
             organizer_location: row.organizer_location,
         }
     }
@@ -147,10 +126,9 @@ pub(crate) async fn get_all_events_ical(
     let events_with_organizers = sqlx::query_as::<_, EventWithOrganizerRow>(
         r#"
         SELECT 
-            e.id, e.organizer_id, e.title_de, e.title_en, e.description_de, e.description_en,
-            e.start_date_time, e.end_date_time, e.event_url, e.location, e.publish_app, e.publish_newsletter, e.publish_in_ical,
-            e.created_at, e.updated_at,
-            o.name as organizer_name, o.location as organizer_location
+            e.id, e.title_de, e.title_en, e.description_de, e.description_en,
+            e.start_date_time, e.end_date_time, e.event_url, e.location,
+            o.location as organizer_location
         FROM events e
         JOIN organizers o ON e.organizer_id = o.id
         WHERE e.publish_in_ical = true
@@ -202,7 +180,7 @@ pub(crate) async fn get_organizer_events_ical(
     // First, verify the organizer exists
     let organizer = sqlx::query_as::<_, Organizer>(
         r#"
-        SELECT id, name, description_de, description_en, website_url, instagram_url, super_user, created_at, updated_at
+        SELECT id, name, description_de, description_en, website_url, instagram_url, location, created_at, updated_at
         FROM organizers
         WHERE id = $1
         "#
@@ -218,10 +196,9 @@ pub(crate) async fn get_organizer_events_ical(
     let events_with_organizers = sqlx::query_as::<_, EventWithOrganizerRow>(
         r#"
         SELECT 
-            e.id, e.organizer_id, e.title_de, e.title_en, e.description_de, e.description_en,
-            e.start_date_time, e.end_date_time, e.event_url, e.publish_app, e.publish_newsletter,
-            e.created_at, e.updated_at,
-            o.name as organizer_name
+            e.id, e.title_de, e.title_en, e.description_de, e.description_en,
+            e.start_date_time, e.end_date_time, e.event_url, e.location,
+            o.location as organizer_location
         FROM events e
         JOIN organizers o ON e.organizer_id = o.id
         WHERE e.organizer_id = $1 AND e.publish_app = true

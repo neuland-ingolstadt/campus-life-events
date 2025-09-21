@@ -5,7 +5,6 @@ import {
 	AlertTriangle,
 	Instagram,
 	Pencil,
-	Settings,
 	User2Icon,
 	UsersIcon
 } from 'lucide-react'
@@ -14,26 +13,36 @@ import { useState } from 'react'
 import { listOrganizers } from '@/client'
 import type { Organizer } from '@/client/types.gen'
 import { OrganizerViewDialog } from '@/components/organizer-view-dialog'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { me } from '@/lib/auth'
 
+const ORGANIZER_SKELETON_KEYS = Array.from(
+	{ length: 3 },
+	(_, idx) => `organizer-skeleton-${idx}`
+)
+
 export default function OrganizersPage() {
 	const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
-	const userId = meData?.id as number | undefined
-	const isSuperUser = meData?.super_user ?? false
-	const { data, isLoading, error } = useQuery({
+	const organizerId = meData?.organizer_id ?? undefined
+	const isAdmin = meData?.account_type === 'ADMIN'
+	const {
+		data: organizers = [],
+		isLoading,
+		error
+	} = useQuery<Organizer[]>({
 		queryKey: ['organizers'],
-		queryFn: () => listOrganizers()
+		queryFn: async () => {
+			const response = await listOrganizers({ throwOnError: true })
+			return response.data ?? []
+		}
 	})
-	const organizers: Organizer[] = (data?.data ?? []) as Organizer[]
 	const [viewing, setViewing] = useState<Organizer | null>(null)
 
 	// Get current user's organizer profile
-	const currentUserOrganizer = organizers.find((o) => o.id === userId)
+	const currentUserOrganizer = organizers.find((o) => o.id === organizerId)
 
 	// Check if organizer profile is incomplete (same logic as dashboard)
 	const isProfileIncomplete =
@@ -44,7 +53,13 @@ export default function OrganizersPage() {
 
 	return (
 		<div className="flex flex-col min-h-screen">
-			<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+			<header
+				className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur-sm px-4"
+				style={{
+					backdropFilter: 'blur(8px)',
+					WebkitBackdropFilter: 'blur(8px)'
+				}}
+			>
 				<SidebarTrigger className="-ml-1" />
 				<div className="flex items-center gap-2">
 					<h1 className="text-lg font-semibold">Vereine</h1>
@@ -52,23 +67,10 @@ export default function OrganizersPage() {
 			</header>
 
 			<div className="flex-1 p-4 md:p-8 space-y-4 pt-6">
-				{isSuperUser && (
-					<div className="flex justify-end mb-6">
-						<Link href="/organizers/manage">
-							<Button size="sm" className="flex items-center gap-2">
-								<Settings className="h-4 w-4" />
-								Vereine verwalten
-							</Button>
-						</Link>
-					</div>
-				)}
 				{isLoading ? (
 					<div className="space-y-2">
-						{Array.from({ length: 3 }).map((_, idx) => (
-							<div
-								key={`org-skeleton-${Date.now()}-${idx}`}
-								className="h-16 bg-muted animate-pulse rounded"
-							/>
+						{ORGANIZER_SKELETON_KEYS.map((key) => (
+							<div key={key} className="h-16 bg-muted animate-pulse rounded" />
 						))}
 					</div>
 				) : error ? (
@@ -76,14 +78,14 @@ export default function OrganizersPage() {
 				) : (
 					<div className="space-y-14	">
 						{/* Your organizer first with edit only */}
-						{organizers.find((o) => o.id === userId) && (
+						{organizers.find((o) => o.id === organizerId) && (
 							<div className="space-y-4">
 								<div className="flex items-center gap-3">
 									<div className="h-8 w-8 bg-muted rounded-lg flex items-center justify-center">
 										<User2Icon className="h-6 w-6" />
 									</div>
 									<div>
-										<h2 className="text-xl font-semibold">Dein Verein</h2>
+										<h2 className="text-xl font-bold">Dein Verein</h2>
 										<p className="text-sm text-muted-foreground">
 											Verwalte deine Vereinsinformationen
 										</p>
@@ -91,9 +93,10 @@ export default function OrganizersPage() {
 								</div>
 
 								{organizers
-									.filter((o) => o.id === userId)
+									.filter((o) => o.id === organizerId)
 									.map((o) => (
 										<Card key={o.id}>
+											o
 											<CardHeader>
 												<div className="flex flex-row items-start justify-between gap-4">
 													<div className="flex-1 space-y-2">
@@ -226,17 +229,33 @@ export default function OrganizersPage() {
 								<div className="h-8 w-8 bg-muted rounded-lg flex items-center justify-center">
 									<UsersIcon className="h-6 w-6" />
 								</div>
-								<div>
-									<h2 className="text-xl font-semibold">Andere Vereine</h2>
-									<p className="text-sm text-muted-foreground">
-										Entdecke andere Vereine und Organisationen
-									</p>
-								</div>
+								{isAdmin ? (
+									<div>
+										<h2 className="text-xl font-bold">Alle Vereine</h2>
+										<p className="text-sm text-muted-foreground">
+											Verwende die{' '}
+											<Link
+												href="/organizers/manage"
+												className="text-primary hover:underline"
+											>
+												Admin-Seite
+											</Link>{' '}
+											um alle Vereine zu verwalten.
+										</p>
+									</div>
+								) : (
+									<div>
+										<h2 className="text-xl font-bold">Andere Vereine</h2>
+										<p className="text-sm text-muted-foreground">
+											Entdecke andere Vereine und Organisationen
+										</p>
+									</div>
+								)}
 							</div>
 
 							<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 								{organizers
-									.filter((o) => o.id !== userId)
+									.filter((o) => o.id !== organizerId)
 									.map((o) => (
 										<Card
 											key={o.id}

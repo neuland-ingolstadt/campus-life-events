@@ -1,15 +1,18 @@
 'use client'
 
+import { useQuery } from '@tanstack/react-query'
 import {
 	BarChart3,
 	Calendar,
 	CalendarDays,
 	Home,
 	Settings,
+	Shield,
 	Users
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useMemo } from 'react'
 import { AuthStatus } from '@/components/auth-status'
 import { ThemeToggle } from '@/components/theme-toggle'
 import {
@@ -24,43 +27,58 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem
 } from '@/components/ui/sidebar'
+import { me } from '@/lib/auth'
 import NeulandPalm from './neuland-palm'
-
-const items = [
-	{
-		title: 'Dashboard',
-		url: '/',
-		icon: Home
-	},
-	{
-		title: 'Events',
-		url: '/events',
-		icon: Calendar
-	},
-	{
-		title: 'Vereine',
-		url: '/organizers',
-		icon: Users
-	},
-	{
-		title: 'iCal Abonnements',
-		url: '/ical',
-		icon: CalendarDays
-	},
-	{
-		title: 'Analysen',
-		url: '/analytics',
-		icon: BarChart3
-	},
-	{
-		title: 'Einstellungen',
-		url: '/settings',
-		icon: Settings
-	}
-]
 
 export function DashboardSidebar() {
 	const pathname = usePathname()
+	const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
+	const isAdmin = meData?.account_type === 'ADMIN'
+
+	const items = useMemo(() => {
+		const base = [
+			{
+				title: 'Dashboard',
+				url: '/',
+				icon: Home
+			},
+			{
+				title: 'Events',
+				url: '/events',
+				icon: Calendar
+			},
+			{
+				title: 'Vereine',
+				url: '/organizers',
+				icon: Users
+			},
+			{
+				title: 'iCal Abonnements',
+				url: '/ical',
+				icon: CalendarDays
+			},
+			{
+				title: 'Analysen',
+				url: '/analytics',
+				icon: BarChart3
+			},
+			{
+				title: 'Einstellungen',
+				url: '/settings',
+				icon: Settings
+			}
+		]
+
+		if (isAdmin) {
+			base.splice(3, 0, {
+				title: 'Admin',
+				url: '/admin',
+				icon: Shield
+			})
+		}
+
+		return base
+	}, [isAdmin])
 
 	return (
 		<Sidebar variant="sidebar">
@@ -104,9 +122,11 @@ export function DashboardSidebar() {
 					</SidebarGroupContent>
 				</SidebarGroup>
 			</SidebarContent>
-			<SidebarFooter className="gap-3 p-4">
-				<ThemeToggle />
+			<SidebarFooter className="p-4 space-y-3">
 				<AuthStatus />
+				<div className="flex items-center justify-center">
+					<ThemeToggle />
+				</div>
 			</SidebarFooter>
 		</Sidebar>
 	)

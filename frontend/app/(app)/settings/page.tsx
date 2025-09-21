@@ -20,6 +20,15 @@ import {
 	PASSWORD_POLICY_SUMMARY
 } from '@/lib/password-policy'
 
+function isErrorWithMessage(error: unknown): error is { message: string } {
+	return (
+		typeof error === 'object' &&
+		error !== null &&
+		'message' in error &&
+		typeof (error as { message: unknown }).message === 'string'
+	)
+}
+
 export default function SettingsPage() {
 	const currentId = useId()
 	const nextId = useId()
@@ -50,11 +59,11 @@ export default function SettingsPage() {
 			setCurrent('')
 			setNextPw('')
 		} catch (e) {
-			const msg =
-				e && typeof e === 'object' && 'message' in e
-					? String((e as any).message)
-					: 'Passwort konnte nicht geändert werden'
-			setErr(msg)
+			if (isErrorWithMessage(e)) {
+				setErr(e.message)
+			} else {
+				setErr('Passwort konnte nicht geändert werden')
+			}
 		} finally {
 			setSaving(false)
 		}
@@ -62,7 +71,7 @@ export default function SettingsPage() {
 
 	return (
 		<div className="flex flex-col min-h-screen">
-			<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+			<header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/80 backdrop-blur-md px-4">
 				<SidebarTrigger className="-ml-1" />
 				<div className="flex items-center gap-2">
 					<h1 className="text-lg font-semibold">Einstellungen</h1>

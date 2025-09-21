@@ -30,17 +30,17 @@ import { me } from '@/lib/auth'
 export default function ManageOrganizersPage() {
 	const qc = useQueryClient()
 	const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
-	const isSuperUser = meData?.super_user ?? false
+	const isAdmin = meData?.account_type === 'ADMIN'
 
-	const { data, isLoading, error, refetch } = useQuery({
+	const { data, isLoading, error, refetch } = useQuery<OrganizerWithInvite[]>({
 		queryKey: ['organizers-admin'],
-		queryFn: () => listOrganizersAdmin()
+		queryFn: async () => {
+			const response = await listOrganizersAdmin({ throwOnError: true })
+			return response.data ?? []
+		}
 	})
 
-	const organizers = useMemo(
-		() => (data?.data ?? []) as OrganizerWithInvite[],
-		[data]
-	)
+	const organizers = useMemo(() => data ?? [], [data])
 
 	const onDelete = useCallback(
 		async (id: number) => {
@@ -61,9 +61,6 @@ export default function ManageOrganizersPage() {
 				cell: ({ row }) => (
 					<div className="max-w-[200px]">
 						<div className="font-medium text-sm">{row.original.name}</div>
-						{row.original.super_user && (
-							<div className="text-xs text-primary font-medium">Super User</div>
-						)}
 					</div>
 				),
 				size: 200
@@ -86,9 +83,9 @@ export default function ManageOrganizersPage() {
 				cell: ({ row }) => {
 					const status = row.original.invite_status
 					const statusColors = {
-						PENDING: 'text-yellow-600 bg-yellow-50',
-						EXPIRED: 'text-red-600 bg-red-50',
-						COMPLETED: 'text-green-600 bg-green-50'
+						PENDING: ' bg-yellow-500/20 border border-yellow-600',
+						EXPIRED: ' bg-red-500/20 border border-red-600',
+						COMPLETED: 'bg-green-500/20 border border-green-600'
 					}
 					const statusText = {
 						PENDING: 'Ausstehend',
@@ -143,12 +140,12 @@ export default function ManageOrganizersPage() {
 										disabled
 										title="Bearbeitung nicht möglich - Einladung noch ausstehend"
 									>
-										<Pencil className="h-4 w-4 mr-1" /> Bearbeiten
+										<Pencil className="h-4 w-4" />
 									</Button>
 								) : (
 									<Link href={`/organizers/${organizer.id}`}>
 										<Button variant="outline" size="sm" className="h-8 px-2">
-											<Pencil className="h-4 w-4 mr-1" /> Bearbeiten
+											<Pencil className="h-4 w-4" />
 										</Button>
 									</Link>
 								)}
@@ -159,7 +156,7 @@ export default function ManageOrganizersPage() {
 											size="sm"
 											className="h-8 px-2"
 										>
-											<Trash2 className="h-4 w-4 mr-1" /> Löschen
+											<Trash2 className="h-4 w-4" />
 										</Button>
 									</AlertDialogTrigger>
 									<AlertDialogContent>
@@ -201,8 +198,26 @@ export default function ManageOrganizersPage() {
 		[]
 	)
 
-	// Redirect non-superusers
-	if (!isSuperUser) {
+	if (!meData) {
+		return (
+			<div className="flex flex-col min-h-screen">
+				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+					<SidebarTrigger className="-ml-1" />
+					<div className="flex items-center gap-2">
+						<h1 className="text-lg font-semibold">Vereine verwalten</h1>
+					</div>
+				</header>
+				<div className="flex-1 flex items-center justify-center">
+					<div className="text-center text-muted-foreground">
+						Lade Berechtigungen…
+					</div>
+				</div>
+			</div>
+		)
+	}
+
+	// Restrict access to admins
+	if (meData && !isAdmin) {
 		return (
 			<div className="flex flex-col min-h-screen">
 				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -215,7 +230,7 @@ export default function ManageOrganizersPage() {
 					<div className="text-center">
 						<h2 className="text-2xl font-bold mb-2">Zugriff verweigert</h2>
 						<p className="text-muted-foreground mb-4">
-							Du hast keine Berechtigung, diese Seite zu besuchen.
+							Du benötigst Administratorrechte, um diesen Bereich zu sehen.
 						</p>
 						<Link href="/organizers">
 							<Button>Zurück zu Vereinen</Button>
@@ -262,7 +277,7 @@ export default function ManageOrganizersPage() {
 
 	return (
 		<div className="flex flex-col min-h-screen">
-			<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+			<header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/80 backdrop-blur-md px-4">
 				<SidebarTrigger className="-ml-1" />
 				<div className="flex items-center gap-2">
 					<h1 className="text-lg font-semibold">Vereine verwalten</h1>

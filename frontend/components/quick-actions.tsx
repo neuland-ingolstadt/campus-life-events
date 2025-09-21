@@ -1,38 +1,55 @@
 'use client'
 
-import { Calendar, Plus, User } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import { Calendar, Plus, Shield, User } from 'lucide-react'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 
+type QuickAction = {
+	title: string
+	description: string
+	icon: LucideIcon
+	href: string
+	hideForAdmin?: boolean
+}
+
 type QuickActionsProps = {
 	userEventsCount: number
+	isAdmin?: boolean
 	className?: string
 }
 
 export function QuickActions({
 	userEventsCount,
+	isAdmin,
 	className
 }: QuickActionsProps) {
-	const actions = [
+	const actions: QuickAction[] = [
 		{
 			title: 'Neues Event',
 			description: 'Ein neues Event erstellen',
 			icon: Plus,
-			href: '/events/new'
+			href: '/events/new',
+			hideForAdmin: true
 		},
 		{
-			title: 'Meine Events',
-			description: `${userEventsCount} gesamt`,
+			title: isAdmin ? 'Alle Events' : 'Meine Events',
+			description: isAdmin
+				? 'Zur Eventübersicht wechseln'
+				: `${userEventsCount} gesamt`,
 			icon: Calendar,
 			href: '/events'
 		},
 		{
-			title: 'Vereinsprofil',
-			description: 'Vereinsprofil verwalten',
-			icon: User,
-			href: '/organizers'
+			title: isAdmin ? 'Adminbereich' : 'Vereinsprofil',
+			description: isAdmin
+				? 'Verwaltung & Audit-Log öffnen'
+				: 'Vereinsprofil verwalten',
+			icon: isAdmin ? Shield : User,
+			href: isAdmin ? '/admin' : '/organizers',
+			hideForAdmin: isAdmin ? false : undefined
 		}
-	]
+	].filter((action) => !(isAdmin && action.hideForAdmin))
 
 	return (
 		<div className={className}>

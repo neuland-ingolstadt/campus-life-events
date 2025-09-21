@@ -59,7 +59,7 @@ export default function NewOrganizerPage() {
 
 	return (
 		<div className="flex flex-col min-h-screen">
-			<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+			<header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/80 backdrop-blur-md px-4">
 				<SidebarTrigger className="-ml-1" />
 				<div className="flex items-center gap-2">
 					<h1 className="text-lg font-semibold">Neuen Verein einladen</h1>

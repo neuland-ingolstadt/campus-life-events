@@ -26,28 +26,48 @@ use super::shared::current_user_from_headers;
     params(ListEventsQuery),
     responses((status = 200, description = "List events", body = [Event]))
 )]
-#[instrument(skip(state, query_params))]
+#[instrument(skip(state, query_params, headers))]
 pub(crate) async fn list_events(
     State(state): State<AppState>,
     Query(query_params): Query<ListEventsQuery>,
+    headers: HeaderMap,
 ) -> Result<Json<Vec<Event>>, AppError> {
+    // Check if user is authenticated
+    let is_authenticated = current_user_from_headers(&headers, &state).await.is_ok();
+
     let mut builder = QueryBuilder::<Postgres>::new(
-        "SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, created_at, updated_at FROM events",
+        "SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at FROM events",
     );
 
-    if query_params.organizer_id.is_some() || query_params.upcoming_only.unwrap_or(false) {
-        builder.push(" WHERE ");
+    let mut has_where = false;
+
+    // If not authenticated, only show events that are published in the app
+    if !is_authenticated {
+        builder.push(" WHERE publish_app = true");
+        has_where = true;
     }
 
     if let Some(organizer_id) = query_params.organizer_id {
-        builder.push("organizer_id = ").push_bind(organizer_id);
-        if query_params.upcoming_only.unwrap_or(false) {
-            builder.push(" AND ");
+        if has_where {
+            builder.push(" AND organizer_id = ").push_bind(organizer_id);
+        } else {
+            builder
+                .push(" WHERE organizer_id = ")
+                .push_bind(organizer_id);
+            has_where = true;
         }
     }
 
     if query_params.upcoming_only.unwrap_or(false) {
-        builder.push("start_date_time >= ").push_bind(Utc::now());
+        if has_where {
+            builder
+                .push(" AND start_date_time >= ")
+                .push_bind(Utc::now());
+        } else {
+            builder
+                .push(" WHERE start_date_time >= ")
+                .push_bind(Utc::now());
+        }
     }
 
     builder.push(" ORDER BY start_date_time ASC");
@@ -81,6 +101,9 @@ pub(crate) async fn create_event(
     Json(payload): Json<CreateEventRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
+    let organizer_id = user
+        .organizer_id()
+        .ok_or_else(|| AppError::unauthorized("organizer account required"))?;
     let CreateEventRequest {
         title_de,
         title_en,
@@ -93,18 +116,19 @@ pub(crate) async fn create_event(
         publish_app,
         publish_newsletter,
         publish_in_ical,
+        publish_web,
     } = payload;
 
     let mut transaction = state.db.begin().await?;
 
     let event = sqlx::query_as::<_, Event>(
         r#"
-        INSERT INTO events (organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, created_at, updated_at
+        INSERT INTO events (organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
         "#,
     )
-    .bind(user.id)
+    .bind(organizer_id)
     .bind(title_de)
     .bind(title_en)
     .bind(description_de)
@@ -116,6 +140,7 @@ pub(crate) async fn create_event(
     .bind(publish_app)
     .bind(publish_newsletter)
     .bind(publish_in_ical)
+    .bind(publish_web)
     .fetch_one(&mut *transaction)
     .await?;
 
@@ -123,6 +148,7 @@ pub(crate) async fn create_event(
         &mut transaction,
         event.id,
         event.organizer_id,
+        user.account_id,
         AuditType::Create,
         None,
         Some(&event),
@@ -148,7 +174,7 @@ pub(crate) async fn get_event(
 ) -> Result<Json<Event>, AppError> {
     let event = sqlx::query_as::<_, Event>(
         r#"
-        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, created_at, updated_at
+        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
         FROM events
         WHERE id = $1
         "#,
@@ -177,6 +203,16 @@ pub(crate) async fn update_event(
 ) -> Result<Json<Event>, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
 
+    // Allow admins to edit any event, organizers can only edit their own events
+    let organizer_id = if user.is_admin() {
+        None // Admin can edit any event, so we don't need to check organizer_id
+    } else {
+        Some(
+            user.organizer_id()
+                .ok_or_else(|| AppError::unauthorized("organizer account required"))?,
+        )
+    };
+
     let has_updates = payload.has_updates();
     let UpdateEventRequest {
         title_de,
@@ -190,6 +226,7 @@ pub(crate) async fn update_event(
         publish_app,
         publish_newsletter,
         publish_in_ical,
+        publish_web,
     } = payload;
 
     if !has_updates {
@@ -200,7 +237,7 @@ pub(crate) async fn update_event(
 
     let existing_event = sqlx::query_as::<_, Event>(
         r#"
-        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, created_at, updated_at
+        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
         FROM events
         WHERE id = $1
         "#,
@@ -209,10 +246,13 @@ pub(crate) async fn update_event(
     .fetch_one(&mut *transaction)
     .await?;
 
-    if existing_event.organizer_id != user.id {
-        return Err(AppError::unauthorized(
-            "cannot update another organizer's event",
-        ));
+    // Only check ownership if the user is not an admin
+    if let Some(organizer_id) = organizer_id {
+        if existing_event.organizer_id != organizer_id {
+            return Err(AppError::unauthorized(
+                "cannot update another organizer's event",
+            ));
+        }
     }
 
     // Build assignments defensively to avoid any stray commas
@@ -260,9 +300,12 @@ pub(crate) async fn update_event(
             .push(", publish_in_ical = ")
             .push_bind(publish_in_ical);
     }
+    if let Some(publish_web) = publish_web {
+        builder.push(", publish_web = ").push_bind(publish_web);
+    }
 
     builder.push(" WHERE id = ").push_bind(id);
-    builder.push(" RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, created_at, updated_at");
+    builder.push(" RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at");
 
     let updated_event = builder
         .build_query_as::<Event>()
@@ -273,6 +316,7 @@ pub(crate) async fn update_event(
         &mut transaction,
         updated_event.id,
         updated_event.organizer_id,
+        user.account_id,
         AuditType::Update,
         Some(&existing_event),
         Some(&updated_event),
@@ -298,11 +342,21 @@ pub(crate) async fn delete_event(
     Path(id): Path<i64>,
 ) -> Result<StatusCode, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
+
+    // Allow admins to delete any event, organizers can only delete their own events
+    let organizer_id = if user.is_admin() {
+        None // Admin can delete any event, so we don't need to check organizer_id
+    } else {
+        Some(
+            user.organizer_id()
+                .ok_or_else(|| AppError::unauthorized("organizer account required"))?,
+        )
+    };
     let mut transaction = state.db.begin().await?;
 
     let existing_event = sqlx::query_as::<_, Event>(
         r#"
-        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, created_at, updated_at
+        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
         FROM events
         WHERE id = $1
         "#,
@@ -315,10 +369,13 @@ pub(crate) async fn delete_event(
         return Err(AppError::not_found("Event not found"));
     };
 
-    if existing_event.organizer_id != user.id {
-        return Err(AppError::unauthorized(
-            "cannot delete another organizer's event",
-        ));
+    // Only check ownership if the user is not an admin
+    if let Some(organizer_id) = organizer_id {
+        if existing_event.organizer_id != organizer_id {
+            return Err(AppError::unauthorized(
+                "cannot delete another organizer's event",
+            ));
+        }
     }
 
     sqlx::query("DELETE FROM events WHERE id = $1")
@@ -330,6 +387,7 @@ pub(crate) async fn delete_event(
         &mut transaction,
         existing_event.id,
         existing_event.organizer_id,
+        user.account_id,
         AuditType::Delete,
         Some(&existing_event),
         None,
@@ -345,6 +403,7 @@ async fn record_audit(
     transaction: &mut Transaction<'_, Postgres>,
     event_id: i64,
     organizer_id: i64,
+    user_id: i64,
     audit_type: AuditType,
     old_data: Option<&Event>,
     new_data: Option<&Event>,
@@ -360,12 +419,13 @@ async fn record_audit(
 
     sqlx::query(
         r#"
-        INSERT INTO audit_log (event_id, organizer_id, type, old_data, new_data)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO audit_log (event_id, organizer_id, user_id, type, old_data, new_data)
+        VALUES ($1, $2, $3, $4, $5, $6)
         "#,
     )
     .bind(event_id)
     .bind(organizer_id)
+    .bind(user_id)
     .bind(audit_type)
     .bind(old_json)
     .bind(new_json)

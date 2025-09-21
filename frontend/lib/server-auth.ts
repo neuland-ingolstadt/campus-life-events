@@ -1,7 +1,14 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
-export type AuthUser = { id: number; name: string }
+import type { AccountType } from '@/client/types.gen'
+
+export type AuthUser = {
+	account_id: number
+	display_name: string
+	account_type: AccountType
+	organizer_id?: number | null
+}
 
 export async function requireUser(): Promise<AuthUser> {
 	const ck = await cookies()
@@ -19,4 +26,12 @@ export async function requireUser(): Promise<AuthUser> {
 		redirect('/login')
 	}
 	return res.json()
+}
+
+export async function requireAdmin(): Promise<AuthUser> {
+	const user = await requireUser()
+	if (user.account_type !== 'ADMIN') {
+		redirect('/')
+	}
+	return user
 }

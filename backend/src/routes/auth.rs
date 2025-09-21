@@ -1,4 +1,7 @@
-use argon2::{Argon2, password_hash::rand_core::OsRng};
+use argon2::{
+    Argon2,
+    password_hash::rand_core::{OsRng, RngCore},
+};
 use axum::{
     Json, Router,
     extract::State,
@@ -6,17 +9,22 @@ use axum::{
     response::{IntoResponse, Response},
     routing::{get, post},
 };
+use base64::{Engine as _, engine::general_purpose};
 use chrono::{DateTime, Duration, Utc};
 use password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString};
 use password_policy::{COMMON_PASSWORDS, HighSecurityPolicy, PasswordPolicy};
 use sqlx::Row;
-use tracing::instrument;
+use tracing::{error, info, instrument, warn};
 use uuid::Uuid;
 
 use crate::{
     app_state::AppState,
-    dto::{ChangePasswordRequest, InitAccountRequest, LoginRequest, SetupTokenLookupRequest},
+    dto::{
+        ChangePasswordRequest, InitAccountRequest, LoginRequest, RequestPasswordResetRequest,
+        ResetPasswordRequest, SetupTokenLookupRequest,
+    },
     error::AppError,
+    models::AccountType,
     responses::{AuthUserResponse, SetupTokenInfoResponse},
 };
 
@@ -38,7 +46,11 @@ pub(crate) async fn login(
     Json(payload): Json<LoginRequest>,
 ) -> Result<Response, AppError> {
     let rec = sqlx::query(
-        r#"SELECT id, name, password_hash, super_user FROM organizers WHERE email = $1"#,
+        r#"
+        SELECT id, display_name, password_hash, account_type, organizer_id
+        FROM accounts
+        WHERE email = $1
+        "#,
     )
     .bind(&payload.email)
     .fetch_optional(&state.db)
@@ -50,9 +62,10 @@ pub(crate) async fn login(
     };
 
     let id: i64 = row.try_get("id").unwrap_or_default();
-    let name: String = row.try_get::<String, _>("name").unwrap_or_default();
+    let display_name: String = row.try_get::<String, _>("display_name").unwrap_or_default();
     let stored_hash: Option<String> = row.try_get("password_hash").ok();
-    let super_user: bool = row.try_get("super_user").unwrap_or(false);
+    let account_type: AccountType = row.try_get("account_type")?;
+    let organizer_id: Option<i64> = row.try_get("organizer_id").ok();
     let Some(stored_hash) = stored_hash else {
         tracing::warn!(
             "Failed login attempt for email: {} (no password hash)",
@@ -76,7 +89,7 @@ pub(crate) async fn login(
     let session_id = Uuid::new_v4();
     // 24 hours expiry
     let expires_at = Utc::now() + Duration::hours(24);
-    sqlx::query(r#"INSERT INTO sessions (id, organizer_id, expires_at) VALUES ($1, $2, $3)"#)
+    sqlx::query(r#"INSERT INTO sessions (id, account_id, expires_at) VALUES ($1, $2, $3)"#)
         .bind(session_id)
         .bind(id)
         .bind(expires_at)
@@ -91,12 +104,17 @@ pub(crate) async fn login(
         24 * 60 * 60
     );
 
-    tracing::info!("Successful login for user: {} (id: {})", name, id);
+    tracing::info!(
+        "Successful login for account: {} (id: {})",
+        display_name,
+        id
+    );
 
     let body = Json(AuthUserResponse {
-        id,
-        name,
-        super_user,
+        account_id: id,
+        display_name,
+        account_type,
+        organizer_id,
     });
     let mut resp = (StatusCode::OK, body).into_response();
     resp.headers_mut().append(
@@ -121,10 +139,15 @@ pub(crate) async fn lookup_setup_token(
     State(state): State<AppState>,
     Json(payload): Json<SetupTokenLookupRequest>,
 ) -> Result<Json<SetupTokenInfoResponse>, AppError> {
-    let PendingSetupToken { name, .. } = ensure_pending_setup_token(&state, &payload.token).await?;
+    let PendingSetupToken {
+        display_name,
+        account_type,
+        ..
+    } = ensure_pending_setup_token(&state, &payload.token).await?;
 
     Ok(Json(SetupTokenInfoResponse {
-        organizer_name: name,
+        account_name: display_name,
+        account_type,
     }))
 }
 
@@ -145,9 +168,10 @@ pub(crate) async fn init_account(
 ) -> Result<Response, AppError> {
     let pending = ensure_pending_setup_token(&state, &payload.token).await?;
     let PendingSetupToken {
-        id,
-        name,
-        super_user,
+        account_id,
+        display_name,
+        account_type,
+        organizer_id,
     } = pending;
 
     ensure_password_requirements(&payload.password)?;
@@ -160,7 +184,7 @@ pub(crate) async fn init_account(
 
     sqlx::query(
         r#"
-        UPDATE organizers
+        UPDATE accounts
         SET email = $1,
             password_hash = $2,
             setup_token = NULL,
@@ -171,16 +195,16 @@ pub(crate) async fn init_account(
     )
     .bind(&payload.email)
     .bind(&hash)
-    .bind(id)
+    .bind(account_id)
     .execute(&state.db)
     .await?;
 
     // Create session
     let session_id = Uuid::new_v4();
     let expires_at = Utc::now() + Duration::hours(24);
-    sqlx::query(r#"INSERT INTO sessions (id, organizer_id, expires_at) VALUES ($1, $2, $3)"#)
+    sqlx::query(r#"INSERT INTO sessions (id, account_id, expires_at) VALUES ($1, $2, $3)"#)
         .bind(session_id)
-        .bind(id)
+        .bind(account_id)
         .bind(expires_at)
         .execute(&state.db)
         .await?;
@@ -193,10 +217,33 @@ pub(crate) async fn init_account(
         24 * 60 * 60
     );
 
+    // Send welcome email
+    if let Some(email_client) = &state.email {
+        let account_type_str = match account_type {
+            AccountType::Admin => "Admin",
+            AccountType::Organizer => "Organizer",
+        };
+
+        match email_client
+            .send_welcome_email(&payload.email, &display_name, account_type_str)
+            .await
+        {
+            Ok(_) => info!("welcome email sent successfully to {}", payload.email),
+            Err(err) => {
+                error!(error = %err, "failed to send welcome email to {}", payload.email);
+                // Don't fail the registration if email fails
+                warn!("account created but welcome email failed - user can still login");
+            }
+        }
+    } else {
+        warn!("email client not configured; skipping welcome email");
+    }
+
     let body = Json(AuthUserResponse {
-        id,
-        name,
-        super_user,
+        account_id,
+        display_name,
+        account_type,
+        organizer_id,
     });
     let mut resp = (StatusCode::OK, body).into_response();
     resp.headers_mut().append(
@@ -226,7 +273,7 @@ pub(crate) async fn logout(
                 .await?;
         }
         let attrs = session_cookie_attributes();
-        let expired = format!("session_id=; {}; Max-Age=0", attrs);
+        let expired = format!("session_id=; {attrs}; Max-Age=0");
         let mut resp = StatusCode::NO_CONTENT.into_response();
         resp.headers_mut().append(
             axum::http::header::SET_COOKIE,
@@ -260,9 +307,9 @@ pub(crate) async fn me(
         .map_err(|_| AppError::unauthorized("invalid session format"))?;
     let rec = sqlx::query(
         r#"
-        SELECT o.id, o.name, o.super_user
+        SELECT a.id, a.display_name, a.account_type, a.organizer_id
         FROM sessions s
-        JOIN organizers o ON o.id = s.organizer_id
+        JOIN accounts a ON a.id = s.account_id
         WHERE s.id = $1 AND s.expires_at > NOW()
         "#,
     )
@@ -274,13 +321,15 @@ pub(crate) async fn me(
         return Err(AppError::unauthorized("invalid or expired session"));
     };
 
-    let id: i64 = row.try_get("id").unwrap_or_default();
-    let name: String = row.try_get("name").unwrap_or_default();
-    let super_user: bool = row.try_get("super_user").unwrap_or(false);
+    let account_id: i64 = row.try_get("id").unwrap_or_default();
+    let display_name: String = row.try_get::<String, _>("display_name").unwrap_or_default();
+    let account_type: AccountType = row.try_get("account_type")?;
+    let organizer_id: Option<i64> = row.try_get("organizer_id").ok();
     Ok(Json(AuthUserResponse {
-        id,
-        name,
-        super_user,
+        account_id,
+        display_name,
+        account_type,
+        organizer_id,
     }))
 }
 
@@ -298,8 +347,8 @@ pub(crate) async fn change_password(
     Json(payload): Json<ChangePasswordRequest>,
 ) -> Result<StatusCode, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
-    let rec = sqlx::query(r#"SELECT password_hash FROM organizers WHERE id = $1"#)
-        .bind(user.id)
+    let rec = sqlx::query(r#"SELECT password_hash FROM accounts WHERE id = $1"#)
+        .bind(user.account_id)
         .fetch_one(&state.db)
         .await?;
 
@@ -323,14 +372,14 @@ pub(crate) async fn change_password(
         .to_string();
 
     let mut tx = state.db.begin().await?;
-    sqlx::query(r#"UPDATE organizers SET password_hash = $1, updated_at = NOW() WHERE id = $2"#)
+    sqlx::query(r#"UPDATE accounts SET password_hash = $1, updated_at = NOW() WHERE id = $2"#)
         .bind(&new_hash)
-        .bind(user.id)
+        .bind(user.account_id)
         .execute(&mut *tx)
         .await?;
     // Invalidate all existing sessions for this user (session rotation)
-    sqlx::query(r#"DELETE FROM sessions WHERE organizer_id = $1"#)
-        .bind(user.id)
+    sqlx::query(r#"DELETE FROM sessions WHERE account_id = $1"#)
+        .bind(user.account_id)
         .execute(&mut *tx)
         .await?;
     tx.commit().await?;
@@ -339,23 +388,40 @@ pub(crate) async fn change_password(
 }
 
 struct PendingSetupToken {
-    id: i64,
-    name: String,
-    super_user: bool,
+    account_id: i64,
+    display_name: String,
+    account_type: AccountType,
+    organizer_id: Option<i64>,
 }
 
 async fn ensure_pending_setup_token(
     state: &AppState,
     token: &str,
 ) -> Result<PendingSetupToken, AppError> {
+    tracing::debug!(
+        "Looking up setup token: '{}' (length: {})",
+        token,
+        token.len()
+    );
+
+    // Handle URL encoding issues where + becomes space
+    let normalized_token = token.replace(' ', "+");
+    if normalized_token != token {
+        tracing::debug!(
+            "Normalized token: '{}' (length: {})",
+            normalized_token,
+            normalized_token.len()
+        );
+    }
+
     let row = sqlx::query(
         r#"
-        SELECT id, name, password_hash, super_user, setup_token_expires_at
-        FROM organizers
+        SELECT id, display_name, password_hash, account_type, organizer_id, setup_token_expires_at
+        FROM accounts
         WHERE setup_token = $1
         "#,
     )
-    .bind(token)
+    .bind(&normalized_token)
     .fetch_optional(&state.db)
     .await?;
 
@@ -377,9 +443,10 @@ async fn ensure_pending_setup_token(
     }
 
     Ok(PendingSetupToken {
-        id: row.try_get("id")?,
-        name: row.try_get::<String, _>("name")?,
-        super_user: row.try_get("super_user")?,
+        account_id: row.try_get("id")?,
+        display_name: row.try_get::<String, _>("display_name")?,
+        account_type: row.try_get("account_type")?,
+        organizer_id: row.try_get("organizer_id").ok(),
     })
 }
 
@@ -440,6 +507,167 @@ fn ensure_password_requirements(password: &str) -> Result<(), AppError> {
     Ok(())
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/auth/request-password-reset",
+    tag = "Auth",
+    request_body = RequestPasswordResetRequest,
+    responses(
+        (status = 204, description = "Password reset email sent if account exists"),
+        (status = 400, description = "Invalid email format"),
+    )
+)]
+#[instrument(skip(state, payload))]
+pub(crate) async fn request_password_reset(
+    State(state): State<AppState>,
+    Json(payload): Json<RequestPasswordResetRequest>,
+) -> Result<StatusCode, AppError> {
+    // Always return 204 to prevent email enumeration attacks
+    // Even if the email doesn't exist, we don't reveal that information
+
+    let rec = sqlx::query(
+        r#"
+        SELECT id, display_name, email
+        FROM accounts
+        WHERE email = $1 AND password_hash IS NOT NULL
+        "#,
+    )
+    .bind(&payload.email)
+    .fetch_optional(&state.db)
+    .await?;
+
+    if let Some(row) = rec {
+        let account_id: i64 = row.try_get("id")?;
+        let display_name: String = row.try_get::<String, _>("display_name")?;
+
+        // Generate a secure reset token (32 random bytes = 256 bits of entropy)
+        let mut token_bytes = [0u8; 32];
+        OsRng.fill_bytes(&mut token_bytes);
+        let reset_token = general_purpose::URL_SAFE_NO_PAD.encode(token_bytes);
+
+        // Set expiry to 10 minutes from now
+        let expires_at = Utc::now() + Duration::minutes(10);
+
+        // Invalidate any existing reset tokens for this account
+        sqlx::query("DELETE FROM password_reset_tokens WHERE account_id = $1")
+            .bind(account_id)
+            .execute(&state.db)
+            .await?;
+
+        // Insert new reset token
+        sqlx::query(
+            r#"INSERT INTO password_reset_tokens (account_id, token, expires_at) VALUES ($1, $2, $3)"#
+        )
+        .bind(account_id)
+        .bind(&reset_token)
+        .bind(expires_at)
+        .execute(&state.db)
+        .await?;
+
+        // Send password reset email
+        if let Some(email_client) = &state.email {
+            match email_client
+                .send_password_reset_email(&payload.email, &display_name, &reset_token)
+                .await
+            {
+                Ok(_) => info!(
+                    "Password reset email sent successfully to {}",
+                    payload.email
+                ),
+                Err(err) => {
+                    error!(error = %err, "Failed to send password reset email to {}", payload.email);
+                    // Don't fail the request if email fails
+                }
+            }
+        } else {
+            warn!(
+                "Email client not configured; password reset token: {}",
+                reset_token
+            );
+        }
+    }
+
+    // Always return success to prevent email enumeration
+    Ok(StatusCode::NO_CONTENT)
+}
+
+#[utoipa::path(
+    post,
+    path = "/api/v1/auth/reset-password",
+    tag = "Auth",
+    request_body = ResetPasswordRequest,
+    responses(
+        (status = 204, description = "Password reset successfully"),
+        (status = 400, description = "Invalid or expired token"),
+    )
+)]
+#[instrument(skip(state, payload))]
+pub(crate) async fn reset_password(
+    State(state): State<AppState>,
+    Json(payload): Json<ResetPasswordRequest>,
+) -> Result<StatusCode, AppError> {
+    // Validate the reset token
+    let rec = sqlx::query(
+        r#"
+        SELECT prt.id, prt.account_id, prt.expires_at, a.display_name
+        FROM password_reset_tokens prt
+        JOIN accounts a ON a.id = prt.account_id
+        WHERE prt.token = $1 AND prt.expires_at > NOW() AND prt.used_at IS NULL
+        "#,
+    )
+    .bind(&payload.token)
+    .fetch_optional(&state.db)
+    .await?;
+
+    let Some(row) = rec else {
+        return Err(AppError::validation("Invalid or expired reset token"));
+    };
+
+    let token_id: i64 = row.try_get("id")?;
+    let account_id: i64 = row.try_get("account_id")?;
+    let display_name: String = row.try_get::<String, _>("display_name")?;
+
+    // Validate new password
+    ensure_password_requirements(&payload.new_password)?;
+
+    // Hash the new password
+    let salt = SaltString::generate(&mut OsRng);
+    let new_hash = Argon2::default()
+        .hash_password(payload.new_password.as_bytes(), &salt)
+        .map_err(|_| AppError::validation("Failed to hash password"))?
+        .to_string();
+
+    // Start transaction
+    let mut tx = state.db.begin().await?;
+
+    // Update the password
+    sqlx::query(r#"UPDATE accounts SET password_hash = $1, updated_at = NOW() WHERE id = $2"#)
+        .bind(&new_hash)
+        .bind(account_id)
+        .execute(&mut *tx)
+        .await?;
+
+    // Mark the reset token as used
+    sqlx::query(r#"UPDATE password_reset_tokens SET used_at = NOW() WHERE id = $1"#)
+        .bind(token_id)
+        .execute(&mut *tx)
+        .await?;
+
+    // Invalidate all existing sessions for this user (session rotation)
+    sqlx::query(r#"DELETE FROM sessions WHERE account_id = $1"#)
+        .bind(account_id)
+        .execute(&mut *tx)
+        .await?;
+
+    tx.commit().await?;
+
+    info!(
+        "Password reset successful for account: {} (id: {})",
+        display_name, account_id
+    );
+    Ok(StatusCode::NO_CONTENT)
+}
+
 pub(crate) fn router() -> Router<AppState> {
     Router::new()
         .route("/login", post(login))
@@ -447,5 +675,7 @@ pub(crate) fn router() -> Router<AppState> {
         .route("/init", post(init_account))
         .route("/logout", post(logout))
         .route("/change-password", post(change_password))
+        .route("/request-password-reset", post(request_password_reset))
+        .route("/reset-password", post(reset_password))
         .route("/me", get(me))
 }

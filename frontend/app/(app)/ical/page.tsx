@@ -6,5 +6,10 @@ const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080'
 export default async function ICalPage() {
 	const user = await requireUser()
 
-	return <ICalClient backendUrl={backendUrl} userId={user.id} />
+	return (
+		<ICalClient
+			backendUrl={backendUrl}
+			userId={user?.organizer_id ?? undefined}
+		/>
+	)
 }

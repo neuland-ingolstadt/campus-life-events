@@ -13,6 +13,11 @@ import {
 	YAxis
 } from 'recharts'
 import { listAuditLogs, listEvents, listOrganizers } from '@/client'
+import type {
+	Event as ApiEvent,
+	Organizer as ApiOrganizer,
+	AuditLogEntry
+} from '@/client/types.gen'
 import {
 	Card,
 	CardContent,
@@ -47,38 +52,44 @@ export default function AnalyticsPage() {
 	const [days, setDays] = useState(30)
 	const [search, setSearch] = useState('')
 
-	const { data: logsData, isLoading: _logsLoading } = useQuery({
+	const { data: auditLogs = [] } = useQuery<AuditLogEntry[]>({
 		queryKey: ['audit-logs', days],
-		queryFn: () => listAuditLogs({ query: { limit: 5000 } })
+		queryFn: async () => {
+			const response = await listAuditLogs({
+				query: { limit: 5000 },
+				throwOnError: true
+			})
+			return response.data ?? []
+		}
 	})
-	const { data: eventsData } = useQuery({
+	const { data: events = [] } = useQuery<ApiEvent[]>({
 		queryKey: ['events'],
-		queryFn: () => listEvents()
+		queryFn: async () => {
+			const response = await listEvents({ throwOnError: true })
+			return response.data ?? []
+		}
 	})
-	const { data: orgsData } = useQuery({
+	const { data: organizers = [] } = useQuery<ApiOrganizer[]>({
 		queryKey: ['organizers'],
-		queryFn: () => listOrganizers()
+		queryFn: async () => {
+			const response = await listOrganizers({ throwOnError: true })
+			return response.data ?? []
+		}
 	})
-
-	const events = eventsData?.data ?? []
-	const orgs = orgsData?.data ?? []
 	const orgMap = useMemo(
-		() =>
-			new Map((orgs ?? []).map((o: any) => [o.id as number, o.name as string])),
-		[orgs]
+		() => new Map(organizers.map((o) => [o.id, o.name])),
+		[organizers]
 	)
 
 	const since = new Date()
 	since.setDate(since.getDate() - days)
 
 	const filtered = useMemo(() => {
-		let rows = (logsData?.data ?? []).filter(
-			(r: any) => new Date(r.at) >= since
-		)
+		let rows = auditLogs.filter((r) => new Date(r.at) >= since)
 		if (search.trim()) {
 			const q = search.toLowerCase()
-			rows = rows.filter((r: any) => {
-				const ev = events.find((e: any) => e.id === r.event_id)
+			rows = rows.filter((r) => {
+				const ev = events.find((e) => e.id === r.event_id)
 				const orgName = orgMap.get(r.organizer_id) ?? ''
 				return (
 					String(r.event_id).includes(q) ||
@@ -89,7 +100,7 @@ export default function AnalyticsPage() {
 			})
 		}
 		return rows
-	}, [logsData, since, search, events, orgMap])
+	}, [auditLogs, since, search, events, orgMap])
 
 	const timeline = useMemo(() => {
 		const buckets = new Map<
@@ -100,8 +111,9 @@ export default function AnalyticsPage() {
 			const d = format(new Date(r.at), 'yyyy-MM-dd')
 			if (!buckets.has(d))
 				buckets.set(d, { date: d, CREATE: 0, UPDATE: 0, DELETE: 0 })
-			const b = buckets.get(d)!
-			b[r.type as 'CREATE' | 'UPDATE' | 'DELETE']++
+			const bucket = buckets.get(d)
+			if (!bucket) continue
+			bucket[r.type] += 1
 		}
 		return Array.from(buckets.values()).sort((a, b) =>
 			a.date.localeCompare(b.date)
@@ -109,21 +121,27 @@ export default function AnalyticsPage() {
 	}, [filtered])
 
 	const byType = useMemo(() => {
-		const acc = { CREATE: 0, UPDATE: 0, DELETE: 0 } as Record<string, number>
-		for (const r of filtered) acc[r.type] = (acc[r.type] || 0) + 1
+		const acc: Record<AuditLogEntry['type'], number> = {
+			CREATE: 0,
+			UPDATE: 0,
+			DELETE: 0
+		}
+		for (const r of filtered) {
+			acc[r.type] += 1
+		}
 		return acc
 	}, [filtered])
 
 	const byEvent = useMemo(() => {
 		const acc = new Map<number, number>()
-		for (const r of filtered)
-			acc.set(r.event_id, (acc.get(r.event_id) || 0) + 1)
+		for (const r of filtered) {
+			acc.set(r.event_id, (acc.get(r.event_id) ?? 0) + 1)
+		}
 		return Array.from(acc.entries())
 			.map(([id, count]) => ({
 				id,
 				count,
-				title:
-					events.find((e: any) => e.id === id)?.title_de || `Event Nr. ${id}`
+				title: events.find((e) => e.id === id)?.title_de || `Event Nr. ${id}`
 			}))
 			.sort((a, b) => b.count - a.count)
 			.slice(0, 10)
@@ -133,7 +151,7 @@ export default function AnalyticsPage() {
 
 	return (
 		<div className="flex flex-col min-h-screen">
-			<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+			<header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/80 backdrop-blur-md px-4">
 				<SidebarTrigger className="-ml-1" />
 				<div className="flex items-center gap-2">
 					<h1 className="text-lg font-semibold">Analysen</h1>

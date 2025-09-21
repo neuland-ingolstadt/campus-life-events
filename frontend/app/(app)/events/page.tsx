@@ -3,10 +3,22 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
-import { Grid3X3, List, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react'
+import {
+	Grid3X3,
+	List,
+	Pencil,
+	Plus,
+	RefreshCw,
+	Share2,
+	Trash2
+} from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useMemo, useState } from 'react'
 import { deleteEvent, listEvents, listOrganizers } from '@/client'
+import type {
+	Event as ApiEvent,
+	Organizer as ApiOrganizer
+} from '@/client/types.gen'
 import { DataTableColumnHeader } from '@/components/data-table/column-header'
 import { DataTable } from '@/components/data-table/data-table'
 import { dateRangeFilter } from '@/components/data-table/date-range-filter'
@@ -27,49 +39,40 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { me } from '@/lib/auth'
 
-interface Event {
-	id: number
-	title_de: string
-	title_en?: string
-	description_de?: string
-	description_en?: string
-	start_date_time: string
-	end_date_time?: string
-	organizer_id: number
-}
-
-interface Organizer {
-	id: number
-	name: string
-}
-
 export default function EventsPage() {
 	const qc = useQueryClient()
 	const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
 	const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
-	const userId = meData?.id as number | undefined
+	const organizerId = meData?.organizer_id ?? undefined
+	const isAdmin = meData?.account_type === 'ADMIN'
 
-	const { data, isLoading, error, refetch } = useQuery({
+	const { data, isLoading, error, refetch } = useQuery<ApiEvent[]>({
 		queryKey: ['events'],
-		queryFn: () => listEvents()
+		queryFn: async () => {
+			const response = await listEvents({ throwOnError: true })
+			return response.data ?? []
+		}
 	})
 
-	const { data: organizersData } = useQuery({
+	const { data: organizersData } = useQuery<ApiOrganizer[]>({
 		queryKey: ['organizers'],
-		queryFn: () => listOrganizers()
+		queryFn: async () => {
+			const response = await listOrganizers({ throwOnError: true })
+			return response.data ?? []
+		}
 	})
 
 	const getOrganizerName = useCallback(
 		(organizerId: number) => {
-			const organizer = organizersData?.data?.find(
-				(org: Organizer) => org.id === organizerId
+			const organizer = organizersData?.find(
+				(org: ApiOrganizer) => org.id === organizerId
 			)
 			return organizer?.name || 'Unbekannter Verein'
 		},
 		[organizersData]
 	)
 
-	const events = useMemo(() => (data?.data ?? []) as Event[], [data])
+	const events = useMemo(() => data ?? [], [data])
 
 	const onDelete = useCallback(
 		async (id: number) => {
@@ -79,7 +82,7 @@ export default function EventsPage() {
 		[qc]
 	)
 
-	const columns: ColumnDef<Event>[] = useMemo(
+	const columns: ColumnDef<ApiEvent>[] = useMemo(
 		() => [
 			{
 				accessorKey: 'title_de',
@@ -176,9 +179,16 @@ export default function EventsPage() {
 				enableHiding: false,
 				cell: ({ row }) => {
 					const e = row.original
+					const shareUrl = `${window.location.origin}/e/${e.id}`
+
+					const handleShare = () => {
+						navigator.clipboard.writeText(shareUrl)
+					}
+
 					return (
 						<div className="flex justify-center">
-							{userId && userId === e.organizer_id ? (
+							{isAdmin ||
+							(organizerId !== undefined && organizerId === e.organizer_id) ? (
 								<div className="flex items-center gap-2">
 									<Link href={`/events/${e.id}`}>
 										<Button variant="outline" size="sm" className="h-8 px-2">
@@ -220,18 +230,31 @@ export default function EventsPage() {
 								// biome-ignore lint/complexity/noUselessFragments: soon™
 								<></>
 							)}
+
+							{/* Share button - always visible if publish_web is true */}
+							{e.publish_web && (
+								<Button
+									variant="outline"
+									size="sm"
+									className="h-8 px-2"
+									onClick={handleShare}
+									title="Share link kopieren"
+								>
+									<Share2 className="h-4 w-4" />
+								</Button>
+							)}
 						</div>
 					)
 				},
 				size: 200
 			}
 		],
-		[userId, getOrganizerName, onDelete]
+		[organizerId, isAdmin, getOrganizerName, onDelete]
 	)
 
 	const organizerOptions = useMemo(() => {
 		return (
-			organizersData?.data?.map((org: Organizer) => ({
+			organizersData?.map((org: ApiOrganizer) => ({
 				label: org.name,
 				value: org.id.toString()
 			})) || []
@@ -274,7 +297,13 @@ export default function EventsPage() {
 
 	return (
 		<div className="flex flex-col min-h-screen">
-			<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+			<header
+				className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur-sm px-4"
+				style={{
+					backdropFilter: 'blur(8px)',
+					WebkitBackdropFilter: 'blur(8px)'
+				}}
+			>
 				<SidebarTrigger className="-ml-1" />
 				<div className="flex items-center gap-2">
 					<h1 className="text-lg font-semibold">Events</h1>
@@ -315,7 +344,7 @@ export default function EventsPage() {
 							<RefreshCw className="h-4 w-4" />
 							Aktualisieren
 						</Button>
-						{userId && (
+						{organizerId !== undefined && (
 							<Link href="/events/new">
 								<Button size="sm" className="flex items-center gap-2">
 									<Plus className="h-4 w-4" />
@@ -357,7 +386,7 @@ export default function EventsPage() {
 				) : (
 					<EventsCalendar
 						events={events}
-						organizers={organizersData?.data || []}
+						organizers={organizersData || []}
 						onDelete={onDelete}
 					/>
 				)}

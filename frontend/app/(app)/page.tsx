@@ -14,6 +14,10 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { listEvents, listOrganizers } from '@/client'
+import type {
+	Event as ApiEvent,
+	Organizer as ApiOrganizer
+} from '@/client/types.gen'
 import QuickActions from '@/components/quick-actions'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -29,21 +33,29 @@ import { me } from '@/lib/auth'
 
 export default function Dashboard() {
 	const { data: user } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
-	const { data: events, isLoading: eventsLoading } = useQuery({
+	const { data: events = [], isLoading: eventsLoading } = useQuery<ApiEvent[]>({
 		queryKey: ['events'],
-		queryFn: () => listEvents()
+		queryFn: async () => {
+			const response = await listEvents({ throwOnError: true })
+			return response.data ?? []
+		}
 	})
-	const { data: organizers } = useQuery({
+	const { data: organizers = [] } = useQuery<ApiOrganizer[]>({
 		queryKey: ['organizers'],
-		queryFn: () => listOrganizers()
+		queryFn: async () => {
+			const response = await listOrganizers({ throwOnError: true })
+			return response.data ?? []
+		}
 	})
 
 	const now = new Date()
-	const allEvents = events?.data ?? []
+	const allEvents = events
+	const organizerList = organizers
+	const isAdmin = user?.account_type === 'ADMIN'
 
 	// Get current user's organizer profile
-	const currentUserOrganizer = organizers?.data?.find(
-		(o: any) => o.id === user?.id
+	const currentUserOrganizer = organizerList.find(
+		(o) => o.id === user?.organizer_id
 	)
 
 	// Check if organizer profile is incomplete
@@ -54,11 +66,13 @@ export default function Dashboard() {
 			!currentUserOrganizer.website_url)
 
 	// Get user's events
-	const userEvents = allEvents.filter((e: any) => e.organizer_id === user?.id)
-	const userUpcomingEvents = userEvents.filter(
-		(e: any) => new Date(e.start_date_time) > now
+	const userEvents = allEvents.filter(
+		(e) => e.organizer_id === user?.organizer_id
 	)
-	const userPublishedEvents = userEvents.filter((e: any) => e.publish_app)
+	const userUpcomingEvents = userEvents.filter(
+		(e) => new Date(e.start_date_time) > now
+	)
+	const userPublishedEvents = userEvents.filter((e) => e.publish_app)
 
 	// Quick actions moved to dedicated component
 
@@ -83,7 +97,7 @@ export default function Dashboard() {
 		},
 		{
 			title: 'Alle Vereine',
-			value: organizers?.data?.length || 0,
+			value: organizerList.length,
 			icon: Users,
 			description: 'Alle Vereine'
 		}
@@ -91,7 +105,13 @@ export default function Dashboard() {
 
 	return (
 		<div className="flex flex-col min-h-screen">
-			<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+			<header
+				className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur-sm px-4"
+				style={{
+					backdropFilter: 'blur(8px)',
+					WebkitBackdropFilter: 'blur(8px)'
+				}}
+			>
 				<SidebarTrigger className="-ml-1" />
 				<div className="flex items-center gap-2">
 					<h1 className="text-lg font-semibold">Dashboard</h1>
@@ -102,7 +122,7 @@ export default function Dashboard() {
 				<div className="flex items-center justify-between">
 					<div>
 						<h2 className="text-3xl font-bold tracking-tight">
-							{user ? `Willkommen zurück, ${user.name}` : 'Willkommen'}
+							{user ? `Willkommen zurück, ${user.display_name}` : 'Willkommen'}
 						</h2>
 						<p className="text-muted-foreground mt-1">
 							Verwalte deine Events und dein Vereinsprofil
@@ -138,146 +158,160 @@ export default function Dashboard() {
 				{/* Quick Actions */}
 				<div className="space-y-3">
 					<h3 className="text-lg font-semibold">Schnellaktionen</h3>
-					<QuickActions userEventsCount={userEvents.length} />
+					<QuickActions userEventsCount={userEvents.length} isAdmin={isAdmin} />
 				</div>
 
-				<div className="space-y-4">
-					<h3 className="text-lg font-semibold">Übersicht</h3>
-					<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-						{stats.map((stat) => (
-							<Card key={stat.title}>
-								<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-									<CardTitle className="text-sm font-medium">
-										{stat.title}
-									</CardTitle>
-									<stat.icon className="h-4 w-4 text-muted-foreground" />
+				{isAdmin ? (
+					<div>
+						<h3 className="text-lg font-semibold">Admin-Übersicht</h3>
+						<p className="text-muted-foreground mt-1">
+							Als Admin kannst du alle Events und Vereine verwalten, alle
+							Änderungen im System nachvollziehen und neue Vereine einladen.
+						</p>
+					</div>
+				) : (
+					<>
+						<div className="space-y-4">
+							<h3 className="text-lg font-semibold">Übersicht</h3>
+							<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+								{stats.map((stat) => (
+									<Card key={stat.title}>
+										<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+											<CardTitle className="text-sm font-medium">
+												{stat.title}
+											</CardTitle>
+											<stat.icon className="h-4 w-4 text-muted-foreground" />
+										</CardHeader>
+										<CardContent>
+											<div className="text-2xl font-bold">{stat.value}</div>
+											<p className="text-xs text-muted-foreground">
+												{stat.description}
+											</p>
+										</CardContent>
+									</Card>
+								))}
+							</div>
+						</div>
+
+						{/* Your Events */}
+						<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+							<Card className="col-span-4">
+								<CardHeader>
+									<CardTitle>Deine anstehenden Events</CardTitle>
+									<CardDescription>
+										Events, die du erstellt hast und die bevorstehen
+									</CardDescription>
 								</CardHeader>
 								<CardContent>
-									<div className="text-2xl font-bold">{stat.value}</div>
-									<p className="text-xs text-muted-foreground">
-										{stat.description}
-									</p>
+									{eventsLoading ? (
+										<div className="space-y-2">
+											{Array.from({ length: 3 }, (_, i) => (
+												<div
+													key={`upcoming-skeleton-${Date.now()}-${i}`}
+													className="h-16 bg-muted animate-pulse rounded"
+												/>
+											))}
+										</div>
+									) : userUpcomingEvents.length === 0 ? (
+										<div className="text-center py-8">
+											<Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+											<p className="text-muted-foreground mb-4">
+												Keine anstehenden Events
+											</p>
+											<Link href="/events/new">
+												<Button size="sm">
+													<Plus className="h-4 w-4 mr-2" />
+													Erstelle dein erstes Event
+												</Button>
+											</Link>
+										</div>
+									) : (
+										<div className="space-y-4">
+											{userUpcomingEvents.slice(0, 5).map((event) => (
+												<div
+													key={event.id}
+													className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+												>
+													<div className="space-y-1">
+														<p className="text-sm font-medium leading-none">
+															{event.title_de}
+														</p>
+														<p className="text-sm text-muted-foreground">
+															{format(new Date(event.start_date_time), 'PPpp')}
+														</p>
+													</div>
+													<div className="flex items-center gap-2">
+														<Badge
+															variant={
+																event.publish_app ? 'default' : 'secondary'
+															}
+														>
+															{event.publish_app ? 'Veröffentlicht' : 'Entwurf'}
+														</Badge>
+														<Link href={`/events/${event.id}`}>
+															<Button size="sm" variant="ghost">
+																<ExternalLink className="h-3 w-3" />
+															</Button>
+														</Link>
+													</div>
+												</div>
+											))}
+										</div>
+									)}
 								</CardContent>
 							</Card>
-						))}
-					</div>
-				</div>
 
-				{/* Your Events */}
-				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-					<Card className="col-span-4">
-						<CardHeader>
-							<CardTitle>Deine anstehenden Events</CardTitle>
-							<CardDescription>
-								Events, die du erstellt hast und die bevorstehen
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							{eventsLoading ? (
-								<div className="space-y-2">
-									{Array.from({ length: 3 }, (_, i) => (
-										<div
-											key={`upcoming-skeleton-${Date.now()}-${i}`}
-											className="h-16 bg-muted animate-pulse rounded"
-										/>
-									))}
-								</div>
-							) : userUpcomingEvents.length === 0 ? (
-								<div className="text-center py-8">
-									<Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-									<p className="text-muted-foreground mb-4">
-										Keine anstehenden Events
-									</p>
-									<Link href="/events/new">
-										<Button size="sm">
-											<Plus className="h-4 w-4 mr-2" />
-											Erstelle dein erstes Event
-										</Button>
-									</Link>
-								</div>
-							) : (
-								<div className="space-y-4">
-									{userUpcomingEvents.slice(0, 5).map((event: any) => (
-										<div
-											key={event.id}
-											className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-										>
-											<div className="space-y-1">
-												<p className="text-sm font-medium leading-none">
-													{event.title_de}
-												</p>
-												<p className="text-sm text-muted-foreground">
-													{format(new Date(event.start_date_time), 'PPpp')}
-												</p>
-											</div>
-											<div className="flex items-center gap-2">
-												<Badge
-													variant={event.publish_app ? 'default' : 'secondary'}
+							<Card className="col-span-3">
+								<CardHeader>
+									<CardTitle>Aktivitäten</CardTitle>
+									<CardDescription>
+										Deine letzten Events und Updates
+									</CardDescription>
+								</CardHeader>
+								<CardContent>
+									{eventsLoading ? (
+										<div className="space-y-2">
+											{Array.from({ length: 3 }, (_, i) => (
+												<div
+													key={`recent-skeleton-${Date.now()}-${i}`}
+													className="h-12 bg-muted animate-pulse rounded"
+												/>
+											))}
+										</div>
+									) : userEvents.length === 0 ? (
+										<div className="text-center py-6">
+											<BarChart3 className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+											<p className="text-sm text-muted-foreground">
+												Noch keine Events
+											</p>
+										</div>
+									) : (
+										<div className="space-y-3">
+											{userEvents.slice(0, 4).map((event) => (
+												<div
+													key={event.id}
+													className="flex items-center justify-between p-2 rounded border"
 												>
-													{event.publish_app ? 'Veröffentlicht' : 'Entwurf'}
-												</Badge>
-												<Link href={`/events/${event.id}`}>
-													<Button size="sm" variant="ghost">
-														<ExternalLink className="h-3 w-3" />
-													</Button>
-												</Link>
-											</div>
+													<div className="space-y-1">
+														<p className="text-sm font-medium leading-none line-clamp-1">
+															{event.title_de}
+														</p>
+														<p className="text-xs text-muted-foreground">
+															{format(new Date(event.start_date_time), 'MMM d')}
+														</p>
+													</div>
+													<Badge variant="outline" className="text-xs">
+														{event.publish_app ? 'Veröffentlicht' : 'Entwurf'}
+													</Badge>
+												</div>
+											))}
 										</div>
-									))}
-								</div>
-							)}
-						</CardContent>
-					</Card>
-
-					<Card className="col-span-3">
-						<CardHeader>
-							<CardTitle>Aktivitäten</CardTitle>
-							<CardDescription>
-								Deine letzten Events und Updates
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							{eventsLoading ? (
-								<div className="space-y-2">
-									{Array.from({ length: 3 }, (_, i) => (
-										<div
-											key={`recent-skeleton-${Date.now()}-${i}`}
-											className="h-12 bg-muted animate-pulse rounded"
-										/>
-									))}
-								</div>
-							) : userEvents.length === 0 ? (
-								<div className="text-center py-6">
-									<BarChart3 className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-									<p className="text-sm text-muted-foreground">
-										Noch keine Events
-									</p>
-								</div>
-							) : (
-								<div className="space-y-3">
-									{userEvents.slice(0, 4).map((event: any) => (
-										<div
-											key={event.id}
-											className="flex items-center justify-between p-2 rounded border"
-										>
-											<div className="space-y-1">
-												<p className="text-sm font-medium leading-none line-clamp-1">
-													{event.title_de}
-												</p>
-												<p className="text-xs text-muted-foreground">
-													{format(new Date(event.start_date_time), 'MMM d')}
-												</p>
-											</div>
-											<Badge variant="outline" className="text-xs">
-												{event.publish_app ? 'Veröffentlicht' : 'Entwurf'}
-											</Badge>
-										</div>
-									))}
-								</div>
-							)}
-						</CardContent>
-					</Card>
-				</div>
+									)}
+								</CardContent>
+							</Card>
+						</div>
+					</>
+				)}
 			</div>
 		</div>
 	)

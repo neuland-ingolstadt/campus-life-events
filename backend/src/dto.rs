@@ -10,6 +10,13 @@ pub struct CreateOrganizerRequest {
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
+#[serde(deny_unknown_fields)]
+pub struct InviteAdminRequest {
+    pub display_name: String,
+    pub email: String,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateOrganizerRequest {
     pub name: Option<String>,
     pub description_de: Option<String>,
@@ -17,7 +24,6 @@ pub struct UpdateOrganizerRequest {
     pub website_url: Option<String>,
     pub instagram_url: Option<String>,
     pub location: Option<String>,
-    pub super_user: Option<bool>,
 }
 
 impl UpdateOrganizerRequest {
@@ -28,7 +34,6 @@ impl UpdateOrganizerRequest {
             || self.website_url.is_some()
             || self.instagram_url.is_some()
             || self.location.is_some()
-            || self.super_user.is_some()
     }
 }
 
@@ -49,6 +54,8 @@ pub struct CreateEventRequest {
     pub publish_newsletter: bool,
     #[serde(default = "default_true")]
     pub publish_in_ical: bool,
+    #[serde(default = "default_true")]
+    pub publish_web: bool,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -65,6 +72,7 @@ pub struct UpdateEventRequest {
     pub publish_app: Option<bool>,
     pub publish_newsletter: Option<bool>,
     pub publish_in_ical: Option<bool>,
+    pub publish_web: Option<bool>,
 }
 
 impl UpdateEventRequest {
@@ -80,6 +88,7 @@ impl UpdateEventRequest {
             || self.publish_app.is_some()
             || self.publish_newsletter.is_some()
             || self.publish_in_ical.is_some()
+            || self.publish_web.is_some()
     }
 }
 
@@ -127,5 +136,18 @@ pub struct SetupTokenLookupRequest {
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct ChangePasswordRequest {
     pub current_password: String,
+    pub new_password: String,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+#[serde(deny_unknown_fields)]
+pub struct RequestPasswordResetRequest {
+    pub email: String,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ResetPasswordRequest {
+    pub token: String,
     pub new_password: String,
 }
