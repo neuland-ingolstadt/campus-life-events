@@ -1,6 +1,12 @@
 'use client'
 
-import { CircleQuestionMarkIcon, InfoIcon, MailIcon } from 'lucide-react'
+import {
+	CircleQuestionMarkIcon,
+	CodeIcon,
+	GithubIcon,
+	InfoIcon,
+	MailIcon
+} from 'lucide-react'
 import { useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -206,6 +212,43 @@ export default function SettingsPage() {
 						</CardContent>
 					</Card>
 				</div>
+			</div>
+
+			<div className="flex-1 p-4 md:p-8 space-y-6 pt-2">
+				<h2 className="text-3xl font-bold tracking-tight">Repository</h2>
+
+				<Card>
+					<CardHeader className="pb-3">
+						<CardTitle className="flex items-center gap-2">
+							<GithubIcon className="h-5 w-5" />
+							GitHub Repository
+						</CardTitle>
+						<CardDescription>Quellcode und Entwicklung</CardDescription>
+					</CardHeader>
+					<CardContent className="space-y-4">
+						<div className="space-y-2">
+							<div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+								<GithubIcon className="h-4 w-4" />
+								<a
+									href="https://github.com/neuland-ingolstadt/campus-life-events"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="font-medium transition-colors hover:text-primary"
+								>
+									neuland-ingolstadt/campus-life-events
+								</a>
+							</div>
+							{process.env.NEXT_PUBLIC_COMMIT_HASH && (
+								<div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+									<CodeIcon className="h-4 w-4" />
+									<span className="text-sm font-mono">
+										Commit: {process.env.NEXT_PUBLIC_COMMIT_HASH.slice(0, 8)}
+									</span>
+								</div>
+							)}
+						</div>
+					</CardContent>
+				</Card>
 			</div>
 		</div>
 	)
