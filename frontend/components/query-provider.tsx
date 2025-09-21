@@ -28,9 +28,11 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
 
 		// Add request interceptor to ensure credentials are included
 		const requestId = client.interceptors.request.use(async (request) => {
-			// Create a new request with credentials included
+			// Create a new request with credentials included, preserving the method
 			const newRequest = new Request(request.url, {
-				...request,
+				method: request.method,
+				headers: request.headers,
+				body: request.body,
 				credentials: 'include'
 			})
 			return newRequest
