@@ -6,12 +6,12 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useId, useState } from 'react'
 import Beams from '@/components/Beams'
 import NeulandPalm from '@/components/neuland-palm'
-import { ThemeToggle } from '@/components/theme-toggle'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { UnifiedFooter } from '@/components/unified-footer'
 import { login } from '@/lib/auth'
 
 function getErrorMessage(error: unknown): string {
@@ -180,41 +180,7 @@ export default function LoginPage() {
 					</Card>
 				</div>
 			</div>
-			{/* Footer */}
-			<footer className="px-6 py-4 text-sm text-muted-foreground flex items-center justify-between gap-4 flex-wrap bg-black">
-				<div className="flex items-center gap-4 flex-wrap">
-					<span>
-						© {`${new Date().getFullYear()} `}
-						<Link
-							href="https://neuland-ingolstadt.de"
-							className="hover:underline"
-						>
-							Neuland Ingolstadt e.V.
-						</Link>
-					</span>
-					<span>•</span>
-					<Link
-						href="https://neuland-ingolstadt.de/legal/impressum"
-						className="hover:underline"
-					>
-						Impressum
-					</Link>
-					<span>•</span>
-					<Link
-						href="https://neuland-ingolstadt.de/legal/datenschutz"
-						className="hover:underline"
-					>
-						Datenschutz
-					</Link>
-					<span>•</span>
-					<Link href="https://studver.thi.de" className="hover:underline">
-						StudVer
-					</Link>
-				</div>
-				<div className="flex items-center">
-					<ThemeToggle />
-				</div>
-			</footer>
+			<UnifiedFooter variant="auth" showThemeToggle />
 		</div>
 	)
 }

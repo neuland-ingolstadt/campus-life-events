@@ -23,19 +23,8 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
 			baseUrl: '',
 			headers: {
 				'Content-Type': 'application/json'
-			}
-		})
-
-		// Add request interceptor to ensure credentials are included
-		const requestId = client.interceptors.request.use(async (request) => {
-			// Create a new request with credentials included, preserving the method
-			const newRequest = new Request(request.url, {
-				method: request.method,
-				headers: request.headers,
-				body: request.body,
-				credentials: 'include'
-			})
-			return newRequest
+			},
+			credentials: 'include'
 		})
 
 		// Redirect to login on 401 responses
@@ -51,7 +40,6 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
 		})
 
 		return () => {
-			client.interceptors.request.eject(requestId)
 			client.interceptors.response.eject(responseId)
 		}
 	}, [])

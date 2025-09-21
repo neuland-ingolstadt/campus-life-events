@@ -123,6 +123,9 @@ NEXT_PUBLIC_COMMIT_HASH=local-dev
 - Use React Hook Form for form handling
 - Generate API client with `bun run openapi-ts` when backend changes
 
+## General Guidelines
+- Do not write comments in the code
+
 ## Database Management
 
 ### Migrations
