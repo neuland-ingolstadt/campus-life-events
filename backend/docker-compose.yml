@@ -9,13 +9,13 @@ services:
       POSTGRES_PASSWORD: cle_password
       POSTGRES_DB: cle_db
     ports:
-      - "54322:5432"
+      - "5422:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdatae:/var/lib/postgresql/data
     restart: unless-stopped
 
 volumes:
-  pgdata:
+  pgdatae:
 
 
 
