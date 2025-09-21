@@ -72,9 +72,10 @@ async function getPublicOrganizer(id: number): Promise<Organizer | null> {
 export default async function PublicEventPage({
 	params
 }: {
-	params: { id: string }
+	params: Promise<{ id: string }>
 }) {
-	const id = Number(params.id)
+	const resolvedParams = await params
+	const id = Number(resolvedParams.id)
 
 	if (!Number.isFinite(id)) {
 		notFound()

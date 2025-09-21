@@ -6,6 +6,7 @@ import {
 	Calendar,
 	CalendarDays,
 	Home,
+	Mail,
 	Settings,
 	Shield,
 	Users
@@ -60,6 +61,11 @@ export function DashboardSidebar() {
 				icon: Users
 			},
 			{
+				title: 'Newsletter',
+				url: '/newsletter',
+				icon: Mail
+			},
+			{
 				title: 'iCal Abonnements',
 				url: '/ical',
 				icon: CalendarDays
@@ -77,7 +83,7 @@ export function DashboardSidebar() {
 		]
 
 		if (isAdmin) {
-			base.splice(3, 0, {
+			base.splice(4, 0, {
 				title: 'Admin',
 				url: '/admin',
 				icon: Shield

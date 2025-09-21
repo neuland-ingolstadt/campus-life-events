@@ -58,6 +58,7 @@ export function DataTable<TData, TValue>({
 	initialPageSize,
 	initialSorting
 }: DataTableProps<TData, TValue>) {
+	'use no memo'
 	const tableStateKey = useMemo(() => `tableState-${tableId}`, [tableId])
 	const [isClient, setIsClient] = useState(false)
 

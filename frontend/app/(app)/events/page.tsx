@@ -15,6 +15,7 @@ import { EventsCalendar } from '@/components/events-calendar'
 import { me } from '@/lib/auth'
 
 export default function EventsPage() {
+	'use no memo'
 	const qc = useQueryClient()
 	const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
 	const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })

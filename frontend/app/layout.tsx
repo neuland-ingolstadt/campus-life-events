@@ -12,7 +12,6 @@ export const metadata: Metadata = {
 		nosnippet: true,
 		noimageindex: true
 	},
-	themeColor: '#000000',
 	openGraph: {
 		title: 'Campus Life Events',
 		description:

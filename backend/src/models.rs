@@ -66,6 +66,28 @@ pub struct Event {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
+pub struct EventWithOrganizer {
+    pub id: i64,
+    pub organizer_id: i64,
+    pub title_de: String,
+    pub title_en: String,
+    pub description_de: Option<String>,
+    pub description_en: Option<String>,
+    pub start_date_time: DateTime<Utc>,
+    pub end_date_time: Option<DateTime<Utc>>,
+    pub event_url: Option<String>,
+    pub location: Option<String>,
+    pub publish_app: bool,
+    pub publish_newsletter: bool,
+    pub publish_in_ical: bool,
+    pub publish_web: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub organizer_name: String,
+    pub organizer_website: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct AuditLogEntry {
     pub id: i64,
     pub event_id: i64,

@@ -117,6 +117,11 @@ export type LoginRequest = {
     password: string;
 };
 
+export type NewsletterTemplateResponse = {
+    html_body: string;
+    subject: string;
+};
+
 export type Organizer = {
     created_at: string;
     description_de?: string | null;
@@ -444,6 +449,22 @@ export type CreateEventResponses = {
 };
 
 export type CreateEventResponse = CreateEventResponses[keyof CreateEventResponses];
+
+export type GetNewsletterTemplateData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/events/newsletter-template';
+};
+
+export type GetNewsletterTemplateResponses = {
+    /**
+     * Generate official newsletter template for upcoming weeks
+     */
+    200: NewsletterTemplateResponse;
+};
+
+export type GetNewsletterTemplateResponse = GetNewsletterTemplateResponses[keyof GetNewsletterTemplateResponses];
 
 export type DeleteEventData = {
     body?: never;

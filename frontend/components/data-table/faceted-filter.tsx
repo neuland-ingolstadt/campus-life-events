@@ -1,5 +1,5 @@
 import type { Column } from '@tanstack/react-table'
-import { Check, PlusCircle } from 'lucide-react'
+import { Check, PlusCircle, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -45,6 +45,7 @@ export function DataTableFacetedFilter<TData, TValue>({
 	mode = 'multiple',
 	options = []
 }: DataTableFacetedFilterProps<TData, TValue>) {
+	'use no memo'
 	const facets = column.getFacetedUniqueValues()
 	const selectedValues = new Set(column.getFilterValue() as string[])
 
@@ -85,6 +86,17 @@ export function DataTableFacetedFilter<TData, TValue>({
 										))
 								)}
 							</div>
+							<Button
+								variant="ghost"
+								size="sm"
+								className="ml-2 h-6 w-6 p-0 hover:bg-destructive hover:text-destructive-foreground"
+								onClick={(e) => {
+									e.stopPropagation()
+									column?.setFilterValue(undefined)
+								}}
+							>
+								<X className="h-3 w-3" />
+							</Button>
 						</>
 					)}
 				</Button>

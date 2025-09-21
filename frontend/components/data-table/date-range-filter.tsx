@@ -45,17 +45,20 @@ export function DataTableDateRangeFilter<TData, TValue>({
 	const hasFilter = dateRange?.from || dateRange?.to
 
 	return (
-		<div className="flex items-center">
-			<Popover>
-				<PopoverTrigger asChild>
-					<Button
-						variant="outline"
-						size="sm"
-						className={cn('h-8 border-dashed', hasFilter && 'border-solid')}
-					>
-						<CalendarIcon className="mr-2 h-4 w-4" />
-						{title}
-						{hasFilter && (
+		<Popover>
+			<PopoverTrigger asChild>
+				<Button
+					variant="outline"
+					size="sm"
+					className={cn(
+						'h-8 border-dashed relative',
+						hasFilter && 'border-solid'
+					)}
+				>
+					<CalendarIcon className="mr-2 h-4 w-4" />
+					{title}
+					{hasFilter && (
+						<>
 							<span className="ml-2 text-xs">
 								{dateRange?.from ? (
 									dateRange?.to ? (
@@ -70,30 +73,31 @@ export function DataTableDateRangeFilter<TData, TValue>({
 									'Filter aktiv'
 								)}
 							</span>
-						)}
-					</Button>
-				</PopoverTrigger>
-				<PopoverContent className="w-auto p-0" align="start">
-					<Calendar
-						mode="range"
-						selected={dateRange}
-						onSelect={handleDateSelect}
-						numberOfMonths={2}
-						defaultMonth={dateRange?.from}
-					/>
-				</PopoverContent>
-			</Popover>
-			{hasFilter && (
-				<Button
-					variant="ghost"
-					size="sm"
-					className="ml-1 h-8 w-8 p-0 hover:bg-transparent"
-					onClick={clearFilter}
-				>
-					<X className="h-3 w-3" />
+							<Button
+								variant="ghost"
+								size="sm"
+								className="ml-2 h-6 w-6 p-0 hover:bg-destructive hover:text-destructive-foreground"
+								onClick={(e) => {
+									e.stopPropagation()
+									clearFilter()
+								}}
+							>
+								<X className="h-3 w-3" />
+							</Button>
+						</>
+					)}
 				</Button>
-			)}
-		</div>
+			</PopoverTrigger>
+			<PopoverContent className="w-auto p-0" align="start">
+				<Calendar
+					mode="range"
+					selected={dateRange}
+					onSelect={handleDateSelect}
+					numberOfMonths={2}
+					defaultMonth={dateRange?.from}
+				/>
+			</PopoverContent>
+		</Popover>
 	)
 }
 

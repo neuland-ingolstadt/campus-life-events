@@ -9,7 +9,8 @@ use crate::{
     },
     models::{AdminWithInvite, AuditLogEntry, Event, InviteStatus, Organizer, OrganizerWithInvite},
     responses::{
-        AuthUserResponse, ErrorResponse, HealthResponse, SetupTokenInfoResponse, SetupTokenResponse,
+        AuthUserResponse, ErrorResponse, HealthResponse, NewsletterDataResponse,
+        NewsletterTemplateResponse, SetupTokenInfoResponse, SetupTokenResponse,
     },
     routes,
 };
@@ -48,6 +49,7 @@ use crate::{
         routes::events::get_event,
         routes::events::update_event,
         routes::events::delete_event,
+        routes::events::get_newsletter_template,
         routes::public_events::get_public_event,
         routes::public_events::get_public_organizer,
         routes::audit::list_audit_logs,
@@ -84,6 +86,7 @@ use crate::{
         AuthUserResponse,
         SetupTokenResponse,
         SetupTokenInfoResponse,
+        NewsletterTemplateResponse, NewsletterDataResponse,
         InviteStatus
     )),
     tags(
