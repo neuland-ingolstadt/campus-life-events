@@ -3,6 +3,7 @@
 import { Pencil, Share2, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useMemo } from 'react'
+import { toast } from 'sonner'
 import type { Event as ApiEvent } from '@/client/types.gen'
 import {
 	AlertDialog,
@@ -40,6 +41,7 @@ export function EventActionsCell({
 			return
 		}
 		void navigator.clipboard.writeText(shareUrl)
+		toast.success(`Öffentlicher Link wurde in die Zwischenablage kopiert.`)
 	}, [shareUrl])
 
 	return (

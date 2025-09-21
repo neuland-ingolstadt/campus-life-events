@@ -39,13 +39,12 @@ type Organizer = {
 	updated_at: string
 }
 
+const baseUrl = process.env.BACKEND_URL || 'http://localhost:8080'
+
 async function getPublicEvent(id: number): Promise<Event> {
-	const response = await fetch(
-		`http://localhost:8080/api/v1/public/events/${id}`,
-		{
-			cache: 'no-store'
-		}
-	)
+	const response = await fetch(`${baseUrl}/api/v1/public/events/${id}`, {
+		cache: 'no-store'
+	})
 
 	if (!response.ok) {
 		notFound()
@@ -56,12 +55,9 @@ async function getPublicEvent(id: number): Promise<Event> {
 
 async function getPublicOrganizer(id: number): Promise<Organizer | null> {
 	try {
-		const response = await fetch(
-			`http://localhost:8080/api/v1/public/organizers/${id}`,
-			{
-				cache: 'no-store'
-			}
-		)
+		const response = await fetch(`${baseUrl}/api/v1/public/organizers/${id}`, {
+			cache: 'no-store'
+		})
 
 		if (!response.ok) {
 			return null
@@ -79,6 +75,10 @@ export default async function PublicEventPage({
 	params: { id: string }
 }) {
 	const id = Number(params.id)
+
+	if (!Number.isFinite(id)) {
+		notFound()
+	}
 
 	const event = await getPublicEvent(id)
 	const organizer = event.organizer_id

@@ -30,3 +30,4 @@ lettre = { version = "0.11", default-features = false, features = ["builder", "s
 base64 = "0.22"
 rand = "0.8"
 icalendar = "0.12"
+chrono-tz = "0.10"

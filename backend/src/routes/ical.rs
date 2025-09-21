@@ -6,7 +6,8 @@ use axum::{
     routing::get,
 };
 use chrono::{DateTime, Utc};
-use icalendar::{Calendar, Component, Event as ICalEvent};
+use chrono_tz::Europe::Berlin;
+use icalendar::{Calendar, Component, Event as ICalEvent, Property};
 use tracing::instrument;
 
 use crate::{app_state::AppState, error::AppError, models::Organizer};
@@ -60,14 +61,20 @@ impl EventWithOrganizer {
             ical_event.description(desc);
         }
 
-        // Set start time
-        ical_event.starts(self.start_date_time);
+        let start_local = self.start_date_time.with_timezone(&Berlin);
+        let mut start_property =
+            Property::new("DTSTART", &start_local.format("%Y%m%dT%H%M%S").to_string());
+        start_property.add_parameter("TZID", BERLIN_TZID);
+        ical_event.append_property(start_property);
 
-        // Set end time - if not specified, assume 2 hours duration
         let end_time = self
             .end_date_time
             .unwrap_or_else(|| self.start_date_time + chrono::Duration::hours(2));
-        ical_event.ends(end_time);
+        let end_local = end_time.with_timezone(&Berlin);
+        let mut end_property =
+            Property::new("DTEND", &end_local.format("%Y%m%dT%H%M%S").to_string());
+        end_property.add_parameter("TZID", BERLIN_TZID);
+        ical_event.append_property(end_property);
 
         // Add event URL if available
         if let Some(url) = &self.event_url {
@@ -80,6 +87,8 @@ impl EventWithOrganizer {
         ical_event.done()
     }
 }
+
+const BERLIN_TZID: &str = "Europe/Berlin";
 
 #[derive(Debug, Clone, sqlx::FromRow)]
 struct EventWithOrganizerRow {
@@ -142,6 +151,7 @@ pub(crate) async fn get_all_events_ical(
     calendar.name("Campus Life Events");
     calendar.description("All campus life events");
     calendar.ttl(&chrono::Duration::hours(1));
+    calendar.timezone(BERLIN_TZID);
 
     for row in events_with_organizers {
         let event_with_organizer = EventWithOrganizer::from(row);
@@ -213,6 +223,7 @@ pub(crate) async fn get_organizer_events_ical(
     calendar.name(&format!("{} Events", organizer.name));
     calendar.description(&format!("Events organized by {}", organizer.name));
     calendar.ttl(&chrono::Duration::hours(1));
+    calendar.timezone(BERLIN_TZID);
 
     for row in events_with_organizers {
         let event_with_organizer = EventWithOrganizer::from(row);

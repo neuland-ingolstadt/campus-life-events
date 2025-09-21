@@ -96,7 +96,6 @@ export default function OrganizersPage() {
 									.filter((o) => o.id === organizerId)
 									.map((o) => (
 										<Card key={o.id}>
-											o
 											<CardHeader>
 												<div className="flex flex-row items-start justify-between gap-4">
 													<div className="flex-1 space-y-2">

@@ -215,19 +215,19 @@ export default function SettingsPage() {
 			</div>
 
 			<div className="flex-1 p-4 md:p-8 space-y-6 pt-2">
-				<h2 className="text-3xl font-bold tracking-tight">Repository</h2>
+				<h2 className="text-3xl font-bold tracking-tight">Über</h2>
 
 				<Card>
 					<CardHeader className="pb-3">
 						<CardTitle className="flex items-center gap-2">
 							<GithubIcon className="h-5 w-5" />
-							Über
+							GitHub
 						</CardTitle>
 						<CardDescription>Quellcode und Entwicklung</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-4">
 						<div className="space-y-2">
-							<div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+							<div className="flex items-center gap-2 bg-muted/50 rounded-lg">
 								<GithubIcon className="h-4 w-4" />
 								<a
 									href="https://github.com/neuland-ingolstadt/campus-life-events"
@@ -239,7 +239,7 @@ export default function SettingsPage() {
 								</a>
 							</div>
 							{process.env.NEXT_PUBLIC_COMMIT_HASH && (
-								<div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+								<div className="flex items-center gap-2 bg-muted/50 rounded-lg">
 									<CodeIcon className="h-4 w-4" />
 									<span className="text-sm font-mono">
 										Commit: {process.env.NEXT_PUBLIC_COMMIT_HASH.slice(0, 8)}
