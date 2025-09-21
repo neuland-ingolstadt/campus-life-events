@@ -375,14 +375,8 @@ function RegisterForm({ token }: { token: string }) {
 									</p>
 									{tokenStatus === 'valid' && clubName && (
 										<div className="mt-6 p-4 bg-primary/10 rounded-lg">
-											<p className="text-sm font-semibold text-primary">
-												Willkommen
-											</p>
-											<p className="text-lg font-bold text-foreground">
+											<p className="text-xl font-semibold text-foreground">
 												{clubName}
-											</p>
-											<p className="text-xs text-foreground/70 mt-1">
-												Richte dein Konto ein
 											</p>
 										</div>
 									)}
@@ -404,7 +398,7 @@ function RegisterForm({ token }: { token: string }) {
 												Willkommen
 											</p>
 										</div>
-										<p className="text-lg font-semibold text-blue-900 dark:text-blue-100 mt-1">
+										<p className="text-lg font-semibold text-blue-900 dark:text-blue-100 mt-1 text-center">
 											{clubName}
 										</p>
 									</div>

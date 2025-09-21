@@ -293,12 +293,12 @@ Campus Life Events ist ein Projekt der THI StudVer und wird von Neuland Ingolsta
 
         format!(
             "Hallo {display_name},\n\n\
-herzlich willkommen bei Campus Life Events! 🎉\n\n\
+herzlich willkommen bei Campus Life Events! 🎉\n\
 Dein Konto wurde erfolgreich aktiviert und du kannst dich jetzt in die Plattform einloggen.\n\n\
-{role_description}\n\n\
-Du kannst dich jederzeit über die Login-Seite anmelden und die Plattform nutzen.\n\n\
-Bei Fragen oder Problemen wende dich gerne an uns\n\n\
-Viele Grüße\nDas Neuland und StudVer Team\n\n\
+{role_description}\n\
+Du kannst dich jederzeit über die Login-Seite anmelden und die Plattform nutzen.\n\
+Bei Fragen oder Problemen wende dich gerne an uns.\n\n\
+Viele Grüße\nDas Neuland und StudVer Team\n\n\n\
 Campus Life Events ist ein Projekt der THI StudVer und wird von Neuland Ingolstadt e.V. entwickelt und betrieben."
         )
     }
