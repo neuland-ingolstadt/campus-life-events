@@ -580,10 +580,7 @@ pub(crate) async fn request_password_reset(
                 }
             }
         } else {
-            warn!(
-                "Email client not configured; password reset token: {}",
-                reset_token
-            );
+            warn!("email client not configured; password reset email not sent");
         }
     }
 

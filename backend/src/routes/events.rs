@@ -167,9 +167,10 @@ pub(crate) async fn create_event(
     params(("id" = i64, Path, description = "Event identifier")),
     responses((status = 200, description = "Event details", body = Event))
 )]
-#[instrument(skip(state))]
+#[instrument(skip(state, headers))]
 pub(crate) async fn get_event(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<i64>,
 ) -> Result<Json<Event>, AppError> {
     let event = sqlx::query_as::<_, Event>(
@@ -180,10 +181,25 @@ pub(crate) async fn get_event(
         "#,
     )
     .bind(id)
-    .fetch_one(&state.db)
+    .fetch_optional(&state.db)
     .await?;
 
-    Ok(Json(event))
+    let Some(event) = event else {
+        return Err(AppError::not_found("event not found"));
+    };
+
+    if event.publish_app || event.publish_web {
+        return Ok(Json(event));
+    }
+
+    let user = current_user_from_headers(&headers, &state).await.ok();
+    if let Some(user) = user
+        && (user.is_admin() || user.organizer_id() == Some(event.organizer_id))
+    {
+        return Ok(Json(event));
+    }
+
+    Err(AppError::not_found("event not found"))
 }
 
 #[utoipa::path(
@@ -247,12 +263,12 @@ pub(crate) async fn update_event(
     .await?;
 
     // Only check ownership if the user is not an admin
-    if let Some(organizer_id) = organizer_id {
-        if existing_event.organizer_id != organizer_id {
-            return Err(AppError::unauthorized(
-                "cannot update another organizer's event",
-            ));
-        }
+    if let Some(organizer_id) = organizer_id
+        && existing_event.organizer_id != organizer_id
+    {
+        return Err(AppError::unauthorized(
+            "cannot update another organizer's event",
+        ));
     }
 
     // Build assignments defensively to avoid any stray commas
@@ -370,12 +386,12 @@ pub(crate) async fn delete_event(
     };
 
     // Only check ownership if the user is not an admin
-    if let Some(organizer_id) = organizer_id {
-        if existing_event.organizer_id != organizer_id {
-            return Err(AppError::unauthorized(
-                "cannot delete another organizer's event",
-            ));
-        }
+    if let Some(organizer_id) = organizer_id
+        && existing_event.organizer_id != organizer_id
+    {
+        return Err(AppError::unauthorized(
+            "cannot delete another organizer's event",
+        ));
     }
 
     sqlx::query("DELETE FROM events WHERE id = $1")

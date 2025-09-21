@@ -100,15 +100,16 @@ async fn main() {
     // that's compatible with the current Axum version. These can be added later
     // with proper middleware implementations.
 
-    let swagger_router: Router<AppState> = SwaggerUi::new("/swagger-ui")
-        .url("/api-docs/openapi.json", ApiDoc::openapi())
+    let swagger_router: Router<AppState> = SwaggerUi::new("/api/swagger-ui")
+        .url("/api/api-docs/openapi.json", ApiDoc::openapi())
         .into();
 
-    let api = Router::new().nest("/api/v1", api_router());
+    let api = Router::new()
+        .nest("/api/v1", api_router())
+        .merge(swagger_router);
 
     let app = Router::new()
         .merge(api)
-        .merge(swagger_router)
         .layer(cors)
         .layer(SetResponseHeaderLayer::overriding(
             header::X_FRAME_OPTIONS,

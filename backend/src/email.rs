@@ -13,16 +13,6 @@ const INVITE_SUBJECT: &str = "Willkommen bei Campus Life Events";
 const WELCOME_SUBJECT: &str = "Willkommen bei Campus Life Events - Dein Konto ist aktiviert!";
 const PASSWORD_RESET_SUBJECT: &str = "Passwort zurücksetzen - Campus Life Events";
 
-/// Generate and log registration URL for debugging purposes when SMTP is not configured
-pub fn log_registration_url(token: &str) {
-    let base_url = env::var("BASE_URL").unwrap_or_else(|_| DEFAULT_BASE_URL.to_string());
-
-    let trimmed = base_url.trim_end_matches('/');
-    let url = format!("{trimmed}/register?token={token}");
-
-    eprintln!("⚠️  SMTP not configured - Registration URL: {url}");
-}
-
 #[derive(Clone)]
 pub struct EmailClient {
     mailer: AsyncSmtpTransport<Tokio1Executor>,
@@ -212,18 +202,12 @@ impl EmailClient {
 
     fn registration_url(&self, token: &str) -> String {
         let trimmed = self.base_url.trim_end_matches('/');
-        let url = format!("{trimmed}/register?token={token}");
-
-        println!("Registration URL: {url}");
-        url
+        format!("{trimmed}/register?token={token}")
     }
 
     fn reset_url(&self, token: &str) -> String {
         let trimmed = self.base_url.trim_end_matches('/');
-        let url = format!("{trimmed}/reset-password?token={token}");
-
-        println!("Reset URL: {url}");
-        url
+        format!("{trimmed}/reset-password?token={token}")
     }
 
     fn render_invite_template(

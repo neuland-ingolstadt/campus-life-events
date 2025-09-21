@@ -101,17 +101,11 @@ pub(crate) async fn create_organizer(
             Ok(_) => info!("organizer invite email sent successfully"),
             Err(err) => {
                 error!(error = %err, "failed to send organizer invite email");
-                // Log the registration URL for manual use
-                crate::email::log_registration_url(&token);
-                warn!(
-                    "organizer invite created but email failed - registration URL logged to console"
-                );
+                warn!("organizer invite created but email delivery failed");
             }
         }
     } else {
-        warn!("email client not configured; skipping organizer invite email");
-        // Log the registration URL for manual use
-        crate::email::log_registration_url(&token);
+        warn!("email client not configured; organizer invite email not sent");
     }
 
     tx.commit().await?;

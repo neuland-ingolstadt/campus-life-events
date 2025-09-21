@@ -86,11 +86,6 @@ pub(crate) async fn invite_admin(
     }
 
     let token = generate_setup_token_value();
-    tracing::debug!(
-        "Generated setup token: '{}' (length: {})",
-        token,
-        token.len()
-    );
     let mut tx = state.db.begin().await?;
 
     sqlx::query(
@@ -120,15 +115,11 @@ pub(crate) async fn invite_admin(
             Ok(_) => info!("admin invite email sent successfully"),
             Err(err) => {
                 error!(error = %err, "failed to send admin invite email");
-                // Log the registration URL for manual use
-                crate::email::log_registration_url(&token);
-                warn!("admin invite created but email failed - registration URL logged to console");
+                warn!("admin invite created but email delivery failed");
             }
         }
     } else {
-        warn!("email client not configured; skipping admin invite email");
-        // Log the registration URL for manual use
-        crate::email::log_registration_url(&token);
+        warn!("email client not configured; admin invite email not sent");
     }
 
     tx.commit().await?;
