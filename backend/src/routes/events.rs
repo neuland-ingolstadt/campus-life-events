@@ -26,7 +26,7 @@ use super::shared::{AuthedUser, current_user_from_headers};
     path = "/api/v1/events",
     tag = "Events",
     params(ListEventsQuery),
-    responses((status = 200, description = "List events", body = [Event]))
+    responses((status = 200, description = "List events", body = [Event]), (status = 401, description = "Unauthorized", body = ErrorResponse))
 )]
 #[instrument(skip(state, query_params, headers))]
 pub(crate) async fn list_events(
@@ -34,20 +34,14 @@ pub(crate) async fn list_events(
     Query(query_params): Query<ListEventsQuery>,
     headers: HeaderMap,
 ) -> Result<Json<Vec<Event>>, AppError> {
-    // Check if user is authenticated
-    let is_authenticated = current_user_from_headers(&headers, &state).await.is_ok();
+    // Require authentication for this endpoint
+    let _user = current_user_from_headers(&headers, &state).await?;
 
     let mut builder = QueryBuilder::<Postgres>::new(
         "SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at FROM events",
     );
 
     let mut has_where = false;
-
-    // If not authenticated, only show events that are published in the app
-    if !is_authenticated {
-        builder.push(" WHERE publish_app = true");
-        has_where = true;
-    }
 
     if let Some(organizer_id) = query_params.organizer_id {
         if has_where {
@@ -168,7 +162,7 @@ pub(crate) async fn create_event(
     path = "/api/v1/events/{id}",
     tag = "Events",
     params(("id" = i64, Path, description = "Event identifier")),
-    responses((status = 200, description = "Event details", body = Event))
+    responses((status = 200, description = "Event details", body = Event), (status = 401, description = "Unauthorized", body = ErrorResponse))
 )]
 #[instrument(skip(state, headers))]
 pub(crate) async fn get_event(
@@ -192,18 +186,15 @@ pub(crate) async fn get_event(
         return Err(AppError::not_found("event not found"));
     };
 
-    if event.publish_app || event.publish_web {
-        return Ok(Json(event));
-    }
+    // Require authentication for this endpoint
+    let user = current_user_from_headers(&headers, &state).await?;
 
-    let user = current_user_from_headers(&headers, &state).await.ok();
-    if let Some(user) = user
-        && (user.is_admin() || user.organizer_id() == Some(event.organizer_id))
-    {
-        return Ok(Json(event));
+    // Only allow admins or the event's organizer to access the event
+    if user.is_admin() || user.organizer_id() == Some(event.organizer_id) {
+        Ok(Json(event))
+    } else {
+        Err(AppError::not_found("event not found"))
     }
-
-    Err(AppError::not_found("event not found"))
 }
 
 #[utoipa::path(

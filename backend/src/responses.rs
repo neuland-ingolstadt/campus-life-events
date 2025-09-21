@@ -50,3 +50,28 @@ pub struct NewsletterDataResponse {
     pub next_week_start: DateTime<Utc>,
     pub week_after_start: DateTime<Utc>,
 }
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct PublicEventResponse {
+    pub id: i64,
+    pub organizer_id: i64,
+    pub title_de: String,
+    pub title_en: String,
+    pub description_de: Option<String>,
+    pub description_en: Option<String>,
+    pub start_date_time: DateTime<Utc>,
+    pub end_date_time: Option<DateTime<Utc>>,
+    pub event_url: Option<String>,
+    pub location: Option<String>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct PublicOrganizerResponse {
+    pub id: i64,
+    pub name: String,
+    pub description_de: Option<String>,
+    pub description_en: Option<String>,
+    pub website_url: Option<String>,
+    pub instagram_url: Option<String>,
+    pub location: Option<String>,
+}

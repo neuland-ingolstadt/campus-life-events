@@ -81,6 +81,27 @@ export type Event = {
     updated_at: string;
 };
 
+export type EventWithOrganizer = {
+    created_at: string;
+    description_de?: string | null;
+    description_en?: string | null;
+    end_date_time?: string | null;
+    event_url?: string | null;
+    id: number;
+    location?: string | null;
+    organizer_id: number;
+    organizer_name: string;
+    organizer_website?: string | null;
+    publish_app: boolean;
+    publish_in_ical: boolean;
+    publish_newsletter: boolean;
+    publish_web: boolean;
+    start_date_time: string;
+    title_de: string;
+    title_en: string;
+    updated_at: string;
+};
+
 export type HealthResponse = {
     message: string;
     status: string;
@@ -118,6 +139,15 @@ export type LoginRequest = {
     password: string;
 };
 
+export type NewsletterDataResponse = {
+    all_organizers: Array<Organizer>;
+    following_week_events: Array<EventWithOrganizer>;
+    next_week_events: Array<EventWithOrganizer>;
+    next_week_start: string;
+    subject: string;
+    week_after_start: string;
+};
+
 export type NewsletterTemplateResponse = {
     html_body: string;
     subject: string;
@@ -140,11 +170,34 @@ export type OrganizerWithInvite = {
     created_at: string;
     email?: string | null;
     id: number;
-    newsletter: boolean;
     invite_expires_at?: string | null;
     invite_status: InviteStatus;
     name: string;
+    newsletter: boolean;
     updated_at: string;
+};
+
+export type PublicEventResponse = {
+    description_de?: string | null;
+    description_en?: string | null;
+    end_date_time?: string | null;
+    event_url?: string | null;
+    id: number;
+    location?: string | null;
+    organizer_id: number;
+    start_date_time: string;
+    title_de: string;
+    title_en: string;
+};
+
+export type PublicOrganizerResponse = {
+    description_de?: string | null;
+    description_en?: string | null;
+    id: number;
+    instagram_url?: string | null;
+    location?: string | null;
+    name: string;
+    website_url?: string | null;
 };
 
 export type RequestPasswordResetRequest = {
@@ -184,6 +237,10 @@ export type UpdateEventRequest = {
     title_en?: string | null;
 };
 
+export type UpdateOrganizerPermissionsRequest = {
+    newsletter: boolean;
+};
+
 export type UpdateOrganizerRequest = {
     description_de?: string | null;
     description_en?: string | null;
@@ -191,10 +248,6 @@ export type UpdateOrganizerRequest = {
     location?: string | null;
     name?: string | null;
     website_url?: string | null;
-};
-
-export type UpdateOrganizerPermissionsRequest = {
-    newsletter: boolean;
 };
 
 export type InviteAdminData = {
@@ -232,6 +285,9 @@ export type ListAdminsResponse = ListAdminsResponses[keyof ListAdminsResponses];
 export type UpdateOrganizerPermissionsData = {
     body: UpdateOrganizerPermissionsRequest;
     path: {
+        /**
+         * Organizer identifier
+         */
         id: number;
     };
     query?: never;
@@ -450,6 +506,15 @@ export type ListEventsData = {
     url: '/api/v1/events';
 };
 
+export type ListEventsErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+};
+
+export type ListEventsError = ListEventsErrors[keyof ListEventsErrors];
+
 export type ListEventsResponses = {
     /**
      * List events
@@ -524,6 +589,15 @@ export type GetEventData = {
     url: '/api/v1/events/{id}';
 };
 
+export type GetEventErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+};
+
+export type GetEventError = GetEventErrors[keyof GetEventErrors];
+
 export type GetEventResponses = {
     /**
      * Event details
@@ -576,6 +650,15 @@ export type ListOrganizersData = {
     query?: never;
     url: '/api/v1/organizers';
 };
+
+export type ListOrganizersErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+};
+
+export type ListOrganizersError = ListOrganizersErrors[keyof ListOrganizersErrors];
 
 export type ListOrganizersResponses = {
     /**
@@ -651,6 +734,15 @@ export type GetOrganizerData = {
     url: '/api/v1/organizers/{id}';
 };
 
+export type GetOrganizerErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+};
+
+export type GetOrganizerError = GetOrganizerErrors[keyof GetOrganizerErrors];
+
 export type GetOrganizerResponses = {
     /**
      * Organizer details
@@ -702,6 +794,27 @@ export type GenerateSetupTokenResponses = {
 
 export type GenerateSetupTokenResponse = GenerateSetupTokenResponses[keyof GenerateSetupTokenResponses];
 
+export type ListPublicEventsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        organizer_id?: number;
+        upcoming_only?: boolean;
+        limit?: number;
+        offset?: number;
+    };
+    url: '/api/v1/public/events';
+};
+
+export type ListPublicEventsResponses = {
+    /**
+     * List public events
+     */
+    200: Array<PublicEventResponse>;
+};
+
+export type ListPublicEventsResponse = ListPublicEventsResponses[keyof ListPublicEventsResponses];
+
 export type GetPublicEventData = {
     body?: never;
     path: {
@@ -725,10 +838,26 @@ export type GetPublicEventResponses = {
     /**
      * Public event details
      */
-    200: Event;
+    200: PublicEventResponse;
 };
 
 export type GetPublicEventResponse = GetPublicEventResponses[keyof GetPublicEventResponses];
+
+export type ListPublicOrganizersData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/public/organizers';
+};
+
+export type ListPublicOrganizersResponses = {
+    /**
+     * List public organizers
+     */
+    200: Array<PublicOrganizerResponse>;
+};
+
+export type ListPublicOrganizersResponse = ListPublicOrganizersResponses[keyof ListPublicOrganizersResponses];
 
 export type GetPublicOrganizerData = {
     body?: never;
@@ -753,7 +882,7 @@ export type GetPublicOrganizerResponses = {
     /**
      * Public organizer details
      */
-    200: Organizer;
+    200: PublicOrganizerResponse;
 };
 
 export type GetPublicOrganizerResponse = GetPublicOrganizerResponses[keyof GetPublicOrganizerResponses];

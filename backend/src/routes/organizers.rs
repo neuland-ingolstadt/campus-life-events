@@ -13,7 +13,7 @@ use crate::{
     dto::{CreateOrganizerRequest, UpdateOrganizerRequest},
     error::AppError,
     models::{AccountType, Organizer, OrganizerInviteRow, OrganizerWithInvite},
-    responses::SetupTokenResponse,
+    responses::{ErrorResponse, SetupTokenResponse},
 };
 
 use super::shared::{current_user_from_headers, generate_setup_token_value};
@@ -22,12 +22,15 @@ use super::shared::{current_user_from_headers, generate_setup_token_value};
     get,
     path = "/api/v1/organizers",
     tag = "Organizers",
-    responses((status = 200, description = "List organizers", body = [Organizer]))
+    responses((status = 200, description = "List organizers", body = [Organizer]), (status = 401, description = "Unauthorized", body = ErrorResponse))
 )]
-#[instrument(skip(state))]
+#[instrument(skip(state, headers))]
 pub(crate) async fn list_organizers(
     State(state): State<AppState>,
+    headers: HeaderMap,
 ) -> Result<Json<Vec<Organizer>>, AppError> {
+    // Require authentication for this endpoint
+    let _user = current_user_from_headers(&headers, &state).await?;
     let organizers = sqlx::query_as!(
         Organizer,
         r#"
@@ -173,13 +176,16 @@ pub(crate) async fn list_organizers_admin(
     path = "/api/v1/organizers/{id}",
     tag = "Organizers",
     params(("id" = i64, Path, description = "Organizer identifier")),
-    responses((status = 200, description = "Organizer details", body = Organizer))
+    responses((status = 200, description = "Organizer details", body = Organizer), (status = 401, description = "Unauthorized", body = ErrorResponse))
 )]
-#[instrument(skip(state))]
+#[instrument(skip(state, headers))]
 pub(crate) async fn get_organizer(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Path(id): Path<i64>,
 ) -> Result<Json<Organizer>, AppError> {
+    // Require authentication for this endpoint
+    let _user = current_user_from_headers(&headers, &state).await?;
     let organizer = sqlx::query_as!(
         Organizer,
         r#"
