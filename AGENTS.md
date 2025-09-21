@@ -76,8 +76,7 @@ SMTP_USERNAME=apikey
 SMTP_PASSWORD=secret
 SMTP_FROM_EMAIL=events@example.com
 SMTP_FROM_NAME=Campus Life Events
-REGISTRATION_BASE_URL=http://localhost:3000/register
-RESET_BASE_URL=http://localhost:3000/reset-password
+BASE_URL=http://localhost:3000
 ```
 
 ### Frontend (.env.local in frontend/)

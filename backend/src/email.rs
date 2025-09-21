@@ -8,23 +8,17 @@ use lettre::{
 };
 use thiserror::Error;
 
-const DEFAULT_REGISTRATION_BASE_URL: &str = "http://localhost:3000/register";
-const DEFAULT_RESET_BASE_URL: &str = "http://localhost:3000/reset-password";
+const DEFAULT_BASE_URL: &str = "http://localhost:3000";
 const INVITE_SUBJECT: &str = "Willkommen bei Campus Life Events";
 const WELCOME_SUBJECT: &str = "Willkommen bei Campus Life Events - Dein Konto ist aktiviert!";
 const PASSWORD_RESET_SUBJECT: &str = "Passwort zurücksetzen - Campus Life Events";
 
 /// Generate and log registration URL for debugging purposes when SMTP is not configured
 pub fn log_registration_url(token: &str) {
-    let registration_base_url = env::var("REGISTRATION_BASE_URL")
-        .unwrap_or_else(|_| DEFAULT_REGISTRATION_BASE_URL.to_string());
+    let base_url = env::var("BASE_URL").unwrap_or_else(|_| DEFAULT_BASE_URL.to_string());
 
-    let trimmed = registration_base_url.trim_end_matches('?');
-    let url = if trimmed.contains('?') {
-        format!("{trimmed}&token={token}")
-    } else {
-        format!("{trimmed}?token={token}")
-    };
+    let trimmed = base_url.trim_end_matches('/');
+    let url = format!("{trimmed}/register?token={token}");
 
     eprintln!("⚠️  SMTP not configured - Registration URL: {url}");
 }
@@ -33,8 +27,7 @@ pub fn log_registration_url(token: &str) {
 pub struct EmailClient {
     mailer: AsyncSmtpTransport<Tokio1Executor>,
     from: Mailbox,
-    registration_base_url: String,
-    reset_base_url: String,
+    base_url: String,
 }
 
 #[derive(Debug, Error)]
@@ -59,10 +52,7 @@ impl EmailClient {
         let port = env::var("SMTP_PORT").ok();
         let from_email = env::var("SMTP_FROM_EMAIL").ok();
         let from_name = env::var("SMTP_FROM_NAME").ok();
-        let registration_base_url = env::var("REGISTRATION_BASE_URL")
-            .unwrap_or_else(|_| DEFAULT_REGISTRATION_BASE_URL.to_string());
-        let reset_base_url =
-            env::var("RESET_BASE_URL").unwrap_or_else(|_| DEFAULT_RESET_BASE_URL.to_string());
+        let base_url = env::var("BASE_URL").unwrap_or_else(|_| DEFAULT_BASE_URL.to_string());
 
         let required = [
             ("SMTP_HOST", host.as_ref()),
@@ -117,8 +107,7 @@ impl EmailClient {
         Ok(Some(Self {
             mailer,
             from,
-            registration_base_url,
-            reset_base_url,
+            base_url,
         }))
     }
 
@@ -222,24 +211,16 @@ impl EmailClient {
     }
 
     fn registration_url(&self, token: &str) -> String {
-        let trimmed = self.registration_base_url.trim_end_matches('?');
-        let url = if trimmed.contains('?') {
-            format!("{trimmed}&token={token}")
-        } else {
-            format!("{trimmed}?token={token}")
-        };
+        let trimmed = self.base_url.trim_end_matches('/');
+        let url = format!("{trimmed}/register?token={token}");
 
         println!("Registration URL: {url}");
         url
     }
 
     fn reset_url(&self, token: &str) -> String {
-        let trimmed = self.reset_base_url.trim_end_matches('?');
-        let url = if trimmed.contains('?') {
-            format!("{trimmed}&token={token}")
-        } else {
-            format!("{trimmed}?token={token}")
-        };
+        let trimmed = self.base_url.trim_end_matches('/');
+        let url = format!("{trimmed}/reset-password?token={token}");
 
         println!("Reset URL: {url}");
         url
