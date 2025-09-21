@@ -17,7 +17,7 @@ export function UnifiedFooter({
 	const links = {
 		impressum: 'https://neuland-ingolstadt.de/legal/impressum',
 		privacy: 'https://neuland-ingolstadt.de/legal/datenschutz',
-		studver: 'https://studver.thi.de'
+		studver: 'https://studverthi.de'
 	}
 
 	const getFooterClasses = () => {
