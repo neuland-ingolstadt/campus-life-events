@@ -4,6 +4,7 @@ import {
 	CircleQuestionMarkIcon,
 	CodeIcon,
 	GithubIcon,
+	GitPullRequest,
 	InfoIcon,
 	MailIcon
 } from 'lucide-react'
@@ -228,7 +229,7 @@ export default function SettingsPage() {
 					<CardContent className="space-y-4">
 						<div className="space-y-2">
 							<div className="flex items-center gap-2 bg-muted/50 rounded-lg">
-								<GithubIcon className="h-4 w-4" />
+								<GitPullRequest className="h-4 w-4" />
 								<a
 									href="https://github.com/neuland-ingolstadt/campus-life-events"
 									target="_blank"

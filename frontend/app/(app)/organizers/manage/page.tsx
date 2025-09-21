@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
-import { ChevronRight, Pencil, RefreshCw, Trash2 } from 'lucide-react'
+import { Pencil, RefreshCw, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useMemo } from 'react'
 import { deleteOrganizer, listOrganizersAdmin } from '@/client'
@@ -11,6 +11,7 @@ import type { OrganizerWithInvite } from '@/client/types.gen'
 import { CreateOrganizerDialog } from '@/components/create-organizer-dialog'
 import { DataTableColumnHeader } from '@/components/data-table/column-header'
 import { DataTable } from '@/components/data-table/data-table'
+import { OrganizerPermissionsDialog } from '@/components/organizer-permissions-dialog'
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -22,6 +23,15 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
+import { Badge } from '@/components/ui/badge'
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator
+} from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SidebarTrigger } from '@/components/ui/sidebar'
@@ -29,7 +39,11 @@ import { me } from '@/lib/auth'
 
 export default function ManageOrganizersPage() {
 	const qc = useQueryClient()
-	const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
+	const { data: meData, isLoading: meLoading } = useQuery({
+		queryKey: ['auth', 'me'],
+		queryFn: me,
+		retry: false
+	})
 	const isAdmin = meData?.account_type === 'ADMIN'
 
 	const { data, isLoading, error, refetch } = useQuery<OrganizerWithInvite[]>({
@@ -37,7 +51,8 @@ export default function ManageOrganizersPage() {
 		queryFn: async () => {
 			const response = await listOrganizersAdmin({ throwOnError: true })
 			return response.data ?? []
-		}
+		},
+		enabled: !!meData && isAdmin
 	})
 
 	const organizers = useMemo(() => data ?? [], [data])
@@ -50,6 +65,11 @@ export default function ManageOrganizersPage() {
 		},
 		[qc]
 	)
+
+	const onPermissionsUpdated = useCallback(async () => {
+		await qc.invalidateQueries({ queryKey: ['organizers-admin'] })
+		await qc.invalidateQueries({ queryKey: ['organizers'] })
+	}, [qc])
 
 	const columns: ColumnDef<OrganizerWithInvite>[] = useMemo(
 		() => [
@@ -107,6 +127,22 @@ export default function ManageOrganizersPage() {
 				size: 150
 			},
 			{
+				accessorKey: 'newsletter',
+				header: ({ column }) => (
+					<DataTableColumnHeader column={column} title="Newsletter" />
+				),
+				cell: ({ row }) => (
+					<Badge
+						variant={row.original.newsletter ? 'default' : 'outline'}
+						className={row.original.newsletter ? '' : 'text-muted-foreground'}
+					>
+						{row.original.newsletter ? 'Erlaubt' : 'Verweigert'}
+					</Badge>
+				),
+				enableSorting: false,
+				size: 140
+			},
+			{
 				accessorKey: 'created_at',
 				header: ({ column }) => (
 					<DataTableColumnHeader column={column} title="Erstellt" />
@@ -132,6 +168,11 @@ export default function ManageOrganizersPage() {
 					return (
 						<div className="flex justify-center">
 							<div className="flex items-center gap-2">
+								<OrganizerPermissionsDialog
+									organizerId={organizer.id}
+									newsletterEnabled={organizer.newsletter}
+									onSuccess={onPermissionsUpdated}
+								/>
 								{isPending ? (
 									<Button
 										variant="outline"
@@ -186,7 +227,7 @@ export default function ManageOrganizersPage() {
 				size: 200
 			}
 		],
-		[onDelete]
+		[onDelete, onPermissionsUpdated]
 	)
 
 	const statusOptions = useMemo(
@@ -198,7 +239,7 @@ export default function ManageOrganizersPage() {
 		[]
 	)
 
-	if (!meData) {
+	if (meLoading) {
 		return (
 			<div className="flex flex-col min-h-screen">
 				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -210,6 +251,30 @@ export default function ManageOrganizersPage() {
 				<div className="flex-1 flex items-center justify-center">
 					<div className="text-center text-muted-foreground">
 						Lade Berechtigungen…
+					</div>
+				</div>
+			</div>
+		)
+	}
+
+	if (!meData) {
+		return (
+			<div className="flex flex-col min-h-screen">
+				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+					<SidebarTrigger className="-ml-1" />
+					<div className="flex items-center gap-2">
+						<h1 className="text-lg font-semibold">Vereine verwalten</h1>
+					</div>
+				</header>
+				<div className="flex-1 flex items-center justify-center">
+					<div className="text-center">
+						<h2 className="text-2xl font-bold mb-2">Nicht angemeldet</h2>
+						<p className="text-muted-foreground mb-4">
+							Bitte melde dich an, um fortzufahren.
+						</p>
+						<Link href="/login">
+							<Button>Zur Anmeldung</Button>
+						</Link>
 					</div>
 				</div>
 			</div>
@@ -241,7 +306,7 @@ export default function ManageOrganizersPage() {
 		)
 	}
 
-	if (isLoading) {
+	if (isLoading || meLoading) {
 		return (
 			<div className="flex flex-col min-h-screen">
 				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -286,16 +351,17 @@ export default function ManageOrganizersPage() {
 
 			<div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
 				{/* Breadcrumbs */}
-				<nav className="flex items-center space-x-2 text-sm text-muted-foreground">
-					<Link
-						href="/organizers"
-						className="hover:text-foreground transition-colors"
-					>
-						Vereine
-					</Link>
-					<ChevronRight className="h-4 w-4" />
-					<span className="text-foreground">Verwalten</span>
-				</nav>
+				<Breadcrumb>
+					<BreadcrumbList>
+						<BreadcrumbItem>
+							<BreadcrumbLink href="/admin">Adminbereich</BreadcrumbLink>
+						</BreadcrumbItem>
+						<BreadcrumbSeparator />
+						<BreadcrumbItem>
+							<BreadcrumbPage>Vereine verwalten</BreadcrumbPage>
+						</BreadcrumbItem>
+					</BreadcrumbList>
+				</Breadcrumb>
 
 				{/* Header Section */}
 				<div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">

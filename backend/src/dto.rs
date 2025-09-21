@@ -39,6 +39,12 @@ impl UpdateOrganizerRequest {
 
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(deny_unknown_fields)]
+pub struct UpdateOrganizerPermissionsRequest {
+    pub newsletter: bool,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+#[serde(deny_unknown_fields)]
 pub struct CreateEventRequest {
     pub title_de: String,
     pub title_en: String,

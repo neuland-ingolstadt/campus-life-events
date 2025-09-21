@@ -360,9 +360,7 @@ export function EventDialog({
 											{...field}
 										/>
 									</FormControl>
-									<FormDescription>
-										Optionaler Veranstaltungsort oder Raum
-									</FormDescription>
+
 									<FormMessage />
 								</FormItem>
 							)}

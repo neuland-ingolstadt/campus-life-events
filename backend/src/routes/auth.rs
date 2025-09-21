@@ -110,11 +110,15 @@ pub(crate) async fn login(
         id
     );
 
+    let can_access_newsletter =
+        determine_newsletter_access(&state, &account_type, organizer_id).await?;
+
     let body = Json(AuthUserResponse {
         account_id: id,
         display_name,
         account_type,
         organizer_id,
+        can_access_newsletter,
     });
     let mut resp = (StatusCode::OK, body).into_response();
     resp.headers_mut().append(
@@ -241,11 +245,15 @@ pub(crate) async fn init_account(
         warn!("email client not configured; skipping welcome email");
     }
 
+    let can_access_newsletter =
+        determine_newsletter_access(&state, &account_type, organizer_id).await?;
+
     let body = Json(AuthUserResponse {
         account_id,
         display_name,
         account_type,
         organizer_id,
+        can_access_newsletter,
     });
     let mut resp = (StatusCode::OK, body).into_response();
     resp.headers_mut().append(
@@ -326,12 +334,42 @@ pub(crate) async fn me(
     let display_name = row.display_name;
     let account_type = row.account_type;
     let organizer_id = row.organizer_id;
+    let can_access_newsletter =
+        determine_newsletter_access(&state, &account_type, organizer_id).await?;
     Ok(Json(AuthUserResponse {
         account_id,
         display_name,
         account_type,
         organizer_id,
+        can_access_newsletter,
     }))
+}
+
+async fn determine_newsletter_access(
+    state: &AppState,
+    account_type: &AccountType,
+    organizer_id: Option<i64>,
+) -> Result<bool, AppError> {
+    if matches!(account_type, AccountType::Admin) {
+        return Ok(true);
+    }
+
+    let Some(organizer_id) = organizer_id else {
+        return Ok(false);
+    };
+
+    let row = sqlx::query!(
+        r#"
+        SELECT newsletter
+        FROM organizers
+        WHERE id = $1
+        "#,
+        organizer_id
+    )
+    .fetch_optional(&state.db)
+    .await?;
+
+    Ok(row.map(|record| record.newsletter).unwrap_or(false))
 }
 
 #[utoipa::path(

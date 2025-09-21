@@ -36,6 +36,7 @@ export function DashboardSidebar() {
 	const pathname = usePathname()
 	const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
 	const isAdmin = meData?.account_type === 'ADMIN'
+	const canAccessNewsletter = meData?.can_access_newsletter ?? false
 	const { isMobile, setOpenMobile } = useSidebar()
 	const handleNavigation = useCallback(() => {
 		if (isMobile) {
@@ -44,7 +45,7 @@ export function DashboardSidebar() {
 	}, [isMobile, setOpenMobile])
 
 	const items = useMemo(() => {
-		const base = [
+		const navItems = [
 			{
 				title: 'Dashboard',
 				url: '/',
@@ -59,12 +60,26 @@ export function DashboardSidebar() {
 				title: 'Vereine',
 				url: '/organizers',
 				icon: Users
-			},
-			{
+			}
+		]
+
+		if (isAdmin) {
+			navItems.push({
+				title: 'Admin',
+				url: '/admin',
+				icon: Shield
+			})
+		}
+
+		if (canAccessNewsletter) {
+			navItems.push({
 				title: 'Newsletter',
 				url: '/newsletter',
 				icon: Mail
-			},
+			})
+		}
+
+		navItems.push(
 			{
 				title: 'iCal Abonnements',
 				url: '/ical',
@@ -80,18 +95,10 @@ export function DashboardSidebar() {
 				url: '/settings',
 				icon: Settings
 			}
-		]
+		)
 
-		if (isAdmin) {
-			base.splice(4, 0, {
-				title: 'Admin',
-				url: '/admin',
-				icon: Shield
-			})
-		}
-
-		return base
-	}, [isAdmin])
+		return navItems
+	}, [canAccessNewsletter, isAdmin])
 
 	return (
 		<Sidebar variant="sidebar">

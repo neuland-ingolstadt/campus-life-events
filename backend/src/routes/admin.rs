@@ -1,17 +1,19 @@
 use axum::{
     Json, Router,
-    extract::State,
+    extract::{Path, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
-    routing::{get, post},
+    routing::{get, post, put},
 };
 use tracing::{error, info, instrument, warn};
 
 use crate::{
     app_state::AppState,
-    dto::InviteAdminRequest,
+    dto::{InviteAdminRequest, UpdateOrganizerPermissionsRequest},
     error::AppError,
-    models::{AccountType, AdminInviteRow, AdminWithInvite},
+    models::{
+        AccountType, AdminInviteRow, AdminWithInvite, OrganizerInviteRow, OrganizerWithInvite,
+    },
     responses::SetupTokenResponse,
 };
 
@@ -62,10 +64,83 @@ pub(crate) async fn list_admins(
     Ok(Json(admins))
 }
 
+#[utoipa::path(
+    put,
+    path = "/api/v1/admin/organizers/{id}/permissions",
+    tag = "Admin",
+    params(("id" = i64, Path, description = "Organizer identifier")),
+    request_body = UpdateOrganizerPermissionsRequest,
+    responses((
+        status = 200,
+        description = "Organizer permissions updated",
+        body = OrganizerWithInvite,
+    )),
+)]
+#[instrument(skip(state, headers, payload))]
+pub(crate) async fn update_organizer_permissions(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(id): Path<i64>,
+    Json(payload): Json<UpdateOrganizerPermissionsRequest>,
+) -> Result<Json<OrganizerWithInvite>, AppError> {
+    let user = current_user_from_headers(&headers, &state).await?;
+    if !user.is_admin() {
+        return Err(AppError::unauthorized("insufficient permissions"));
+    }
+
+    let result = sqlx::query!(
+        r#"
+        UPDATE organizers
+        SET newsletter = $1,
+            updated_at = NOW()
+        WHERE id = $2
+        "#,
+        payload.newsletter,
+        id
+    )
+    .execute(&state.db)
+    .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(AppError::not_found("Organizer not found"));
+    }
+
+    let row = sqlx::query_as!(
+        OrganizerInviteRow,
+        r#"
+        SELECT
+            o.id AS organizer_id,
+            o.name AS organizer_name,
+            a.email AS account_email,
+            o.newsletter AS newsletter,
+            o.created_at,
+            o.updated_at,
+            a.password_hash,
+            a.setup_token,
+            a.setup_token_expires_at
+        FROM organizers o
+        LEFT JOIN accounts a
+            ON a.organizer_id = o.id AND a.account_type = 'ORGANIZER'
+        WHERE o.id = $1
+        "#,
+        id
+    )
+    .fetch_one(&state.db)
+    .await?;
+
+    let organizer = OrganizerWithInvite::from_row(row);
+
+    Ok(Json(organizer))
+}
+
 pub(crate) fn router() -> Router<AppState> {
     Router::new()
         .route("/invite", post(invite_admin))
         .route("/list", get(list_admins))
+        .route(
+            "/organizers/{id}/permissions",
+            put(update_organizer_permissions),
+        )
 }
 
 #[utoipa::path(

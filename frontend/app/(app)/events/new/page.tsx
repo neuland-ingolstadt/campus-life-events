@@ -6,6 +6,14 @@ import { useState } from 'react'
 import { createEvent } from '@/client'
 import type { CreateEventRequest, UpdateEventRequest } from '@/client/types.gen'
 import { EventForm } from '@/components/event-form'
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator
+} from '@/components/ui/breadcrumb'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 
 export default function NewEventPage() {
@@ -36,6 +44,19 @@ export default function NewEventPage() {
 				</div>
 			</header>
 			<div className="flex-1 p-4 md:p-8 space-y-4 pt-6">
+				{/* Breadcrumbs */}
+				<Breadcrumb>
+					<BreadcrumbList>
+						<BreadcrumbItem>
+							<BreadcrumbLink href="/events">Events</BreadcrumbLink>
+						</BreadcrumbItem>
+						<BreadcrumbSeparator />
+						<BreadcrumbItem>
+							<BreadcrumbPage>Neues Event</BreadcrumbPage>
+						</BreadcrumbItem>
+					</BreadcrumbList>
+				</Breadcrumb>
+
 				<div className="max-w-5xl">
 					<h2 className="text-2xl font-bold tracking-tight mb-2">
 						Neues Event erstellen

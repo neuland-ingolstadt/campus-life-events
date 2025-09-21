@@ -281,9 +281,7 @@ export function EventForm({
 											{...field}
 										/>
 									</FormControl>
-									<FormDescription>
-										Optionaler Veranstaltungsort oder Raum
-									</FormDescription>
+
 									<FormMessage />
 								</FormItem>
 							)}
@@ -297,10 +295,10 @@ export function EventForm({
 									<FormItem className="flex items-center justify-between rounded-md border p-4">
 										<div className="space-y-1">
 											<FormLabel className="text-sm font-medium">
-												In der App veröffentlichen
+												Neuland Next App
 											</FormLabel>
 											<FormDescription className="text-xs">
-												Dieses Event in der App anzeigen.
+												Dieses Event in der App öffentlich anzeigen.
 											</FormDescription>
 										</div>
 										<FormControl>
@@ -319,10 +317,10 @@ export function EventForm({
 									<FormItem className="flex items-center justify-between rounded-md border p-4">
 										<div className="space-y-1">
 											<FormLabel className="text-sm font-medium">
-												Im Newsletter aufnehmen
+												THI Newsletter
 											</FormLabel>
 											<FormDescription className="text-xs">
-												Dieses Event im Newsletter hervorheben.
+												Dieses Event im Campus Life Newsletter der THI bewerben.
 											</FormDescription>
 										</div>
 										<FormControl>
@@ -341,7 +339,7 @@ export function EventForm({
 									<FormItem className="flex items-center justify-between rounded-md border p-4">
 										<div className="space-y-1">
 											<FormLabel className="text-sm font-medium">
-												In iCal-Kalender aufnehmen
+												iCal-Kalender
 											</FormLabel>
 											<FormDescription className="text-xs">
 												Dieses Event in iCal-Kalendern anzeigen.
@@ -363,10 +361,10 @@ export function EventForm({
 									<FormItem className="flex items-center justify-between rounded-md border p-4">
 										<div className="space-y-1">
 											<FormLabel className="text-sm font-medium">
-												Öffentlich teilen
+												Öffentliche Event-Seite
 											</FormLabel>
 											<FormDescription className="text-xs">
-												Event über öffentlichen Link teilen.
+												Eigene öffentliche Event-Seite erstellen.
 											</FormDescription>
 										</div>
 										<FormControl>

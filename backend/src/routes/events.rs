@@ -19,7 +19,7 @@ use crate::{
     responses::{ErrorResponse, NewsletterDataResponse, NewsletterTemplateResponse},
 };
 
-use super::shared::current_user_from_headers;
+use super::shared::{AuthedUser, current_user_from_headers};
 
 #[utoipa::path(
     get,
@@ -438,9 +438,7 @@ pub(crate) async fn get_newsletter_template(
     headers: HeaderMap,
 ) -> Result<Json<NewsletterTemplateResponse>, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
-    if !user.is_admin() && user.organizer_id().is_none() {
-        return Err(AppError::unauthorized("organizer account required"));
-    }
+    ensure_newsletter_access(&user, &state).await?;
     let now = Utc::now();
     let (next_week_start, week_after_start, week_after_end) = compute_newsletter_ranges(now);
     let events = sqlx::query_as!(
@@ -469,7 +467,7 @@ pub(crate) async fn get_newsletter_template(
     // Get all organizers for the footer
     let all_organizers = sqlx::query_as!(
         Organizer,
-        "SELECT id, name, description_de, description_en, website_url, instagram_url, location, created_at, updated_at FROM organizers ORDER BY name"
+        "SELECT id, name, description_de, description_en, website_url, instagram_url, location, newsletter, created_at, updated_at FROM organizers ORDER BY name"
     )
     .fetch_all(&state.db)
     .await?;
@@ -499,13 +497,8 @@ pub(crate) async fn get_newsletter_data(
     State(state): State<AppState>,
     headers: HeaderMap,
 ) -> Result<Json<NewsletterDataResponse>, AppError> {
-    // Temporarily allow public access for testing
-    // let user = current_user_from_headers(&headers, &state).await?;
-
-    // Only admins and organizers can access newsletter data
-    // if !user.is_admin() && user.organizer_id().is_none() {
-    //     return Err(AppError::unauthorized("organizer account required"));
-    // }
+    let user = current_user_from_headers(&headers, &state).await?;
+    ensure_newsletter_access(&user, &state).await?;
 
     let now = Utc::now();
     let (next_week_start, week_after_start, week_after_end) = compute_newsletter_ranges(now);
@@ -539,7 +532,7 @@ pub(crate) async fn get_newsletter_data(
     // Get all organizers for the footer
     let all_organizers = sqlx::query_as!(
         Organizer,
-        "SELECT id, name, description_de, description_en, website_url, instagram_url, location, created_at, updated_at FROM organizers ORDER BY name"
+        "SELECT id, name, description_de, description_en, website_url, instagram_url, location, newsletter, created_at, updated_at FROM organizers ORDER BY name"
     )
     .fetch_all(&state.db)
     .await?;
@@ -552,6 +545,33 @@ pub(crate) async fn get_newsletter_data(
         next_week_start,
         week_after_start,
     }))
+}
+
+async fn ensure_newsletter_access(user: &AuthedUser, state: &AppState) -> Result<(), AppError> {
+    if user.is_admin() {
+        return Ok(());
+    }
+
+    let Some(organizer_id) = user.organizer_id() else {
+        return Err(AppError::unauthorized("organizer account required"));
+    };
+
+    let row = sqlx::query!(
+        r#"SELECT newsletter FROM organizers WHERE id = $1"#,
+        organizer_id
+    )
+    .fetch_optional(&state.db)
+    .await?;
+
+    let Some(row) = row else {
+        return Err(AppError::unauthorized("organizer account required"));
+    };
+
+    if !row.newsletter {
+        return Err(AppError::unauthorized("newsletter permission required"));
+    }
+
+    Ok(())
 }
 
 fn compute_newsletter_ranges(now: DateTime<Utc>) -> (DateTime<Utc>, DateTime<Utc>, DateTime<Utc>) {
@@ -853,7 +873,7 @@ fn build_newsletter_html(
             }
 
             html.push_str("<div class=\"event\">");
-            html.push_str(&format!("<div class=\"event-title\">{}</div>", title));
+            html.push_str(&format!("<div class=\"event-title\">{title}</div>"));
 
             html.push_str("<div class=\"event-meta\">");
             html.push_str(&format!("<div class=\"meta-item\"><svg class=\"meta-icon\" viewBox=\"0 0 24 24\"><path d=\"M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z\"/></svg>{}</div>", escape_html(&when)));
@@ -869,15 +889,13 @@ fn build_newsletter_html(
                 if !description_de.trim().is_empty() {
                     let formatted_description = escape_with_line_breaks(description_de);
                     html.push_str(&format!(
-                        "<div class=\"event-description\">{}</div>",
-                        formatted_description
+                        "<div class=\"event-description\">{formatted_description}</div>"
                     ));
                 } else if let Some(description_en) = &event.description_en {
                     if !description_en.trim().is_empty() {
                         let formatted_description = escape_with_line_breaks(description_en);
                         html.push_str(&format!(
-                            "<div class=\"event-description\">{}</div>",
-                            formatted_description
+                            "<div class=\"event-description\">{formatted_description}</div>"
                         ));
                     }
                 }
@@ -887,8 +905,7 @@ fn build_newsletter_html(
                 if !url.trim().is_empty() {
                     let safe_url = escape_html(url);
                     html.push_str(&format!(
-                        "<a href=\"{}\" class=\"event-link\">Weitere Informationen</a>",
-                        safe_url
+                        "<a href=\"{safe_url}\" class=\"event-link\">Weitere Informationen</a>"
                     ));
                 }
             }
@@ -953,8 +970,7 @@ fn build_newsletter_html(
                 if !url.trim().is_empty() {
                     let safe_url = escape_html(url);
                     html.push_str(&format!(
-                        " – <a href=\"{}\" style=\"color:#3b82f6;\">Details</a>",
-                        safe_url
+                        " – <a href=\"{safe_url}\" style=\"color:#3b82f6;\">Details</a>"
                     ));
                 }
             }
@@ -1021,27 +1037,6 @@ fn format_date(date: NaiveDate) -> String {
 
 fn format_time(time: NaiveTime) -> String {
     format!("{:02}:{:02}", time.hour(), time.minute())
-}
-
-fn select_title(event: &Event) -> &str {
-    if !event.title_de.trim().is_empty() {
-        &event.title_de
-    } else {
-        &event.title_en
-    }
-}
-
-fn select_description(event: &Event) -> Option<&str> {
-    event
-        .description_de
-        .as_deref()
-        .and_then(|value| (!value.trim().is_empty()).then_some(value))
-        .or_else(|| {
-            event
-                .description_en
-                .as_deref()
-                .and_then(|value| (!value.trim().is_empty()).then_some(value))
-        })
 }
 
 fn escape_html(input: &str) -> String {

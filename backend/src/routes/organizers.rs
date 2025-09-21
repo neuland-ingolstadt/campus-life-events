@@ -31,7 +31,7 @@ pub(crate) async fn list_organizers(
     let organizers = sqlx::query_as!(
         Organizer,
         r#"
-        SELECT id, name, description_de, description_en, website_url, instagram_url, location, created_at, updated_at
+        SELECT id, name, description_de, description_en, website_url, instagram_url, location, newsletter, created_at, updated_at
         FROM organizers
         ORDER BY name
         "#
@@ -67,7 +67,7 @@ pub(crate) async fn create_organizer(
         r#"
         INSERT INTO organizers (name)
         VALUES ($1)
-        RETURNING id, name, description_de, description_en, website_url, instagram_url, location, created_at, updated_at
+        RETURNING id, name, description_de, description_en, website_url, instagram_url, location, newsletter, created_at, updated_at
         "#,
         &payload.name
     )
@@ -145,6 +145,7 @@ pub(crate) async fn list_organizers_admin(
             o.id AS organizer_id,
             o.name AS organizer_name,
             a.email AS account_email,
+            o.newsletter AS newsletter,
             o.created_at,
             o.updated_at,
             a.password_hash,
@@ -182,7 +183,7 @@ pub(crate) async fn get_organizer(
     let organizer = sqlx::query_as!(
         Organizer,
         r#"
-        SELECT id, name, description_de, description_en, website_url, instagram_url, location, created_at, updated_at
+        SELECT id, name, description_de, description_en, website_url, instagram_url, location, newsletter, created_at, updated_at
         FROM organizers
         WHERE id = $1
         "#,
@@ -254,7 +255,9 @@ pub(crate) async fn update_organizer(
     }
 
     builder.push(" WHERE id = ").push_bind(id);
-    builder.push(" RETURNING id, name, description_de, description_en, website_url, instagram_url, location, created_at, updated_at");
+    builder.push(
+        " RETURNING id, name, description_de, description_en, website_url, instagram_url, location, newsletter, created_at, updated_at",
+    );
 
     let organizer = builder
         .build_query_as::<Organizer>()

@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
-import { ChevronRight, RefreshCw, ShieldCheck } from 'lucide-react'
+import { RefreshCw, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useMemo } from 'react'
 import { listAdmins } from '@/client'
@@ -11,13 +11,25 @@ import type { AdminWithInvite } from '@/client/types.gen'
 import { DataTableColumnHeader } from '@/components/data-table/column-header'
 import { DataTable } from '@/components/data-table/data-table'
 import { InviteAdminDialog } from '@/components/invite-admin-dialog'
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator
+} from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { me } from '@/lib/auth'
 
 export default function ManageAdminsPage() {
-	const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
+	const { data: meData, isLoading: meLoading } = useQuery({
+		queryKey: ['auth', 'me'],
+		queryFn: me,
+		retry: false
+	})
 	const isAdmin = meData?.account_type === 'ADMIN'
 
 	const { data, isLoading, error, refetch } = useQuery<AdminWithInvite[]>({
@@ -25,7 +37,8 @@ export default function ManageAdminsPage() {
 		queryFn: async () => {
 			const response = await listAdmins({ throwOnError: true })
 			return response.data ?? []
-		}
+		},
+		enabled: !!meData && isAdmin
 	})
 
 	const admins = useMemo(() => data ?? [], [data])
@@ -116,7 +129,7 @@ export default function ManageAdminsPage() {
 		[]
 	)
 
-	if (!meData) {
+	if (meLoading) {
 		return (
 			<div className="flex flex-col min-h-screen">
 				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -130,6 +143,32 @@ export default function ManageAdminsPage() {
 				<div className="flex-1 flex items-center justify-center">
 					<div className="text-center text-muted-foreground">
 						Lade Berechtigungen…
+					</div>
+				</div>
+			</div>
+		)
+	}
+
+	if (!meData) {
+		return (
+			<div className="flex flex-col min-h-screen">
+				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+					<SidebarTrigger className="-ml-1" />
+					<div className="flex items-center gap-2">
+						<h1 className="text-lg font-semibold">
+							Administrator*innen verwalten
+						</h1>
+					</div>
+				</header>
+				<div className="flex-1 flex items-center justify-center">
+					<div className="text-center">
+						<h2 className="text-2xl font-bold mb-2">Nicht angemeldet</h2>
+						<p className="text-muted-foreground mb-4">
+							Bitte melde dich an, um fortzufahren.
+						</p>
+						<Link href="/login">
+							<Button>Zur Anmeldung</Button>
+						</Link>
 					</div>
 				</div>
 			</div>
@@ -163,7 +202,7 @@ export default function ManageAdminsPage() {
 		)
 	}
 
-	if (isLoading) {
+	if (isLoading || meLoading) {
 		return (
 			<div className="flex flex-col min-h-screen">
 				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -214,16 +253,17 @@ export default function ManageAdminsPage() {
 
 			<div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
 				{/* Breadcrumbs */}
-				<nav className="flex items-center space-x-2 text-sm text-muted-foreground">
-					<Link
-						href="/admin"
-						className="hover:text-foreground transition-colors"
-					>
-						Adminbereich
-					</Link>
-					<ChevronRight className="h-4 w-4" />
-					<span className="text-foreground">Administrator*innen verwalten</span>
-				</nav>
+				<Breadcrumb>
+					<BreadcrumbList>
+						<BreadcrumbItem>
+							<BreadcrumbLink href="/admin">Adminbereich</BreadcrumbLink>
+						</BreadcrumbItem>
+						<BreadcrumbSeparator />
+						<BreadcrumbItem>
+							<BreadcrumbPage>Administrator*innen verwalten</BreadcrumbPage>
+						</BreadcrumbItem>
+					</BreadcrumbList>
+				</Breadcrumb>
 
 				{/* Header Section */}
 				<div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">

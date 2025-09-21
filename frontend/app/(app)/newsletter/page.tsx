@@ -13,16 +13,26 @@ import {
 	CardTitle
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { me } from '@/lib/auth'
 import { fetchNewsletterData, generateNewsletterHTML } from '@/lib/newsletter'
 
 export default function NewsletterPage() {
+	const {
+		data: meData,
+		isLoading: isMeLoading,
+		error: meError
+	} = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
+
+	const canAccessNewsletter = meData?.can_access_newsletter ?? false
+
 	const {
 		data: newsletterData,
 		isLoading,
 		error
 	} = useQuery({
 		queryKey: ['newsletter-data'],
-		queryFn: fetchNewsletterData
+		queryFn: fetchNewsletterData,
+		enabled: canAccessNewsletter
 	})
 
 	const [generatedHtml, setGeneratedHtml] = useState<string>('')
@@ -61,6 +71,52 @@ export default function NewsletterPage() {
 				alert('Failed to copy to clipboard')
 			}
 		}
+	}
+
+	if (isMeLoading) {
+		return (
+			<div className="container mx-auto p-6">
+				<Alert>
+					<AlertDescription>Lade Berechtigungen…</AlertDescription>
+				</Alert>
+			</div>
+		)
+	}
+
+	if (meError) {
+		return (
+			<div className="container mx-auto p-6">
+				<Alert variant="destructive">
+					<AlertDescription>
+						Failed to load permissions: {meError.message}
+					</AlertDescription>
+				</Alert>
+			</div>
+		)
+	}
+
+	if (!meData) {
+		return (
+			<div className="container mx-auto p-6">
+				<Alert>
+					<AlertDescription>
+						Bitte melde dich an, um auf den Newsletterbereich zuzugreifen.
+					</AlertDescription>
+				</Alert>
+			</div>
+		)
+	}
+
+	if (!canAccessNewsletter) {
+		return (
+			<div className="container mx-auto p-6">
+				<Alert>
+					<AlertDescription>
+						Dieser Verein hat keinen Zugriff auf den Newsletterbereich.
+					</AlertDescription>
+				</Alert>
+			</div>
+		)
 	}
 
 	if (isLoading) {

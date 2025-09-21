@@ -53,6 +53,10 @@ export async function fetchNewsletterTemplate(): Promise<NewsletterTemplate> {
 		}
 	})
 
+	if (response.status === 401 || response.status === 403) {
+		throw new Error('Du hast keinen Zugriff auf den Newsletterbereich.')
+	}
+
 	if (!response.ok) {
 		const error = await response
 			.json()
@@ -70,6 +74,10 @@ export async function fetchNewsletterData(): Promise<NewsletterData> {
 			'Content-Type': 'application/json'
 		}
 	})
+
+	if (response.status === 401 || response.status === 403) {
+		throw new Error('Du hast keinen Zugriff auf den Newsletterbereich.')
+	}
 
 	if (!response.ok) {
 		const error = await response

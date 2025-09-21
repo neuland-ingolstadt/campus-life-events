@@ -28,6 +28,7 @@ export type AuditType = 'CREATE' | 'UPDATE' | 'DELETE';
 export type AuthUserResponse = {
     account_id: number;
     account_type: AccountType;
+    can_access_newsletter: boolean;
     display_name: string;
     organizer_id?: number | null;
 };
@@ -130,6 +131,7 @@ export type Organizer = {
     instagram_url?: string | null;
     location?: string | null;
     name: string;
+    newsletter: boolean;
     updated_at: string;
     website_url?: string | null;
 };
@@ -138,6 +140,7 @@ export type OrganizerWithInvite = {
     created_at: string;
     email?: string | null;
     id: number;
+    newsletter: boolean;
     invite_expires_at?: string | null;
     invite_status: InviteStatus;
     name: string;
@@ -190,6 +193,10 @@ export type UpdateOrganizerRequest = {
     website_url?: string | null;
 };
 
+export type UpdateOrganizerPermissionsRequest = {
+    newsletter: boolean;
+};
+
 export type InviteAdminData = {
     body: InviteAdminRequest;
     path?: never;
@@ -221,6 +228,24 @@ export type ListAdminsResponses = {
 };
 
 export type ListAdminsResponse = ListAdminsResponses[keyof ListAdminsResponses];
+
+export type UpdateOrganizerPermissionsData = {
+    body: UpdateOrganizerPermissionsRequest;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/api/v1/admin/organizers/{id}/permissions';
+};
+
+export type UpdateOrganizerPermissionsResponses = {
+    /**
+     * Organizer permissions updated
+     */
+    200: OrganizerWithInvite;
+};
+
+export type UpdateOrganizerPermissionsResponse = UpdateOrganizerPermissionsResponses[keyof UpdateOrganizerPermissionsResponses];
 
 export type ListAuditLogsData = {
     body?: never;

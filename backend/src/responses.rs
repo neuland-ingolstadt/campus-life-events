@@ -21,6 +21,7 @@ pub struct AuthUserResponse {
     pub display_name: String,
     pub account_type: AccountType,
     pub organizer_id: Option<i64>,
+    pub can_access_newsletter: bool,
 }
 
 #[derive(Debug, Serialize, ToSchema)]

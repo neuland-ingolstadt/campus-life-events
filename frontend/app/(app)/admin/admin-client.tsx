@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import { me } from '@/lib/auth'
 
 const AUDIT_SKELETON_KEYS = Array.from(
 	{ length: 6 },
@@ -35,6 +36,13 @@ function formatAuditType(type: AuditLogEntry['type']) {
 
 export function AdminDashboardClient() {
 	const qc = useQueryClient()
+	const { data: meData, isLoading: meLoading } = useQuery({
+		queryKey: ['auth', 'me'],
+		queryFn: me,
+		retry: false
+	})
+	const isAdmin = meData?.account_type === 'ADMIN'
+
 	const {
 		data: organizers = [],
 		isLoading: isOrganizersLoading,
@@ -44,7 +52,8 @@ export function AdminDashboardClient() {
 		queryFn: async () => {
 			const response = await listOrganizersAdmin({ throwOnError: true })
 			return response.data ?? []
-		}
+		},
+		enabled: !!meData && isAdmin
 	})
 
 	const {
@@ -59,7 +68,8 @@ export function AdminDashboardClient() {
 				throwOnError: true
 			})
 			return response.data ?? []
-		}
+		},
+		enabled: !!meData && isAdmin
 	})
 
 	const organizerMap = useMemo(() => {
@@ -73,6 +83,62 @@ export function AdminDashboardClient() {
 
 	const onRefresh = () => {
 		void Promise.all([refetchOrganizers(), refetchAudit()])
+	}
+
+	// Show loading state while checking authentication
+	if (meLoading) {
+		return (
+			<div className="flex flex-col min-h-screen">
+				<header
+					className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur-sm px-4"
+					style={{
+						backdropFilter: 'blur(8px)',
+						WebkitBackdropFilter: 'blur(8px)'
+					}}
+				>
+					<div className="flex items-center gap-2">
+						<SidebarTrigger className="-ml-1" />
+						<h1 className="text-lg font-semibold">Adminbereich</h1>
+					</div>
+				</header>
+				<div className="flex-1 flex items-center justify-center">
+					<div className="text-center text-muted-foreground">
+						Lade Adminbereich…
+					</div>
+				</div>
+			</div>
+		)
+	}
+
+	// Show error state if not authenticated or not admin
+	if (!meData || !isAdmin) {
+		return (
+			<div className="flex flex-col min-h-screen">
+				<header
+					className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur-sm px-4"
+					style={{
+						backdropFilter: 'blur(8px)',
+						WebkitBackdropFilter: 'blur(8px)'
+					}}
+				>
+					<div className="flex items-center gap-2">
+						<SidebarTrigger className="-ml-1" />
+						<h1 className="text-lg font-semibold">Adminbereich</h1>
+					</div>
+				</header>
+				<div className="flex-1 flex items-center justify-center">
+					<div className="text-center">
+						<h2 className="text-2xl font-bold mb-2">Zugriff verweigert</h2>
+						<p className="text-muted-foreground mb-4">
+							Du benötigst Administratorrechte, um diesen Bereich zu sehen.
+						</p>
+						<Link href="/">
+							<Button>Zurück zum Dashboard</Button>
+						</Link>
+					</div>
+				</div>
+			</div>
+		)
 	}
 
 	return (
@@ -121,7 +187,9 @@ export function AdminDashboardClient() {
 								</p>
 							</div>
 							<Badge variant="outline" className="text-xs">
-								{isOrganizersLoading ? '…' : `${organizers.length} Vereine`}
+								{isOrganizersLoading || meLoading
+									? '…'
+									: `${organizers.length} Vereine`}
 							</Badge>
 						</CardHeader>
 						<CardContent className="flex flex-col gap-3">
@@ -199,7 +267,7 @@ export function AdminDashboardClient() {
 						</p>
 					</CardHeader>
 					<CardContent>
-						{isAuditLoading ? (
+						{isAuditLoading || meLoading ? (
 							<div className="space-y-2">
 								{AUDIT_SKELETON_KEYS.map((key) => (
 									<div
