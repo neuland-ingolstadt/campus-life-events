@@ -4,7 +4,7 @@ This file provides essential information for AI coding agents working on the Cam
 
 ## Project Overview
 
-Campus Life Events is a full-stack monorepo for managing campus programming events. It consists of:
+Campus Life Events is a full-stack monorepo for managing campus events. It consists of:
 
 - **Backend**: Rust/Axum REST API with PostgreSQL database
 - **Frontend**: Next.js 15 dashboard with React 19 and TypeScript

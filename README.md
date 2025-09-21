@@ -1,17 +1,24 @@
 # Campus Life Events
 
-Campus Life Events is a monorepo that bundles the backend API and the admin dashboard used to plan, publish, and review campus programming. The stack is designed so the two services can run together through Docker Compose or independently for local development.
+Campus Life Events is a comprehensive monorepo containing both the backend API and admin dashboard for planning, publishing, and reviewing campus events. The architecture is designed to allow both services to run together via Docker or independently for local development.
 
-## Repository layout
+## Who is this for?
+
+This platform enables clubs and organizations at THI (Technische Hochschule Ingolstadt) to manage their campus events efficiently.
+Each club has its own dedicated account to create and manage events, while administrators can review, moderate, and approve submissions. Administrators also have the ability to invite new clubs to join the platform.
+
+To maximize event visibility and engagement, clubs can share their events as iCal feeds and publish them directly on the website. The built-in email export feature enables the generation of weekly newsletters that are distributed to all students. Additionally, all events are seamlessly integrated into the [Neuland Next App](https://neuland.app), providing students with easy access to campus activities.
+
+## Repository Structure
 
 | Path | Description |
 | --- | --- |
-| `backend/` | Axum + SQLx REST API that stores events, organizers, audit logs, authentication data, and iCal feeds. Includes docker-compose.yml for local PostgreSQL. |
-| `frontend/` | Next.js 15 dashboard for managing content and interacting with the API. |
+| `backend/` | Axum + SQLx REST API that manages events, organizers, audit logs, authentication, and iCal feeds. Includes docker-compose.yml for local PostgreSQL setup. |
+| `frontend/` | Next.js 15 dashboard for content management and API interaction. |
 
-Each service folder contains a dedicated README with deep-dive instructions, architecture notes, and developer workflows.
+Each service directory contains a dedicated README with detailed instructions, architecture documentation, and development workflows.
 
-## Quick start with local development
+## Quick Start for Local Development
 
 1. Clone the repository and start the database:
 
@@ -38,14 +45,17 @@ Each service folder contains a dedicated README with deep-dive instructions, arc
    bun run dev
    ```
 
-4. Visit [http://localhost:3000](http://localhost:3000) for the dashboard and [http://localhost:8080/swagger-ui](http://localhost:8080/swagger-ui) for interactive API docs.
+4. Access the application:
+   - Dashboard: [http://localhost:3000](http://localhost:3000)
+   - API Documentation: [http://localhost:8080/swagger-ui](http://localhost:8080/swagger-ui)
+
 5. When finished, stop the database with `cd backend && docker compose down`. Add `-v` to also remove the PostgreSQL volume (`pgdatae`).
 
-## Developing services individually
+## Individual Service Development
 
-You can work on each service without Docker if you prefer native tooling:
+You can develop each service independently without Docker if you prefer native tooling:
 
-- [Frontend deep dive](frontend/README.md) explains the Next.js architecture, environment variables, and development scripts.
-- [Backend deep dive](backend/README.md) covers the Axum API, database schema management, and optional email infrastructure.
+- [Frontend Documentation](frontend/README.md) covers the Next.js architecture, environment configuration, and development scripts.
+- [Backend Documentation](backend/README.md) details the Axum API, database schema management, and optional email infrastructure.
 
-For any workflow, make sure the backend API is reachable by the frontend dashboard at `http://localhost:8080` or adjust the documented environment variables accordingly.
+For any development workflow, ensure the backend API is accessible to the frontend dashboard at `http://localhost:8080` or adjust the environment variables accordingly.
