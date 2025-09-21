@@ -221,7 +221,7 @@ export default function SettingsPage() {
 					<CardHeader className="pb-3">
 						<CardTitle className="flex items-center gap-2">
 							<GithubIcon className="h-5 w-5" />
-							GitHub Repository
+							Über
 						</CardTitle>
 						<CardDescription>Quellcode und Entwicklung</CardDescription>
 					</CardHeader>
