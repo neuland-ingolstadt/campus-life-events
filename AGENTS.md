@@ -145,7 +145,7 @@ NEXT_PUBLIC_COMMIT_HASH=local-dev
 - Events: `/api/v1/events/*`
 - Organizers: `/api/v1/organizers/*`
 - Admin: `/api/v1/admin/*`
-- iCal: `/api/v1/ical/*`
+- iCal: `/api/ical/*`
 - OpenAPI docs: `/swagger-ui`
 
 ### Frontend API Client

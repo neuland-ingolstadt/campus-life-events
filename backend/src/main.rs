@@ -106,6 +106,7 @@ async fn main() {
 
     let api = Router::new()
         .nest("/api/v1", api_router())
+        .nest("/api/ical", routes::ical::router())
         .merge(swagger_router);
 
     let app = Router::new()

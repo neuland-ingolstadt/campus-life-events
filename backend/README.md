@@ -78,6 +78,6 @@ Running tests requires the database specified in `DATABASE_URL` to be reachable.
 
 - CORS origins are controlled via the `ALLOWED_ORIGINS` variable (comma-separated list). Defaults cover local dashboard development.
 - Security headers (`X-Frame-Options`, `X-Content-Type-Options`, and HSTS) are injected globally through `tower-http` middleware.
-- iCal feeds are available under `/api/v1/ical/...` and are used by the frontend to export event calendars.
+- iCal feeds are available under `/api/ical/...` and are used by the frontend to export event calendars.
 
 Refer to `src/routes/` for the full list of endpoints and payloads; each module documents its handlers inline and is represented in the generated OpenAPI schema.

@@ -20,6 +20,5 @@ pub fn api_router() -> Router<AppState> {
         .nest("/events", events::router())
         .nest("/organizers", organizers::router())
         .nest("/audit-logs", audit::router())
-        .nest("/ical", ical::router())
         .nest("/public", public_events::router())
 }

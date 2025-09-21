@@ -123,7 +123,7 @@ impl From<EventWithOrganizerRow> for EventWithOrganizer {
 
 #[utoipa::path(
     get,
-    path = "/api/v1/ical/events",
+    path = "/api/ical",
     tag = "iCal",
     responses((status = 200, description = "iCal calendar with all events", content_type = "text/calendar"))
 )]
@@ -177,7 +177,7 @@ pub(crate) async fn get_all_events_ical(
 
 #[utoipa::path(
     get,
-    path = "/api/v1/ical/organizers/{organizer_id}/events",
+    path = "/api/ical/{organizer_id}",
     tag = "iCal",
     params(("organizer_id" = i64, Path, description = "Organizer identifier")),
     responses((status = 200, description = "iCal calendar with events for specific organizer", content_type = "text/calendar"))
@@ -252,9 +252,6 @@ pub(crate) async fn get_organizer_events_ical(
 
 pub(crate) fn router() -> Router<AppState> {
     Router::new()
-        .route("/events", get(get_all_events_ical))
-        .route(
-            "/organizers/{organizer_id}/events",
-            get(get_organizer_events_ical),
-        )
+        .route("/", get(get_all_events_ical))
+        .route("/{organizer_id}", get(get_organizer_events_ical))
 }

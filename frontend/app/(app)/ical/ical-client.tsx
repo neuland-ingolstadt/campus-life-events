@@ -27,8 +27,8 @@ export function ICalClient({ backendUrl, userId }: ICalClientProps) {
 		toast.success(`${description} wurde in die Zwischenablage kopiert.`)
 	}
 
-	const globalIcalUrl = `${backendUrl}/api/v1/ical/events`
-	const personalIcalUrl = `${backendUrl}/api/v1/ical/organizers/${userId}/events`
+	const globalIcalUrl = `${backendUrl}/api/ical`
+	const personalIcalUrl = `${backendUrl}/api/ical/${userId}`
 
 	return (
 		<div className="flex flex-col min-h-screen">
