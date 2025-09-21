@@ -35,8 +35,8 @@ jobs:
       - name: Run TypeScript checks
         run: bunx tsc --noEmit
 
-      - name: Run Biome check
-        run: bunx biome ci .
+      - name: Run Biome check (zero warnings policy)
+        run: bunx biome ci . --error-on-warnings
 
   build-and-push-image:
     name: Build Docker image
