@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
 				},
 			];
 		}
-		// In production, let nginx handle the API routing
+		// In production, let ingress handle the API routing
 		return [];
 	},
 	output: "standalone",

@@ -8,7 +8,6 @@ Campus Life Events is a monorepo that bundles the backend API and the admin dash
 | --- | --- |
 | `backend/` | Axum + SQLx REST API that stores events, organizers, audit logs, authentication data, and iCal feeds. Includes docker-compose.yml for local PostgreSQL. |
 | `frontend/` | Next.js 15 dashboard for managing content and interacting with the API. |
-| `nginx/` | Reverse-proxy assets used for the production container image. |
 
 Each service folder contains a dedicated README with deep-dive instructions, architecture notes, and developer workflows.
 

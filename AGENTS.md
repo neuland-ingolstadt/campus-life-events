@@ -8,7 +8,7 @@ Campus Life Events is a full-stack monorepo for managing campus programming even
 
 - **Backend**: Rust/Axum REST API with PostgreSQL database
 - **Frontend**: Next.js 15 dashboard with React 19 and TypeScript
-- **Infrastructure**: Docker Compose setup with nginx reverse proxy
+- **Infrastructure**: Docker Compose setup for database, start services manually
 
 The system handles event management, organizer administration, audit logging, authentication, and iCal feed generation.
 
@@ -18,7 +18,6 @@ The system handles event management, organizer administration, audit logging, au
 campus-life-events/
 ├── backend/           # Rust/Axum API server (includes docker-compose.yml for local DB)
 ├── frontend/          # Next.js dashboard
-├── nginx/             # Reverse proxy configuration
 └── README.md          # Project overview
 ```
 
@@ -185,7 +184,7 @@ cargo test test_name
 
 ### Production Setup
 - Deploy services independently (no top-level compose file)
-- nginx handles reverse proxy and static assets
+- ingress handles reverse proxy and static assets
 - PostgreSQL data persisted in `pgdatae` volume (backend compose)
 
 ## Common Development Tasks
@@ -230,7 +229,7 @@ cargo test test_name
 ## Important Notes
 
 - The frontend proxies API calls to the backend in development
-- In production, nginx handles the API routing
+- In production, ingress handles the API routing
 - Email functionality is optional and falls back to console logging
 - The system uses PostgreSQL 16 with specific connection parameters
 - All services must be running for full functionality
