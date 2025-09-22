@@ -43,20 +43,15 @@ export async function fetchNewsletterData(): Promise<NewsletterDataResponse> {
 }
 
 function logo(): string {
-	return `
-		<svg version="1.1" id="Ebene_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="-349 229.6 142.3 136.7" enable-background="new -349 229.6 142.3 136.7" xml:space="preserve">
+	// Convert SVG to data URI for better email client compatibility
+	const svgData =
+		encodeURIComponent(`<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="-349 229.6 142.3 136.7">
 <g>
-	<path fill="#ffffff" d="M-225.4,257.8c-4.9-1.3-9.9,1.6-11.2,6.5s1.6,9.9,6.5,11.2c4.9,1.3,9.9-1.6,11.2-6.5
-		C-217.6,264.2-220.5,259.1-225.4,257.8z"/>
-	<path fill="#ffffff" d="M-254,274.4L-254,274.4L-254,274.4h-32.9l6.6-24.7c0.8-2.8-0.9-5.7-3.7-6.4l-5.1-1.4
-		c-2.8-0.8-5.6,0.9-6.4,3.7l-7.7,28.8H-329c-2.9,0-5.9,2.4-6.6,5.3l-1.4,5.2c-0.8,2.9,0.9,5.2,3.8,5.2h25.8l-6.7,24.8
-		c-0.8,2.8,1,5.7,3.8,6.4l5,1.3c2.8,0.7,5.6-0.9,6.3-3.6l7.8-28.9h37.1c5.1,0,9.2,4.1,9.2,9.2c0,0.6-0.2,1.7-0.3,2.1l-12.1,44.9
-		c-0.8,2.8,1,5.7,3.8,6.4l5,1.3c2.8,0.7,5.6-0.9,6.3-3.6l12.1-44.6l0,0c0.6-2.1,0.9-4.2,0.9-6.5C-229.1,285.6-240.3,274.4-254,274.4
-		z"/>
+	<path fill="#ffffff" d="M-225.4,257.8c-4.9-1.3-9.9,1.6-11.2,6.5s1.6,9.9,6.5,11.2c4.9,1.3,9.9-1.6,11.2-6.5C-217.6,264.2-220.5,259.1-225.4,257.8z"/>
+	<path fill="#ffffff" d="M-254,274.4L-254,274.4L-254,274.4h-32.9l6.6-24.7c0.8-2.8-0.9-5.7-3.7-6.4l-5.1-1.4c-2.8-0.8-5.6,0.9-6.4,3.7l-7.7,28.8H-329c-2.9,0-5.9,2.4-6.6,5.3l-1.4,5.2c-0.8,2.9,0.9,5.2,3.8,5.2h25.8l-6.7,24.8c-0.8,2.8,1,5.7,3.8,6.4l5,1.3c2.8,0.7,5.6-0.9,6.3-3.6l7.8-28.9h37.1c5.1,0,9.2,4.1,9.2,9.2c0,0.6-0.2,1.7-0.3,2.1l-12.1,44.9c-0.8,2.8,1,5.7,3.8,6.4l5,1.3c2.8,0.7,5.6-0.9,6.3-3.6l12.1-44.6l0,0c0.6-2.1,0.9-4.2,0.9-6.5C-229.1,285.6-240.3,274.4-254,274.4z"/>
 </g>
-</svg>
-	`
+</svg>`)
+	return `<img src="data:image/svg+xml,${svgData}" alt="Campus Life Logo" style="display: block;" />`
 }
 
 export function generateNewsletterHTML(
@@ -140,26 +135,14 @@ export function generateNewsletterHTML(
 				<div class="event-organizer">${organizerLink}</div>
 				<div class="event-meta">
 					<div class="meta-item">
-						<span class="meta-icon">
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-								<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-								<line x1="16" y1="2" x2="16" y2="6"></line>
-								<line x1="8" y1="2" x2="8" y2="6"></line>
-								<line x1="3" y1="10" x2="21" y2="10"></line>
-							</svg>
-						</span>
+						<span class="meta-icon">📅</span>
 						<span class="meta-text">${formatDate(event.start_date_time)}</span>
 					</div>
 					${
 						!isAllDay
 							? `
 					<div class="meta-item">
-						<span class="meta-icon">
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-								<circle cx="12" cy="12" r="10"></circle>
-								<polyline points="12,6 12,12 16,14"></polyline>
-							</svg>
-						</span>
+						<span class="meta-icon">🕐</span>
 						<span class="meta-text">${formatTime(event.start_date_time)}${endDate ? ` - ${formatTime(event.end_date_time || '')}` : ''}</span>
 					</div>
 					`
@@ -169,12 +152,7 @@ export function generateNewsletterHTML(
 						event.location
 							? `
 					<div class="meta-item">
-						<span class="meta-icon">
-							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-								<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-								<circle cx="12" cy="10" r="3"></circle>
-							</svg>
-						</span>
+						<span class="meta-icon">📍</span>
 						<span class="meta-text">${escapeHtml(event.location)}</span>
 					</div>
 					`
@@ -196,83 +174,132 @@ export function generateNewsletterHTML(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="light dark">
-    <meta name="supported-color-schemes" content="light dark">
     <title>${escapeHtml(subject)}</title>
-    <style>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:AllowPNG/>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+    <style type="text/css">
+        /* Reset styles for email clients */
+        body, table, td, p, a, li, blockquote {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+        img {
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+        
+        /* Prevent Outlook from adding extra spacing */
+        .ExternalClass {
+            width: 100%;
+        }
+        .ExternalClass,
+        .ExternalClass p,
+        .ExternalClass span,
+        .ExternalClass font,
+        .ExternalClass td,
+        .ExternalClass div {
+            line-height: 100%;
+        }
+        
+        /* Prevent Gmail from changing link colors */
+        a[x-apple-data-detectors] {
+            color: inherit !important;
+            text-decoration: none !important;
+            font-size: inherit !important;
+            font-family: inherit !important;
+            font-weight: inherit !important;
+            line-height: inherit !important;
+        }
+        
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            font-family: Arial, Helvetica, sans-serif; 
             line-height: 1.6; 
             color: #374151; 
             margin: 0; 
             padding: 0; 
             background-color: #f3f4f6;
+            width: 100% !important;
+            min-width: 100%;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
         }
         .container { 
-            max-width: 800px; 
-            margin: 0 auto; 
+            width: 800px; 
             background-color: #ffffff; 
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
         }
         .header { 
-            background: linear-gradient(135deg, #215b9c 0%, #215b9c 100%); 
+            background-color: #215b9c; 
             color: white; 
             padding: 40px 30px; 
             text-align: left; 
-            position: relative;
-            overflow: hidden;
         }
         .header-content {
-            position: relative;
-            z-index: 1;
+            width: 100%;
         }
         .logo {
+            margin: 20px 0;
             display: flex;
             align-items: center;
-            justify-content: flex-start;
-            margin: 20px 0;
         }
-        .logo svg {
+        .logo img {
             width: 100px;
             height: 100px;
             margin-right: 30px;
             vertical-align: middle;
+            display: block;
+            flex-shrink: 0;
         }
         .logo span {
             font-size: 56px;
             font-weight: bold;
+            vertical-align: middle;
         }
         .title-col {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
+            flex: 1;
         }
         .header .title {
             font-size: 32px !important;
             font-weight: bold;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
             margin: 0;
             padding: 0;
         }
         .subtitle { 
             font-size: 18px; 
             margin-bottom: 10px; 
-            opacity: 0.9;
         }
         .week-info-wrapper {
             text-align: center;
             margin-top: 10px;
         }
         .week-info {
-            background: rgba(255,255,255,0.2);
+            background-color: rgba(255,255,255,0.2);
             padding: 10px 20px;
             border-radius: 10px;
             display: inline-block;
-            backdrop-filter: blur(10px);
         }
         .content { padding: 30px; }
         .intro { 
-            background: #f8fafc; 
+            background-color: #f8fafc; 
             padding: 15px; 
             border-radius: 16px; 
             margin-bottom: 30px; 
@@ -281,7 +308,7 @@ export function generateNewsletterHTML(
             margin-bottom: 30px;
         }
         .custom-content {
-            background: #ffffff;
+            background-color: #ffffff;
             border: 1px solid #e5e7eb;
             border-radius: 8px;
             padding: 20px;
@@ -296,15 +323,12 @@ export function generateNewsletterHTML(
             margin-bottom: 0;
         }
         .quick-events-list {
-            background: #f8fafc;
+            background-color: #f8fafc;
             border-radius: 16px;
             padding: 20px;
             margin-bottom: 20px;
         }
         .quick-event-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 15px;
             padding: 12px 0;
             border-bottom: 1px solid #e5e7eb;
         }
@@ -315,11 +339,15 @@ export function generateNewsletterHTML(
             font-weight: bold;
             color: #215b9c;
             font-size: 14px;
-            min-width: 120px;
-            flex-shrink: 0;
+            display: inline-block;
+            width: 120px;
+            vertical-align: top;
         }
         .quick-event-details {
-            flex: 1;
+            display: inline-block;
+            width: calc(100% - 140px);
+            vertical-align: top;
+            margin-left: 20px;
         }
         .quick-event-title {
             font-weight: 600;
@@ -339,12 +367,11 @@ export function generateNewsletterHTML(
             border-bottom: 2px solid #e5e7eb;
         }
         .event { 
-            background: #ffffff; 
+            background-color: #ffffff; 
             border: 1px solid #e5e7eb; 
             border-radius: 12px; 
             padding: 25px; 
             margin-bottom: 20px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         .event-title { 
             font-size: 20px; 
@@ -359,35 +386,24 @@ export function generateNewsletterHTML(
             margin-bottom: 15px;
         }
         .event-meta { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 15px; 
             margin-bottom: 15px; 
         }
         .meta-item { 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
+            display: inline-block;
             color: #6b7280; 
             font-size: 14px;
+            margin-right: 15px;
+            margin-bottom: 8px;
         }
         .meta-icon { 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 20px;
-            height: 20px;
-            color: #215b9c;
-            background: #f3f4f6;
-            border-radius: 4px;
-            flex-shrink: 0;
-        }
-        .meta-icon svg {
-            width: 14px;
-            height: 14px;
+            display: inline-block;
+            font-size: 14px;
+            vertical-align: middle;
+            margin-right: 8px;
         }
         .meta-text { 
             font-weight: 500; 
+            vertical-align: middle;
         }
         .event-description { 
             color: #374151; 
@@ -396,7 +412,7 @@ export function generateNewsletterHTML(
         }
         .event-link { 
             display: inline-block; 
-            background: #215b9c; 
+            background-color: #215b9c; 
             color: white; 
             padding: 8px 16px; 
             text-decoration: none; 
@@ -412,7 +428,7 @@ export function generateNewsletterHTML(
             color: #374151;
         }
         .quick-list { 
-            background: #f8fafc; 
+            background-color: #f8fafc; 
             border-radius: 8px; 
             padding: 20px; 
             margin-top: 20px;
@@ -434,7 +450,7 @@ export function generateNewsletterHTML(
             left: -15px;
         }
         .footer { 
-            background: #1f2937; 
+            background-color: #1f2937; 
             color: #d1d5db; 
             padding: 30px; 
             text-align: center; 
@@ -442,16 +458,19 @@ export function generateNewsletterHTML(
             line-height: 1.6;
         }
         .footer-logo {
+            text-align: center;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 20px;
         }
-        .footer-logo svg {
+        .footer-logo img {
             width: 40px;
             height: 40px;
             margin-right: 15px;
             vertical-align: middle;
+            display: block;
+            flex-shrink: 0;
         }
         .footer-logo span {
             font-size: 20px;
@@ -459,29 +478,22 @@ export function generateNewsletterHTML(
             color: #ffffff;
         }
         .footer-content {
-            display: flex;
-            justify-content: space-between;
             margin-bottom: 20px;
         }
         .footer-section {
-            flex: 1;
-            margin-right: 20px;
-        }
-        .footer-section:last-child {
-            margin-right: 0;
+            margin-bottom: 20px;
         }
         .organizers-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
             margin-top: 10px;
         }
         .organizer-tag {
-            background: #374151;
+            background-color: #374151;
             color: #d1d5db;
             padding: 4px 8px;
             border-radius: 4px;
             font-size: 12px;
+            display: inline-block;
+            margin: 2px;
         }
         .footer-bottom {
             border-top: 1px solid #374151;
@@ -489,9 +501,7 @@ export function generateNewsletterHTML(
             margin-top: 15px;
         }
         .events-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            margin-bottom: 20px;
         }
         .no-events {
             text-align: center;
@@ -500,20 +510,16 @@ export function generateNewsletterHTML(
             padding: 40px 20px;
         }
         .app-promo {
-            background: #ffffff;
+            background-color: #ffffff;
             border: 1px solid #e5e7eb;
             border-radius: 12px;
-            margin: 20px;
             padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         .app-promo-content {
-            display: flex;
-            align-items: center;
-            gap: 15px;
+            width: 100%;
         }
         .app-promo-text {
-            flex: 1;
+            width: 100%;
         }
         .app-promo-text h2 {
             margin: 0 0 8px 0;
@@ -537,7 +543,7 @@ export function generateNewsletterHTML(
         }
         .app-promo-button {
             display: inline-block;
-            background: #215b9c;
+            background-color: #215b9c;
             color: white;
             padding: 10px 18px;
             text-decoration: none;
@@ -546,7 +552,7 @@ export function generateNewsletterHTML(
             font-size: 14px;
         }
         .app-promo-button:hover {
-            background: #1e4a7c;
+            background-color: #1e4a7c;
         }
         .footer a { 
             color: #60a5fa; 
@@ -562,21 +568,20 @@ export function generateNewsletterHTML(
             }
             .container { 
                 background-color: #111111;
-                box-shadow: 0 0 10px rgba(0,0,0,0.5);
             }
             .header { 
-                background: linear-gradient(135deg, #215b9c 0%, #215b9c 100%);
+                background-color: #215b9c;
                 color: #ffffff;
             }
             .content {
                 background-color: #111111;
             }
             .intro { 
-                background: #1a1a1a;
+                background-color: #1a1a1a;
                 color: #e5e5e5;
             }
             .event { 
-                background: #1a1a1a;
+                background-color: #1a1a1a;
                 border: 1px solid #333333;
                 color: #e5e5e5;
             }
@@ -606,11 +611,11 @@ export function generateNewsletterHTML(
                 border-bottom: 2px solid #333333;
             }
             .quick-list { 
-                background: #1a1a1a;
+                background-color: #1a1a1a;
                 color: #e5e5e5;
             }
             .quick-events-list {
-                background: #1a1a1a;
+                background-color: #1a1a1a;
                 color: #e5e5e5;
             }
             .quick-event-item {
@@ -626,23 +631,22 @@ export function generateNewsletterHTML(
                 color: #60a5fa;
             }
             .footer { 
-                background: #000000;
+                background-color: #000000;
                 color: #d1d5db;
             }
             .footer-logo span {
                 color: #ffffff;
             }
             .organizer-tag {
-                background: #333333;
+                background-color: #333333;
                 color: #d1d5db;
             }
             .no-events {
                 color: #9ca3af;
             }
             .app-promo {
-                background: #1a1a1a;
+                background-color: #1a1a1a;
                 border: 1px solid #333333;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             }
             .app-promo-text h2 {
                 color: #60a5fa;
@@ -654,146 +658,59 @@ export function generateNewsletterHTML(
                 color: #9ca3af;
             }
             .app-promo-button {
-                background: #60a5fa;
+                background-color: #60a5fa;
             }
             .app-promo-button:hover {
-                background: #3b82f6;
+                background-color: #3b82f6;
             }
         }
         
-        /* Apple Mail specific dark mode */
-        [data-ogsc] body { 
-            background-color: #000000 !important;
-            color: #e5e5e5 !important;
-        }
-        [data-ogsc] .container { 
-            background-color: #111111 !important;
-        }
-        [data-ogsc] .header { 
-            background: linear-gradient(135deg, #215b9c 0%, #215b9c 100%) !important;
-            color: #ffffff !important;
-        }
-        [data-ogsc] .content {
-            background-color: #111111 !important;
-        }
-        [data-ogsc] .intro { 
-            background: #1a1a1a !important;
-            color: #e5e5e5 !important;
-        }
-        [data-ogsc] .event { 
-            background: #1a1a1a !important;
-            border: 1px solid #333333 !important;
-            color: #e5e5e5 !important;
-        }
-        [data-ogsc] .event-title { 
-            color: #60a5fa !important;
-        }
-        [data-ogsc] .event-description { 
-            color: #d1d5db !important;
-        }
-        [data-ogsc] .event-organizer {
-            color: #9ca3af !important;
-        }
-        [data-ogsc] .meta-item { 
-            color: #9ca3af !important;
-        }
-        [data-ogsc] .meta-text { 
-            color: #d1d5db !important;
-        }
-        [data-ogsc] .organizer { 
-            color: #9ca3af !important;
-        }
-        [data-ogsc] .organizer:hover { 
-            color: #d1d5db !important;
-        }
-        [data-ogsc] .section-title { 
-            color: #60a5fa !important;
-            border-bottom: 2px solid #333333 !important;
-        }
-        [data-ogsc] .quick-list { 
-            background: #1a1a1a !important;
-            color: #e5e5e5 !important;
-        }
-        [data-ogsc] .quick-events-list {
-            background: #1a1a1a !important;
-            color: #e5e5e5 !important;
-        }
-        [data-ogsc] .quick-event-item {
-            border-bottom: 1px solid #333333 !important;
-        }
-        [data-ogsc] .quick-event-title {
-            color: #e5e5e5 !important;
-        }
-        [data-ogsc] .quick-event-meta {
-            color: #9ca3af !important;
-        }
-        [data-ogsc] .quick-event-date {
-            color: #60a5fa !important;
-        }
-        [data-ogsc] .footer { 
-            background: #000000 !important;
-            color: #d1d5db !important;
-        }
-        [data-ogsc] .footer-logo span {
-            color: #ffffff !important;
-        }
-        [data-ogsc] .organizer-tag {
-            background: #333333 !important;
-            color: #d1d5db !important;
-        }
-        [data-ogsc] .no-events {
-            color: #9ca3af !important;
-        }
-        [data-ogsc] .app-promo {
-            background: #1a1a1a !important;
-            border: 1px solid #333333 !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
-        }
-        [data-ogsc] .app-promo-text h2 {
-            color: #60a5fa !important;
-        }
-        [data-ogsc] .app-promo-text p {
-            color: #d1d5db !important;
-        }
-        [data-ogsc] .app-disclaimer {
-            color: #9ca3af !important;
-        }
-        [data-ogsc] .app-promo-button {
-            background: #60a5fa !important;
-        }
-        [data-ogsc] .app-promo-button:hover {
-            background: #3b82f6 !important;
-        }
-        
-        @media (max-width: 600px) {
-            .container { margin: 0; box-shadow: none; }
-            .header, .content, .footer { padding: 20px; }
-            .event-meta { flex-direction: column; gap: 10px; }
-            .app-promo { margin: 15px; padding: 12px; }
-            .app-promo-content { flex-direction: column; text-align: center; gap: 10px; }
+        @media screen and (max-width: 600px) {
+            .container { width: 100% !important; }
+            .header, .content, .footer { padding: 20px !important; }
+            .app-promo { padding: 12px !important; }
+            .app-promo-content { text-align: center !important; }
+            .logo { flex-direction: column !important; align-items: flex-start !important; }
+            .logo img { width: 80px !important; height: 80px !important; margin-right: 0 !important; margin-bottom: 15px !important; }
+            .title-col { margin-left: 0 !important; }
+            .header .title { font-size: 24px !important; }
+            .subtitle { font-size: 16px !important; }
+            .quick-event-date { width: 100px !important; }
+            .quick-event-details { width: calc(100% - 120px) !important; margin-left: 10px !important; }
+            .footer-logo { flex-direction: column !important; }
+            .footer-logo img { margin-right: 0 !important; margin-bottom: 10px !important; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="header-content">
-                <div class="logo">
-                    ${logo()}
-                    <div class="title-col">
-                        <span class="title">Campus Life</span>
-                        <div class="subtitle">Der offizielle Newsletter für die Studierenden der Technischen Hochschule Ingolstadt.</div>
-                    </div>
-                </div>
-                <div class="week-info-wrapper">
-                    <div class="week-info">
-                        Kalenderwoche ${weekNumber} 
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="content">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f3f4f6;">
+        <tr>
+            <td align="center">
+                <table width="800" cellpadding="0" cellspacing="0" border="0" class="container">
+                    <tr>
+                        <td class="header">
+                            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td class="logo">
+                                        ${logo()}
+                                        <div class="title-col">
+                                            <span class="title">Campus Life</span>
+                                            <div class="subtitle">Der offizielle Newsletter für die Studierenden der Technischen Hochschule Ingolstadt.</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="week-info-wrapper">
+                                        <div class="week-info">
+                                            Kalenderwoche ${weekNumber} 
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="content">
             <div class="intro">
                 <p><strong>Hallo zusammen!</strong></p>
                 <p>Hier sind die kommenden Veranstaltungen für euch zusammengestellt. Viel Spaß bei den Events!</p>
@@ -847,41 +764,49 @@ export function generateNewsletterHTML(
 								: '<p>Keine Veranstaltungen geplant.</p>'
 						}
             
-        </div>
-        
-        <div class="app-promo">
-            <div class="app-promo-content">
-                <div class="app-promo-text">
-                    <h2>Neuland Next App</h2>
-                    <p><strong>Die Campus App für die THI</strong></p>
-                    <p>Alle wichtigen Infos zum Studium in einer App: Stundenplan, Mensa, Sport, Events und vieles mehr! Verpasse nie wieder wichtige Termine, finde schnell deine Vorlesungen und entdecke spannende Events direkt auf deinem Smartphone.</p>
-                    <p class="app-disclaimer">Entwickelt von Neuland Ingolstadt e.V.</p>
-                    <a href="https://neuland.app" class="app-promo-button" target="_blank">Mehr erfahren</a>
-                </div>
-            </div>
-        </div>
-        
-        <div class="footer">
-            <div class="footer-logo">
-                ${logo()}
-                <span>Campus Life Events</span>
-            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="content">
+                            <div class="app-promo">
+                                <div class="app-promo-content">
+                                    <div class="app-promo-text">
+                                        <h2>Neuland Next App</h2>
+                                        <p><strong>Die Campus App für die THI</strong></p>
+                                        <p>Alle wichtigen Infos zum Studium in einer App: Stundenplan, Mensa, Sport, Events und vieles mehr! Verpasse nie wieder wichtige Termine, finde schnell deine Vorlesungen und entdecke spannende Events direkt auf deinem Smartphone.</p>
+                                        <p class="app-disclaimer">Entwickelt von Neuland Ingolstadt e.V.</p>
+                                        <a href="https://neuland.app" class="app-promo-button" target="_blank">Mehr erfahren</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="footer">
+                            <div class="footer-logo">
+                                ${logo()}
+                                <span>Campus Life Events</span>
+                            </div>
 
-            Der Newsletter für studentische Veranstaltungen</p>
-            <p>Die teilnehmenden Vereine und Hochschulgruppen:<br/>
-            ${all_organizers.map((org) => escapeHtml(org.name)).join(' • ')}</p>
-            <p>Bei Rückfragen wenden Sie sich bitte an <a href="mailto:campus-life@thi.de">campus-life@thi.de</a><br/>
-            Kommunikation studentischer Vereine: Campus Life/StudVer e-mail</p>
-            <p style="margin-top: 20px; font-size: 12px; color: #9ca3af;">
-                <strong>Den Campus Life Newsletter nicht mehr empfangen?</strong><br/>
-                Melden Sie sich unter <a href="https://sympa.thi.de/">https://sympa.thi.de/</a> an (THI-Login rechts oben).<br/>
-                Dann auf Meine Listen (links) → students-campuslife → Abbestellen (links) → Bestätigen.<br/><br/>
-                <strong>No longer receiving the Campus Life Newsletter?</strong><br/>
-                Log in at <a href="https://sympa.thi.de/">https://sympa.thi.de/</a> (THI login at the top right).<br/>
-                Then go to My lists (left) → students-campuslife → Unsubscribe (left) → Confirm.
-            </p>
-        </div>
-    </div>
+                            Der Newsletter für studentische Veranstaltungen</p>
+                            <p>Die teilnehmenden Vereine und Hochschulgruppen:<br/>
+                            ${all_organizers.map((org) => escapeHtml(org.name)).join(' • ')}</p>
+                            <p>Bei Rückfragen wenden Sie sich bitte an <a href="mailto:campus-life@thi.de">campus-life@thi.de</a><br/>
+                            Kommunikation studentischer Vereine: Campus Life/StudVer e-mail</p>
+                            <p style="margin-top: 20px; font-size: 12px; color: #9ca3af;">
+                                <strong>Den Campus Life Newsletter nicht mehr empfangen?</strong><br/>
+                                Melden Sie sich unter <a href="https://sympa.thi.de/">https://sympa.thi.de/</a> an (THI-Login rechts oben).<br/>
+                                Dann auf Meine Listen (links) → students-campuslife → Abbestellen (links) → Bestätigen.<br/><br/>
+                                <strong>No longer receiving the Campus Life Newsletter?</strong><br/>
+                                Log in at <a href="https://sympa.thi.de/">https://sympa.thi.de/</a> (THI login at the top right).<br/>
+                                Then go to My lists (left) → students-campuslife → Unsubscribe (left) → Confirm.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
 	`

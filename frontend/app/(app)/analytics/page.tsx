@@ -355,7 +355,7 @@ export default function AnalyticsPage() {
 									UPDATE: { label: 'Update', color: COLORS.UPDATE },
 									DELETE: { label: 'Delete', color: COLORS.DELETE }
 								}}
-								className="h-72"
+								className="h-72 aspect-square mx-auto"
 							>
 								<LineChart data={timeline} margin={{ left: 8, right: 8 }}>
 									<CartesianGrid vertical={false} />
@@ -455,13 +455,15 @@ export default function AnalyticsPage() {
 									UPDATE: { label: 'Update', color: COLORS.UPDATE },
 									DELETE: { label: 'Delete', color: COLORS.DELETE }
 								}}
-								className="h-72"
+								className="h-72 aspect-square mx-auto"
 							>
 								<PieChart>
 									<Pie
 										data={byTypeData}
 										dataKey="value"
 										nameKey="name"
+										cx="50%"
+										cy="50%"
 										innerRadius={50}
 										outerRadius={80}
 										paddingAngle={2}
