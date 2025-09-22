@@ -456,7 +456,7 @@ pub(crate) async fn get_newsletter_template(
         .partition(|event| event.start_date_time < week_after_start);
     let subject = build_newsletter_subject(next_week_start);
     // Get all organizers for the footer
-    let all_organizers = sqlx::query_as!(
+    let all_organizers: Vec<Organizer> = sqlx::query_as!(
         Organizer,
         "SELECT id, name, description_de, description_en, website_url, instagram_url, location, newsletter, created_at, updated_at FROM organizers ORDER BY name"
     )
