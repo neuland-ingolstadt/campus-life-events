@@ -217,15 +217,15 @@ export default function NewsletterPage() {
 							Benutzerdefinierter Text
 						</CardTitle>
 						<CardDescription>
-							Fügen Sie benutzerdefinierten Text hinzu, der vor den
-							wöchentlichen Veranstaltungen erscheint
+							Füge benutzerdefinierten Text hinzu, der vor den wöchentlichen
+							Events erscheint
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
 						<textarea
 							value={customText}
 							onChange={(e) => setCustomText(e.target.value)}
-							placeholder="Geben Sie benutzerdefinierten Text für den Newsletter ein (optional)..."
+							placeholder="Hinweise, besondere Ankündigungen, etc. (optional)"
 							className="w-full h-32 p-3 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
 						/>
 					</CardContent>

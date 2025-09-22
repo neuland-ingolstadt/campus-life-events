@@ -7,8 +7,16 @@ import {
 	Bar,
 	BarChart,
 	CartesianGrid,
+	Cell,
+	Label,
 	Line,
 	LineChart,
+	Pie,
+	PieChart,
+	PolarGrid,
+	PolarRadiusAxis,
+	RadialBar,
+	RadialBarChart,
 	XAxis,
 	YAxis
 } from 'recharts'
@@ -18,6 +26,8 @@ import type {
 	Organizer as ApiOrganizer,
 	AuditLogEntry
 } from '@/client/types.gen'
+import { DataTableColumnHeader } from '@/components/data-table/column-header'
+import { DataTable } from '@/components/data-table/data-table'
 import {
 	Card,
 	CardContent,
@@ -43,10 +53,10 @@ import {
 import { SidebarTrigger } from '@/components/ui/sidebar'
 
 const COLORS = {
-	CREATE: 'hsl(var(--chart-1))',
-	UPDATE: 'hsl(var(--chart-2))',
-	DELETE: 'hsl(var(--chart-3))'
-}
+	CREATE: 'var(--chart-2)',
+	UPDATE: 'var(--chart-1)',
+	DELETE: 'var(--chart-5)'
+} as const
 
 export default function AnalyticsPage() {
 	const [days, setDays] = useState(30)
@@ -149,6 +159,32 @@ export default function AnalyticsPage() {
 
 	const total = filtered.length
 
+	const byTypeData = useMemo(
+		() =>
+			(Object.keys(byType) as Array<keyof typeof byType>).map((k) => ({
+				name: k,
+				value: byType[k]
+			})),
+		[byType]
+	)
+
+	const auditRows = useMemo(
+		() =>
+			filtered.map((r) => {
+				const ev = events.find((e) => e.id === r.event_id)
+				return {
+					id: r.id,
+					at: new Date(r.at),
+					type: r.type,
+					eventTitle: ev?.title_de || ev?.title_en || `Event Nr. ${r.event_id}`,
+					organizer: orgMap.get(r.organizer_id) || String(r.organizer_id)
+				}
+			}),
+		[filtered, events, orgMap]
+	)
+
+	type AuditRow = (typeof auditRows)[number]
+
 	return (
 		<div className="flex flex-col min-h-screen">
 			<header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/80 backdrop-blur-md px-4">
@@ -190,33 +226,118 @@ export default function AnalyticsPage() {
 					</div>
 				</div>
 
-				{/* KPI cards */}
-				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-					<Card>
-						<CardHeader className="pb-2">
-							<CardDescription>Änderungen gesamt</CardDescription>
-							<CardTitle className="text-2xl">{total}</CardTitle>
-						</CardHeader>
-					</Card>
-					<Card>
-						<CardHeader className="pb-2">
-							<CardDescription>Erstellungen</CardDescription>
-							<CardTitle className="text-2xl">{byType.CREATE || 0}</CardTitle>
-						</CardHeader>
-					</Card>
-					<Card>
-						<CardHeader className="pb-2">
-							<CardDescription>Aktualisierungen</CardDescription>
-							<CardTitle className="text-2xl">{byType.UPDATE || 0}</CardTitle>
-						</CardHeader>
-					</Card>
-					<Card>
-						<CardHeader className="pb-2">
-							<CardDescription>Löschungen</CardDescription>
-							<CardTitle className="text-2xl">{byType.DELETE || 0}</CardTitle>
-						</CardHeader>
-					</Card>
+				{/* KPI gauges */}
+				<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+					{[
+						{
+							key: 'total',
+							title: 'Änderungen gesamt',
+							value: total,
+							color: 'var(--chart-2)'
+						},
+						{
+							key: 'create',
+							title: 'Erstellungen',
+							value: byType.CREATE || 0,
+							color: 'var(--chart-3)'
+						},
+						{
+							key: 'update',
+							title: 'Aktualisierungen',
+							value: byType.UPDATE || 0,
+							color: 'var(--chart-4)'
+						},
+						{
+							key: 'delete',
+							title: 'Löschungen',
+							value: byType.DELETE || 0,
+							color: 'var(--chart-5)'
+						}
+					].map((kpi) => (
+						<Card key={kpi.key} className="flex flex-col">
+							<CardHeader className="items-center pb-0">
+								<CardTitle className="text-center line-clamp-1">
+									{kpi.title}
+								</CardTitle>
+								<CardDescription>Letzte {days} Tage</CardDescription>
+							</CardHeader>
+							<CardContent className="flex-1 pb-0">
+								<ChartContainer
+									config={{
+										value: {
+											label: kpi.title,
+											theme: { light: 'var(--chart-1)', dark: 'var(--chart-1)' }
+										}
+									}}
+									className="mx-auto aspect-square max-h-[220px]"
+								>
+									<RadialBarChart
+										data={[
+											{
+												key: 'value',
+												value: kpi.value,
+												fill: 'var(--color-value)'
+											}
+										]}
+										endAngle={100}
+										innerRadius={70}
+										outerRadius={120}
+									>
+										<PolarGrid
+											gridType="circle"
+											radialLines={false}
+											stroke="none"
+											className="first:fill-muted last:fill-background"
+											polarRadius={[86, 74]}
+										/>
+										<RadialBar
+											dataKey="value"
+											fill="var(--color-value)"
+											background
+										/>
+										<PolarRadiusAxis
+											tick={false}
+											tickLine={false}
+											axisLine={false}
+										>
+											<Label
+												content={({ viewBox }) => {
+													if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
+														return (
+															<text
+																x={viewBox.cx}
+																y={viewBox.cy}
+																textAnchor="middle"
+																dominantBaseline="middle"
+															>
+																<tspan
+																	x={viewBox.cx}
+																	y={viewBox.cy}
+																	className="fill-foreground text-3xl font-bold"
+																>
+																	{kpi.value.toLocaleString()}
+																</tspan>
+																<tspan
+																	x={viewBox.cx}
+																	y={(viewBox.cy || 0) + 20}
+																	className="fill-muted-foreground"
+																>
+																	{kpi.title}
+																</tspan>
+															</text>
+														)
+													}
+												}}
+											/>
+										</PolarRadiusAxis>
+									</RadialBarChart>
+								</ChartContainer>
+							</CardContent>
+						</Card>
+					))}
 				</div>
+
+				{/* Top 4 gauge stats removed */}
 
 				<div className="grid gap-6 lg:grid-cols-2">
 					{/* Timeline line chart */}
@@ -230,9 +351,9 @@ export default function AnalyticsPage() {
 						<CardContent>
 							<ChartContainer
 								config={{
-									CREATE: { label: 'Erstellung', color: COLORS.CREATE },
-									UPDATE: { label: 'Aktualisierung', color: COLORS.UPDATE },
-									DELETE: { label: 'Löschung', color: COLORS.DELETE }
+									CREATE: { label: 'Create', color: COLORS.CREATE },
+									UPDATE: { label: 'Update', color: COLORS.UPDATE },
+									DELETE: { label: 'Delete', color: COLORS.DELETE }
 								}}
 								className="h-72"
 							>
@@ -254,21 +375,21 @@ export default function AnalyticsPage() {
 									<Line
 										type="monotone"
 										dataKey="CREATE"
-										stroke={COLORS.CREATE}
+										stroke="var(--color-CREATE)"
 										strokeWidth={2}
 										dot={false}
 									/>
 									<Line
 										type="monotone"
 										dataKey="UPDATE"
-										stroke={COLORS.UPDATE}
+										stroke="var(--color-UPDATE)"
 										strokeWidth={2}
 										dot={false}
 									/>
 									<Line
 										type="monotone"
 										dataKey="DELETE"
-										stroke={COLORS.DELETE}
+										stroke="var(--color-DELETE)"
 										strokeWidth={2}
 										dot={false}
 									/>
@@ -286,7 +407,13 @@ export default function AnalyticsPage() {
 						<CardContent>
 							<ChartContainer
 								config={{
-									count: { label: 'Änderungen', color: 'hsl(var(--chart-4))' }
+									count: {
+										label: 'Änderungen',
+										theme: {
+											light: 'var(--chart-1)',
+											dark: 'var(--chart-1)'
+										}
+									}
 								}}
 								className="h-72"
 							>
@@ -307,9 +434,111 @@ export default function AnalyticsPage() {
 										axisLine={false}
 									/>
 									<ChartTooltip content={<ChartTooltipContent />} />
-									<Bar dataKey="count" fill="hsl(var(--chart-4))" radius={4} />
+									<Bar dataKey="count" fill="var(--color-count)" radius={4} />
 								</BarChart>
 							</ChartContainer>
+						</CardContent>
+					</Card>
+				</div>
+
+				{/* Distribution by type (fancy pie chart) */}
+				<div className="grid gap-6 lg:grid-cols-3">
+					<Card className="lg:col-span-1">
+						<CardHeader>
+							<CardTitle>Verteilung nach Typ</CardTitle>
+							<CardDescription>Create / Update / Delete</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<ChartContainer
+								config={{
+									CREATE: { label: 'Create', color: COLORS.CREATE },
+									UPDATE: { label: 'Update', color: COLORS.UPDATE },
+									DELETE: { label: 'Delete', color: COLORS.DELETE }
+								}}
+								className="h-72"
+							>
+								<PieChart>
+									<Pie
+										data={byTypeData}
+										dataKey="value"
+										nameKey="name"
+										innerRadius={50}
+										outerRadius={80}
+										paddingAngle={2}
+										stroke="none"
+									>
+										{byTypeData.map((entry) => (
+											<Cell
+												key={entry.name}
+												fill={`var(--color-${entry.name})`}
+											/>
+										))}
+									</Pie>
+									<ChartTooltip
+										content={<ChartTooltipContent nameKey="name" />}
+									/>
+									<ChartLegend
+										content={<ChartLegendContent nameKey="name" />}
+									/>
+								</PieChart>
+							</ChartContainer>
+						</CardContent>
+					</Card>
+
+					{/* Audit logs table */}
+					<Card className="lg:col-span-2">
+						<CardHeader>
+							<CardTitle>Audit-Log</CardTitle>
+							<CardDescription>Einträge im gewählten Zeitraum</CardDescription>
+						</CardHeader>
+						<CardContent>
+							<DataTable<AuditRow, unknown>
+								tableId="analytics-audit"
+								columns={[
+									{
+										accessorKey: 'at',
+										header: ({ column }) => (
+											<DataTableColumnHeader
+												column={column}
+												title="Zeitpunkt"
+											/>
+										),
+										cell: ({ row }) => (
+											<span>{format(row.original.at, 'dd.MM.yyyy HH:mm')}</span>
+										)
+									},
+									{
+										accessorKey: 'type',
+										header: ({ column }) => (
+											<DataTableColumnHeader column={column} title="Typ" />
+										),
+										cell: ({ row }) => (
+											<span>
+												{row.original.type === 'CREATE'
+													? 'Create'
+													: row.original.type === 'UPDATE'
+														? 'Update'
+														: 'Delete'}
+											</span>
+										)
+									},
+									{
+										accessorKey: 'eventTitle',
+										header: ({ column }) => (
+											<DataTableColumnHeader column={column} title="Event" />
+										)
+									},
+									{
+										accessorKey: 'organizer',
+										header: ({ column }) => (
+											<DataTableColumnHeader column={column} title="Verein" />
+										)
+									}
+								]}
+								data={auditRows}
+								enablePagination
+								initialPageSize={10}
+							/>
 						</CardContent>
 					</Card>
 				</div>
