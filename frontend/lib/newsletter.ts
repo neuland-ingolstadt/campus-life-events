@@ -1,28 +1,9 @@
-export interface NewsletterTemplate {
-	subject: string
-	html_body: string
-}
+import type { ErrorResponse, NewsletterDataResponse } from '@/client'
+import { getNewsletterData } from '@/client'
+import type { EventWithOrganizer as ApiEventWithOrganizer } from '@/client/types.gen'
 
-export interface EventWithOrganizer {
-	id: number
-	organizer_id: number
-	title_de: string
-	title_en: string
-	description_de?: string
-	description_en?: string
-	start_date_time: string
-	end_date_time?: string
-	event_url?: string
-	location?: string
-	publish_app: boolean
-	publish_newsletter: boolean
-	publish_in_ical: boolean
-	publish_web: boolean
-	created_at: string
-	updated_at: string
-	organizer_name: string
-	organizer_website?: string
-}
+// Use the generated API type to stay in sync with backend
+export type EventWithOrganizer = ApiEventWithOrganizer
 
 export interface Organizer {
 	id: number
@@ -45,48 +26,20 @@ export interface NewsletterData {
 	week_after_start: string
 }
 
-export async function fetchNewsletterTemplate(): Promise<NewsletterTemplate> {
-	const response = await fetch('/api/v1/events/newsletter-template', {
-		credentials: 'include',
-		headers: {
-			'Content-Type': 'application/json'
-		}
-	})
+export async function fetchNewsletterData(): Promise<NewsletterDataResponse> {
+	const response = await getNewsletterData()
 
-	if (response.status === 401 || response.status === 403) {
-		throw new Error('Du hast keinen Zugriff auf den Newsletterbereich.')
+	if (response.error) {
+		const err = response.error as ErrorResponse | undefined
+		const message = err?.message || 'Failed to fetch newsletter data'
+		throw new Error(message)
 	}
 
-	if (!response.ok) {
-		const error = await response
-			.json()
-			.catch(() => ({ message: 'Unknown error' }))
-		throw new Error(error.message || 'Failed to fetch newsletter template')
+	if (!response.data) {
+		throw new Error('Failed to fetch newsletter data')
 	}
 
-	return response.json()
-}
-
-export async function fetchNewsletterData(): Promise<NewsletterData> {
-	const response = await fetch('/api/v1/events/newsletter-data', {
-		credentials: 'include',
-		headers: {
-			'Content-Type': 'application/json'
-		}
-	})
-
-	if (response.status === 401 || response.status === 403) {
-		throw new Error('Du hast keinen Zugriff auf den Newsletterbereich.')
-	}
-
-	if (!response.ok) {
-		const error = await response
-			.json()
-			.catch(() => ({ message: 'Unknown error' }))
-		throw new Error(error.message || 'Failed to fetch newsletter data')
-	}
-
-	return response.json()
+	return response.data
 }
 
 function logo(): string {
@@ -107,7 +60,7 @@ function logo(): string {
 }
 
 export function generateNewsletterHTML(
-	data: NewsletterData,
+	data: NewsletterDataResponse,
 	customText?: string
 ): string {
 	const {
@@ -169,7 +122,7 @@ export function generateNewsletterHTML(
 			.replace(/'/g, '&#39;')
 	}
 
-	const renderEvent = (event: EventWithOrganizer) => {
+	const renderEvent = (event: ApiEventWithOrganizer) => {
 		const startDate = new Date(event.start_date_time)
 		const endDate = event.end_date_time ? new Date(event.end_date_time) : null
 		const isAllDay =

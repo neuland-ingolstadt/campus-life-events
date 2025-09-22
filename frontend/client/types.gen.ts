@@ -148,11 +148,6 @@ export type NewsletterDataResponse = {
     week_after_start: string;
 };
 
-export type NewsletterTemplateResponse = {
-    html_body: string;
-    subject: string;
-};
-
 export type Organizer = {
     created_at: string;
     description_de?: string | null;
@@ -540,21 +535,34 @@ export type CreateEventResponses = {
 
 export type CreateEventResponse = CreateEventResponses[keyof CreateEventResponses];
 
-export type GetNewsletterTemplateData = {
+export type GetNewsletterDataData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/v1/events/newsletter-template';
+    url: '/api/v1/events/newsletter-data';
 };
 
-export type GetNewsletterTemplateResponses = {
+export type GetNewsletterDataErrors = {
     /**
-     * Generate official newsletter template for upcoming weeks
+     * Unauthorized
      */
-    200: NewsletterTemplateResponse;
+    401: ErrorResponse;
+    /**
+     * Internal server error
+     */
+    500: ErrorResponse;
 };
 
-export type GetNewsletterTemplateResponse = GetNewsletterTemplateResponses[keyof GetNewsletterTemplateResponses];
+export type GetNewsletterDataError = GetNewsletterDataErrors[keyof GetNewsletterDataErrors];
+
+export type GetNewsletterDataResponses = {
+    /**
+     * Get newsletter data
+     */
+    200: NewsletterDataResponse;
+};
+
+export type GetNewsletterDataResponse = GetNewsletterDataResponses[keyof GetNewsletterDataResponses];
 
 export type DeleteEventData = {
     body?: never;
