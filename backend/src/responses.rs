@@ -36,12 +36,6 @@ pub struct SetupTokenInfoResponse {
 }
 
 #[derive(Debug, Serialize, ToSchema)]
-pub struct NewsletterTemplateResponse {
-    pub subject: String,
-    pub html_body: String,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
 pub struct NewsletterDataResponse {
     pub subject: String,
     pub next_week_events: Vec<EventWithOrganizer>,

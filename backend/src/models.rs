@@ -13,17 +13,6 @@ pub enum AccountType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
-pub struct Account {
-    pub id: i64,
-    pub account_type: AccountType,
-    pub organizer_id: Option<i64>,
-    pub display_name: String,
-    pub email: Option<String>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Organizer {
     pub id: i64,
     pub name: String,
@@ -215,14 +204,4 @@ impl AdminWithInvite {
             invite_expires_at: row.setup_token_expires_at,
         }
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
-pub struct PasswordResetToken {
-    pub id: i64,
-    pub account_id: i64,
-    pub token: String,
-    pub expires_at: DateTime<Utc>,
-    pub used_at: Option<DateTime<Utc>>,
-    pub created_at: DateTime<Utc>,
 }
