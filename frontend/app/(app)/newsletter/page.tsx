@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Copy, Download, Mail } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { EventsPageShell } from '@/components/events/events-page-shell'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
@@ -75,53 +76,53 @@ export default function NewsletterPage() {
 
 	if (isMeLoading) {
 		return (
-			<div className="container mx-auto p-6">
+			<EventsPageShell title="Newsletter" stickyHeader>
 				<Alert>
 					<AlertDescription>Lade Berechtigungen…</AlertDescription>
 				</Alert>
-			</div>
+			</EventsPageShell>
 		)
 	}
 
 	if (meError) {
 		return (
-			<div className="container mx-auto p-6">
+			<EventsPageShell title="Newsletter" stickyHeader>
 				<Alert variant="destructive">
 					<AlertDescription>
 						Failed to load permissions: {meError.message}
 					</AlertDescription>
 				</Alert>
-			</div>
+			</EventsPageShell>
 		)
 	}
 
 	if (!meData) {
 		return (
-			<div className="container mx-auto p-6">
+			<EventsPageShell title="Newsletter" stickyHeader>
 				<Alert>
 					<AlertDescription>
 						Bitte melde dich an, um auf den Newsletterbereich zuzugreifen.
 					</AlertDescription>
 				</Alert>
-			</div>
+			</EventsPageShell>
 		)
 	}
 
 	if (!canAccessNewsletter) {
 		return (
-			<div className="container mx-auto p-6">
+			<EventsPageShell title="Newsletter" stickyHeader>
 				<Alert>
 					<AlertDescription>
 						Dieser Verein hat keinen Zugriff auf den Newsletterbereich.
 					</AlertDescription>
 				</Alert>
-			</div>
+			</EventsPageShell>
 		)
 	}
 
 	if (isLoading) {
 		return (
-			<div className="container mx-auto p-6 space-y-6">
+			<EventsPageShell title="Newsletter" stickyHeader>
 				<div className="space-y-2">
 					<Skeleton className="h-8 w-64" />
 					<Skeleton className="h-4 w-96" />
@@ -145,42 +146,41 @@ export default function NewsletterPage() {
 						</Card>
 					))}
 				</div>
-			</div>
+			</EventsPageShell>
 		)
 	}
 
 	if (error) {
 		return (
-			<div className="container mx-auto p-6">
+			<EventsPageShell title="Newsletter" stickyHeader>
 				<Alert variant="destructive">
 					<AlertDescription>
 						Failed to load newsletter data: {error.message}
 					</AlertDescription>
 				</Alert>
-			</div>
+			</EventsPageShell>
 		)
 	}
 
 	if (!newsletterData) {
 		return (
-			<div className="container mx-auto p-6">
+			<EventsPageShell title="Newsletter" stickyHeader>
 				<Alert>
 					<AlertDescription>No newsletter data available.</AlertDescription>
 				</Alert>
-			</div>
+			</EventsPageShell>
 		)
 	}
 
 	return (
-		<div className="container mx-auto p-6 space-y-6 max-w-6xl">
+		<EventsPageShell title="Newsletter" stickyHeader>
 			<div className="space-y-2">
 				<h1 className="text-3xl font-bold tracking-tight">Newsletter</h1>
 				<p className="text-muted-foreground">
 					Vorschau und Download des wöchentlichen Newsletters
 				</p>
 			</div>
-
-			<div className="grid gap-6">
+			<div className="grid gap-6 max-w-6xl">
 				<Card>
 					<CardHeader>
 						<CardTitle>Aktionen</CardTitle>
@@ -209,7 +209,6 @@ export default function NewsletterPage() {
 						</Button>
 					</CardContent>
 				</Card>
-
 				<Card>
 					<CardHeader>
 						<CardTitle className="flex items-center gap-2">
@@ -230,7 +229,6 @@ export default function NewsletterPage() {
 						/>
 					</CardContent>
 				</Card>
-
 				<Card>
 					<CardHeader>
 						<CardTitle className="flex items-center gap-2">
@@ -253,6 +251,6 @@ export default function NewsletterPage() {
 					</CardContent>
 				</Card>
 			</div>
-		</div>
+		</EventsPageShell>
 	)
 }
