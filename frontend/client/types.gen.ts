@@ -245,6 +245,33 @@ export type UpdateOrganizerRequest = {
     website_url?: string | null;
 };
 
+export type ListOrganizerIcalEventsData = {
+    body?: never;
+    headers: {
+        /**
+         * Bearer API token
+         */
+        Authorization: string;
+    };
+    path: {
+        /**
+         * Organizer identifier
+         */
+        organizer_id: number;
+    };
+    query?: never;
+    url: '/api/ical/{organizer_id}/events';
+};
+
+export type ListOrganizerIcalEventsResponses = {
+    /**
+     * Events for organizer that are iCal eligible
+     */
+    200: Array<PublicEventResponse>;
+};
+
+export type ListOrganizerIcalEventsResponse = ListOrganizerIcalEventsResponses[keyof ListOrganizerIcalEventsResponses];
+
 export type InviteAdminData = {
     body: InviteAdminRequest;
     path?: never;

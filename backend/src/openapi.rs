@@ -55,6 +55,7 @@ use crate::{
         routes::public_events::get_public_event,
         routes::public_events::list_public_organizers,
         routes::public_events::get_public_organizer,
+        routes::ical::list_organizer_ical_events,
         routes::audit::list_audit_logs,
         routes::auth::login,
         routes::auth::lookup_setup_token,

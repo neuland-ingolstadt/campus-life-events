@@ -1,0 +1,5 @@
+CREATE TABLE api_tokens (
+    id BIGSERIAL PRIMARY KEY,
+    token TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
