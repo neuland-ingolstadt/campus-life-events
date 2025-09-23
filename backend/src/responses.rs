@@ -35,6 +35,7 @@ pub struct SetupTokenInfoResponse {
     pub account_type: AccountType,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize, ToSchema)]
 pub struct NewsletterDataResponse {
     pub subject: String,

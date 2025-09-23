@@ -7,6 +7,7 @@ use lettre::{
     transport::smtp::client::{Tls, TlsParameters},
 };
 use thiserror::Error;
+use tracing::warn;
 
 const DEFAULT_BASE_URL: &str = "http://localhost:3000";
 const INVITE_SUBJECT: &str = "Willkommen bei Campus Life Events";
@@ -58,7 +59,7 @@ impl EmailClient {
             .collect();
 
         if missing.len() == required.len() {
-            eprintln!("⚠️  SMTP configuration missing - email sending disabled");
+            warn!("SMTP configuration missing; email sending disabled");
             return Ok(None);
         }
 

@@ -15,8 +15,8 @@ use dotenvy::dotenv;
 use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
 use tower_http::{cors::CorsLayer, set_header::SetResponseHeaderLayer};
-use tracing::info;
-use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
+use tracing::{error, info, warn};
+use tracing_subscriber::{EnvFilter, fmt::time::UtcTime};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::{Config, SwaggerUi, SyntaxHighlight};
 
@@ -42,32 +42,56 @@ async fn main() {
         .await
         .expect("Failed to connect to database");
 
-    info!("✅ Connected to database");
+    info!(target: "startup", component = "database", action = "connect", "Connected to database");
 
     // Run database migrations at startup
     sqlx::migrate!("./migrations")
         .run(&pool)
         .await
         .expect("Failed to run migrations");
-    info!("✅ Database migrations applied");
+    info!(target: "startup", component = "database", action = "migrate", "Database migrations applied");
 
     let email_client = match EmailClient::from_env() {
         Ok(Some(client)) => {
-            info!("📧 Email notifications enabled");
+            info!(
+                target: "startup",
+                component = "email",
+                action = "init",
+                mode = "enabled",
+                "Email notifications enabled"
+            );
             Some(client)
         }
         Ok(None) => {
-            info!("📧 Email notifications disabled (SMTP env vars not set)");
+            warn!(
+                target: "startup",
+                component = "email",
+                action = "init",
+                mode = "disabled",
+                reason = "missing_configuration",
+                "Email notifications disabled; SMTP env vars not set"
+            );
             None
         }
         Err(EmailClientError::IncompleteConfig(missing)) => {
-            info!(
-                missing = missing.as_str(),
-                "📧 Email notifications disabled; SMTP config incomplete"
+            warn!(
+                target: "startup",
+                component = "email",
+                action = "init",
+                mode = "disabled",
+                missing = %missing,
+                "Email notifications disabled; SMTP config incomplete"
             );
             None
         }
         Err(err) => {
+            error!(
+                target: "startup",
+                component = "email",
+                action = "init",
+                %err,
+                "Failed to initialize email client"
+            );
             panic!("Failed to initialize email client: {err}");
         }
     };
@@ -78,11 +102,56 @@ async fn main() {
     };
 
     // Configure CORS to be more restrictive
-    let allowed_origins = std::env::var("ALLOWED_ORIGINS")
-        .unwrap_or_else(|_| "http://localhost:3000,https://localhost:3000".to_string())
-        .split(',')
-        .map(|origin| origin.trim().parse::<HeaderValue>().unwrap())
-        .collect::<Vec<_>>();
+    let raw_allowed_origins = std::env::var("ALLOWED_ORIGINS")
+        .unwrap_or_else(|_| "http://localhost:3000,https://localhost:3000".to_string());
+
+    let mut allowed_origins = Vec::new();
+    for origin in raw_allowed_origins.split(',') {
+        let trimmed = origin.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        match HeaderValue::from_str(trimmed) {
+            Ok(value) => allowed_origins.push(value),
+            Err(err) => warn!(
+                target: "startup",
+                component = "cors",
+                action = "parse_origin",
+                invalid_origin = trimmed,
+                %err,
+                "Ignoring invalid allowed origin"
+            ),
+        }
+    }
+
+    if allowed_origins.is_empty() {
+        warn!(
+            target: "startup",
+            component = "cors",
+            action = "parse_origin",
+            source = %raw_allowed_origins,
+            "No valid allowed origins configured; using default http://localhost:3000"
+        );
+        allowed_origins.push(HeaderValue::from_static("http://localhost:3000"));
+    }
+
+    let allowed_origin_strings: Vec<String> = allowed_origins
+        .iter()
+        .map(|value| {
+            value
+                .to_str()
+                .map(|s| s.to_string())
+                .unwrap_or_else(|_| String::new())
+        })
+        .collect();
+
+    info!(
+        target: "startup",
+        component = "cors",
+        action = "configure",
+        allowed_origins = ?allowed_origin_strings,
+        "Configured CORS allowed origins"
+    );
 
     let cors = CorsLayer::new()
         .allow_methods([
@@ -136,7 +205,7 @@ async fn main() {
         .with_state(state);
 
     let addr: SocketAddr = "0.0.0.0:8080".parse().expect("Invalid listen address");
-    info!(?addr, "✅ Server started successfully");
+    info!(target: "startup", %addr, component = "http", action = "listen", "Server ready to accept connections");
 
     let listener = TcpListener::bind(addr)
         .await
@@ -149,8 +218,13 @@ async fn main() {
 fn init_tracing() {
     let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
 
-    tracing_subscriber::registry()
-        .with(env_filter)
-        .with(tracing_subscriber::fmt::layer())
+    tracing_subscriber::fmt()
+        .with_env_filter(env_filter)
+        .with_target(true)
+        .with_level(true)
+        .with_file(true)
+        .with_line_number(true)
+        .with_timer(UtcTime::rfc_3339())
+        .compact()
         .init();
 }
