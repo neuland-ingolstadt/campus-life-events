@@ -1,11 +1,7 @@
 'use client'
 
 import moment from 'moment'
-import {
-	Calendar,
-	type CalendarEvent,
-	momentLocalizer
-} from 'react-big-calendar'
+import { Calendar, momentLocalizer } from 'react-big-calendar'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { useQuery } from '@tanstack/react-query'
 import { Pencil, Trash2 } from 'lucide-react'
@@ -31,13 +27,16 @@ import { me } from '@/lib/auth'
 
 const localizer = momentLocalizer(moment)
 
+type CalendarEvent = {
+	id: number
+	title: string
+	start: Date
+	end: Date
+	resource: ApiEvent & { organizerName: string }
+}
+
 interface EventComponentProps {
-	event: CalendarEvent & {
-		resource: {
-			organizer_id: number
-			organizerName: string
-		}
-	}
+	event: CalendarEvent
 	organizerId?: number
 	isAdmin: boolean
 	onDelete: (id: number) => Promise<void>
@@ -135,7 +134,7 @@ export function EventsCalendar({
 	)
 
 	// Transform events to calendar format
-	const calendarEvents = events.map((event) => ({
+	const calendarEvents: CalendarEvent[] = events.map((event) => ({
 		id: event.id,
 		title: event.title_de,
 		start: new Date(event.start_date_time),
@@ -151,17 +150,17 @@ export function EventsCalendar({
 	const eventStyleGetter = (event: CalendarEvent) => {
 		const isOwnEvent =
 			isAdmin ||
-			(organizerId !== undefined &&
-				organizerId ===
-					(event.resource as { organizer_id: number }).organizer_id)
+			(organizerId !== undefined && organizerId === event.resource.organizer_id)
 		return {
-			backgroundColor: isOwnEvent ? '#3b82f6' : '#6b7280',
-			borderColor: isOwnEvent ? '#2563eb' : '#4b5563',
-			color: 'white',
-			borderRadius: '4px',
-			border: 'none',
-			fontSize: '12px',
-			padding: '2px 4px'
+			style: {
+				backgroundColor: isOwnEvent ? '#3b82f6' : '#6b7280',
+				borderColor: isOwnEvent ? '#2563eb' : '#4b5563',
+				color: 'white',
+				borderRadius: '4px',
+				border: 'none',
+				fontSize: '12px',
+				padding: '2px 4px'
+			}
 		}
 	}
 
@@ -179,11 +178,7 @@ export function EventsCalendar({
 				components={{
 					event: (props: { event: CalendarEvent }) => (
 						<EventComponent
-							event={
-								props.event as CalendarEvent & {
-									resource: { organizer_id: number; organizerName: string }
-								}
-							}
+							event={props.event}
 							organizerId={organizerId}
 							isAdmin={isAdmin}
 							onDelete={onDelete}
