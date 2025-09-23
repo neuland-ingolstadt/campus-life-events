@@ -214,7 +214,7 @@ pub(crate) async fn get_organizer_events_ical(
             o.location as organizer_location
         FROM events e
         JOIN organizers o ON e.organizer_id = o.id
-        WHERE e.organizer_id = $1 AND e.publish_app = true
+        WHERE e.organizer_id = $1 AND e.publish_in_ical = true
         ORDER BY e.start_date_time ASC
         "#,
         organizer_id
