@@ -1,6 +1,6 @@
 'use client'
 
-import { Pencil, Share2, Trash2 } from 'lucide-react'
+import { Copy, Pencil, Share2, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
@@ -49,6 +49,16 @@ export function EventActionsCell({
 			<div className="flex items-center gap-2">
 				{canManage && (
 					<div className="flex items-center gap-2">
+						<Link href={`/events/${event.id}/duplicate`}>
+							<Button
+								variant="outline"
+								size="sm"
+								className="h-8 px-2"
+								title="Event duplizieren"
+							>
+								<Copy className="h-4 w-4" />
+							</Button>
+						</Link>
 						<Link href={`/events/${event.id}`}>
 							<Button variant="outline" size="sm" className="h-8 px-2">
 								<Pencil className="h-4 w-4" />
