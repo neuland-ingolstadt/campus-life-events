@@ -50,16 +50,25 @@ const eventSchema = z.object({
 
 export type EventFormValues = z.infer<typeof eventSchema>
 
+type EventFormOverrides = Partial<
+	Omit<EventFormValues, 'start_date_time' | 'end_date_time'>
+> & {
+	start_date_time?: Date | undefined
+	end_date_time?: Date | undefined
+}
+
 export function EventForm({
 	event,
 	onSave,
-	isLoading = false
+	isLoading = false,
+	initialValues
 }: {
 	event?: Event | null
 	onSave: (
 		data: CreateEventRequest | UpdateEventRequest
 	) => Promise<void> | void
 	isLoading?: boolean
+	initialValues?: EventFormOverrides
 }) {
 	const [startDate, setStartDate] = useState<Date>()
 	const [endDate, setEndDate] = useState<Date>()
@@ -82,49 +91,69 @@ export function EventForm({
 	})
 
 	useEffect(() => {
-		if (event) {
-			const startDateTime = new Date(event.start_date_time)
-			const endDateTime = event.end_date_time
-				? new Date(event.end_date_time)
-				: undefined
+		const hasInitialValue = <K extends keyof EventFormOverrides>(key: K) =>
+			initialValues && Object.hasOwn(initialValues, key)
 
-			setStartDate(startDateTime)
-			setEndDate(endDateTime)
-			// time is embedded in the Date object
+		const baseStartDate = event ? new Date(event.start_date_time) : new Date()
+		const baseEndDate = event?.end_date_time
+			? new Date(event.end_date_time)
+			: undefined
 
-			form.reset({
-				title_de: event.title_de,
-				title_en: event.title_en,
-				description_de: event.description_de || '',
-				description_en: event.description_en || '',
-				start_date_time: startDateTime,
-				end_date_time: endDateTime,
-				event_url: event.event_url || '',
-				location: event.location || '',
-				publish_app: event.publish_app,
-				publish_newsletter: event.publish_newsletter,
-				publish_in_ical: event.publish_in_ical,
-				publish_web: event.publish_web
-			})
-		} else {
-			form.reset({
-				title_de: '',
-				title_en: '',
-				description_de: '',
-				description_en: '',
-				start_date_time: new Date(),
-				end_date_time: undefined,
-				event_url: '',
-				location: '',
-				publish_app: true,
-				publish_newsletter: true,
-				publish_in_ical: true,
-				publish_web: true
-			})
-			setStartDate(new Date())
-			setEndDate(undefined)
+		const nextStartDate = hasInitialValue('start_date_time')
+			? initialValues?.start_date_time
+			: event
+				? baseStartDate
+				: new Date()
+
+		const nextEndDate = hasInitialValue('end_date_time')
+			? initialValues?.end_date_time
+			: baseEndDate
+
+		const baseValues: EventFormValues = event
+			? {
+					title_de: event.title_de,
+					title_en: event.title_en,
+					description_de: event.description_de || '',
+					description_en: event.description_en || '',
+					start_date_time: baseStartDate,
+					end_date_time: baseEndDate,
+					event_url: event.event_url || '',
+					location: event.location || '',
+					publish_app: event.publish_app,
+					publish_newsletter: event.publish_newsletter,
+					publish_in_ical: event.publish_in_ical,
+					publish_web: event.publish_web
+				}
+			: {
+					title_de: '',
+					title_en: '',
+					description_de: '',
+					description_en: '',
+					start_date_time: new Date(),
+					end_date_time: undefined,
+					event_url: '',
+					location: '',
+					publish_app: true,
+					publish_newsletter: true,
+					publish_in_ical: true,
+					publish_web: true
+				}
+
+		const resolvedValues = {
+			...baseValues,
+			...initialValues,
+			start_date_time: (hasInitialValue('start_date_time')
+				? initialValues?.start_date_time
+				: baseValues.start_date_time) as Date,
+			end_date_time: hasInitialValue('end_date_time')
+				? initialValues?.end_date_time
+				: baseValues.end_date_time
 		}
-	}, [event, form])
+
+		form.reset(resolvedValues)
+		setStartDate(nextStartDate)
+		setEndDate(nextEndDate)
+	}, [event, form, initialValues])
 
 	const onSubmit = async (values: EventFormValues) => {
 		if (!startDate) return

@@ -1,19 +1,9 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import {
-	BarChart3,
-	Calendar,
-	CalendarDays,
-	Home,
-	Mail,
-	Settings,
-	Shield,
-	Users
-} from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { AuthStatus } from '@/components/auth-status'
 import { ThemeToggle } from '@/components/theme-toggle'
 import {
@@ -30,6 +20,14 @@ import {
 	useSidebar
 } from '@/components/ui/sidebar'
 import { me } from '@/lib/auth'
+import { ChartColumnIncreasing } from './animate-ui/icons/chart-column-increasing'
+import { Hammer } from './animate-ui/icons/hammer'
+import { LayoutDashboard } from './animate-ui/icons/layout-dashboard'
+import { PartyPopper } from './animate-ui/icons/party-popper'
+import { Radio } from './animate-ui/icons/radio'
+import { Send } from './animate-ui/icons/send'
+import { Settings } from './animate-ui/icons/settings'
+import { Users } from './animate-ui/icons/users'
 import NeulandPalm from './neuland-palm'
 
 export function DashboardSidebar() {
@@ -38,23 +36,37 @@ export function DashboardSidebar() {
 	const isAdmin = meData?.account_type === 'ADMIN'
 	const canAccessNewsletter = meData?.can_access_newsletter ?? false
 	const { isMobile, setOpenMobile } = useSidebar()
+	const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set())
+
 	const handleNavigation = useCallback(() => {
 		if (isMobile) {
 			setOpenMobile(false)
 		}
 	}, [isMobile, setOpenMobile])
 
+	const handleItemClick = useCallback((itemTitle: string) => {
+		setAnimatingItems((prev) => new Set(prev).add(itemTitle))
+		// Reset animation state after animation completes
+		setTimeout(() => {
+			setAnimatingItems((prev) => {
+				const newSet = new Set(prev)
+				newSet.delete(itemTitle)
+				return newSet
+			})
+		}, 600) // Match animation duration
+	}, [])
+
 	const items = useMemo(() => {
 		const navItems = [
 			{
 				title: 'Dashboard',
 				url: '/',
-				icon: Home
+				icon: LayoutDashboard
 			},
 			{
 				title: 'Events',
 				url: '/events',
-				icon: Calendar
+				icon: PartyPopper
 			},
 			{
 				title: 'Vereine',
@@ -67,7 +79,7 @@ export function DashboardSidebar() {
 			navItems.push({
 				title: 'Admin',
 				url: '/admin',
-				icon: Shield
+				icon: Hammer
 			})
 		}
 
@@ -75,7 +87,7 @@ export function DashboardSidebar() {
 			navItems.push({
 				title: 'Newsletter',
 				url: '/newsletter',
-				icon: Mail
+				icon: Send
 			})
 		}
 
@@ -83,12 +95,12 @@ export function DashboardSidebar() {
 			{
 				title: 'iCal Abonnements',
 				url: '/ical',
-				icon: CalendarDays
+				icon: Radio
 			},
 			{
 				title: 'Analysen',
 				url: '/analytics',
-				icon: BarChart3
+				icon: ChartColumnIncreasing
 			},
 			{
 				title: 'Einstellungen',
@@ -131,8 +143,17 @@ export function DashboardSidebar() {
 										isActive={pathname === item.url}
 										size="lg"
 									>
-										<Link href={item.url} onClick={handleNavigation}>
-											<item.icon className="h-5 w-5" />
+										<Link
+											href={item.url}
+											onClick={() => {
+												handleItemClick(item.title)
+												handleNavigation()
+											}}
+										>
+											<item.icon
+												className="h-5 w-5"
+												animate={animatingItems.has(item.title)}
+											/>
 											<span>{item.title}</span>
 										</Link>
 									</SidebarMenuButton>

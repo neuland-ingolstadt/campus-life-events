@@ -1,6 +1,6 @@
 'use client'
 
-import { Pencil, Share2, Trash2 } from 'lucide-react'
+import { Copy, MoreVertical, Pencil, Share2, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
@@ -17,6 +17,13 @@ import {
 	AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 
 interface EventActionsCellProps {
 	readonly event: ApiEvent
@@ -45,21 +52,61 @@ export function EventActionsCell({
 	}, [shareUrl])
 
 	return (
-		<div className="flex justify-center">
+		<div className="flex">
 			<div className="flex items-center gap-2">
 				{canManage && (
-					<div className="flex items-center gap-2">
-						<Link href={`/events/${event.id}`}>
-							<Button variant="outline" size="sm" className="h-8 px-2">
+					<>
+						<Button
+							asChild
+							variant="outline"
+							size="sm"
+							className="h-8 px-2"
+							title="Bearbeiten"
+						>
+							<Link href={`/events/${event.id}`}>
 								<Pencil className="h-4 w-4" />
-							</Button>
-						</Link>
+							</Link>
+						</Button>
 						<AlertDialog>
-							<AlertDialogTrigger asChild>
-								<Button variant="destructive" size="sm" className="h-8 px-2">
-									<Trash2 className="h-4 w-4" />
-								</Button>
-							</AlertDialogTrigger>
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<Button
+										variant="outline"
+										size="icon"
+										className="h-8 w-8"
+										title="Aktionen"
+									>
+										<MoreVertical className="h-4 w-4" />
+									</Button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end" className="w-48">
+									{event.publish_web && (
+										<DropdownMenuItem onSelect={handleShare}>
+											<Share2 className="h-4 w-4" />
+											<span>Share link kopieren</span>
+										</DropdownMenuItem>
+									)}
+									<DropdownMenuItem asChild>
+										<Link
+											href={`/events/${event.id}/duplicate`}
+											className="flex items-center gap-2"
+										>
+											<Copy className="h-4 w-4" />
+											<span>Duplizieren</span>
+										</Link>
+									</DropdownMenuItem>
+									<DropdownMenuSeparator />
+									<AlertDialogTrigger asChild>
+										<DropdownMenuItem
+											className="text-destructive focus:text-destructive"
+											onSelect={(event) => event.preventDefault()}
+										>
+											<Trash2 className="h-4 w-4" />
+											<span>Löschen</span>
+										</DropdownMenuItem>
+									</AlertDialogTrigger>
+								</DropdownMenuContent>
+							</DropdownMenu>
 							<AlertDialogContent>
 								<AlertDialogHeader>
 									<AlertDialogTitle>Event löschen</AlertDialogTitle>
@@ -79,19 +126,9 @@ export function EventActionsCell({
 								</AlertDialogFooter>
 							</AlertDialogContent>
 						</AlertDialog>
-					</div>
+					</>
 				)}
-				{event.publish_web && (
-					<Button
-						variant="outline"
-						size="sm"
-						className="h-8 px-2"
-						onClick={handleShare}
-						title="Share link kopieren"
-					>
-						<Share2 className="h-4 w-4" />
-					</Button>
-				)}
+				{/* Share action moved into dropdown */}
 			</div>
 		</div>
 	)

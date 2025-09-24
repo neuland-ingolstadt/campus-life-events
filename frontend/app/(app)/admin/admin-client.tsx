@@ -2,11 +2,12 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
-import { BookOpen, RefreshCw, ShieldCheck, Users } from 'lucide-react'
+import { BookOpen, RefreshCw, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useMemo } from 'react'
 import { listAuditLogs, listOrganizersAdmin } from '@/client'
 import type { AuditLogEntry, OrganizerWithInvite } from '@/client/types.gen'
+import { Users } from '@/components/animate-ui/icons/users'
 import { AuditDetailsModal } from '@/components/audit-details-modal'
 import { CreateOrganizerDialog } from '@/components/create-organizer-dialog'
 import { InviteAdminDialog } from '@/components/invite-admin-dialog'

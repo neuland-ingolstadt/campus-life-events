@@ -11,6 +11,7 @@
 			"app/**/*",
 			"lib/**/*",
 			"components/**/*",
+			"!components/animate-ui/**/*",
 			"!components/ui/**/*",
 			"!app/globals.css"
 		]
