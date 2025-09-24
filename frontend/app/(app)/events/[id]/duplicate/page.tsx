@@ -39,14 +39,16 @@ export default function DuplicateEventPage() {
 			return undefined
 		}
 
-		const now = new Date().toISOString()
-
 		return {
 			...data,
-			start_date_time: now,
 			end_date_time: undefined
 		}
 	}, [data])
+
+	const initialFormValues = useMemo(
+		() => ({ start_date_time: undefined, end_date_time: undefined }),
+		[]
+	)
 
 	async function onSave(values: CreateEventRequest) {
 		setSaving(true)
@@ -98,6 +100,7 @@ export default function DuplicateEventPage() {
 							event={duplicateEvent}
 							onSave={onSave}
 							isLoading={saving}
+							initialValues={initialFormValues}
 						/>
 					)}
 				</div>
