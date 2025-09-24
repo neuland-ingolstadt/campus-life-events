@@ -3,11 +3,13 @@
 import { useQuery } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
-import { RefreshCw, ShieldCheck } from 'lucide-react'
+import { ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useMemo } from 'react'
 import { listAdmins } from '@/client'
 import type { AdminWithInvite } from '@/client/types.gen'
+import { AnimateIcon } from '@/components/animate-ui/icons/icon'
+import { RefreshCw } from '@/components/animate-ui/icons/refresh-cw'
 import { DataTableColumnHeader } from '@/components/data-table/column-header'
 import { DataTable } from '@/components/data-table/data-table'
 import { InviteAdminDialog } from '@/components/invite-admin-dialog'
@@ -276,15 +278,17 @@ export default function ManageAdminsPage() {
 						</p>
 					</div>
 					<div className="flex gap-2 items-center">
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() => refetch()}
-							className="flex items-center gap-2"
-						>
-							<RefreshCw className="h-4 w-4" />
-							Aktualisieren
-						</Button>
+						<AnimateIcon animateOnHover>
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={() => refetch()}
+								className="flex items-center gap-2"
+							>
+								<RefreshCw className="h-4 w-4" />
+								Aktualisieren
+							</Button>
+						</AnimateIcon>
 						<InviteAdminDialog />
 					</div>
 				</div>

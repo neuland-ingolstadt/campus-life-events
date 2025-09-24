@@ -4,6 +4,8 @@ import { AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useId, useState } from 'react'
+import { AnimateIcon } from '@/components/animate-ui/icons/icon'
+import { LogIn } from '@/components/animate-ui/icons/log-in'
 import { AuthCard, AuthLayout, AuthLeftSide } from '@/components/auth'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -89,9 +91,12 @@ export default function LoginPage() {
 								required
 							/>
 						</div>
-						<Button type="submit" className="w-full" disabled={loading}>
-							{loading ? 'Einloggen...' : 'Einloggen'}
-						</Button>
+						<AnimateIcon animateOnHover animateOnTap>
+							<Button type="submit" className="w-full" disabled={loading}>
+								{loading ? 'Einloggen...' : 'Einloggen'}
+								<LogIn className="h-4 w-4" />
+							</Button>
+						</AnimateIcon>
 					</form>
 					<div className="mt-5 space-y-4">
 						<p className="text-center text-xs text-muted-foreground">

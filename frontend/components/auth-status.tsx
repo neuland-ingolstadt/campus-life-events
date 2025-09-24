@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { LogOut, Shield, User, Users } from 'lucide-react'
+import { Shield, User, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -13,10 +13,14 @@ import {
 	TooltipProvider,
 	TooltipTrigger
 } from '@/components/ui/tooltip'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { logout, me } from '@/lib/auth'
+import { AnimateIcon } from './animate-ui/icons/icon'
+import { LogOut } from './animate-ui/icons/log-out'
 
 export function AuthStatus() {
 	const router = useRouter()
+	const isMobile = useIsMobile()
 	const { data: user, refetch } = useQuery({
 		queryKey: ['auth', 'me'],
 		queryFn: me
@@ -89,20 +93,30 @@ export function AuthStatus() {
 							</div>
 							<div className="flex items-center gap-2">
 								{isAdmin ? (
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<Badge
-												variant="secondary"
-												className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-											>
-												<Shield className="h-3 w-3 mr-1" />
-												Admin
-											</Badge>
-										</TooltipTrigger>
-										<TooltipContent>
-											<p>Administrator-Berechtigung</p>
-										</TooltipContent>
-									</Tooltip>
+									isMobile ? (
+										<Badge
+											variant="secondary"
+											className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+										>
+											<Shield className="h-3 w-3 mr-1" />
+											Admin
+										</Badge>
+									) : (
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<Badge
+													variant="secondary"
+													className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+												>
+													<Shield className="h-3 w-3 mr-1" />
+													Admin
+												</Badge>
+											</TooltipTrigger>
+											<TooltipContent>
+												<p>Administrator-Berechtigung</p>
+											</TooltipContent>
+										</Tooltip>
+									)
 								) : user.organizer_id ? (
 									<Badge
 										variant="outline"
@@ -123,21 +137,34 @@ export function AuthStatus() {
 							</div>
 						</div>
 
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<Button
-									size="sm"
-									variant="ghost"
-									onClick={onLogout}
-									className="shrink-0 h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
-								>
-									<LogOut className="h-4 w-4" />
-								</Button>
-							</TooltipTrigger>
-							<TooltipContent>
-								<p>Abmelden</p>
-							</TooltipContent>
-						</Tooltip>
+						{isMobile ? (
+							<Button
+								size="sm"
+								variant="ghost"
+								onClick={onLogout}
+								className="shrink-0 h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
+							>
+								<LogOut className="h-4 w-4" />
+							</Button>
+						) : (
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<AnimateIcon animateOnHover animateOnTap>
+										<Button
+											size="sm"
+											variant="ghost"
+											onClick={onLogout}
+											className="shrink-0 h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
+										>
+											<LogOut className="h-4 w-4" />
+										</Button>
+									</AnimateIcon>
+								</TooltipTrigger>
+								<TooltipContent>
+									<p>Abmelden</p>
+								</TooltipContent>
+							</Tooltip>
+						)}
 					</div>
 				</CardContent>
 			</Card>

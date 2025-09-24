@@ -5,6 +5,7 @@ import { format } from 'date-fns'
 import { BookOpen, RefreshCw, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useMemo } from 'react'
+import { toast } from 'sonner'
 import { listAuditLogs, listOrganizersAdmin } from '@/client'
 import type { AuditLogEntry, OrganizerWithInvite } from '@/client/types.gen'
 import { Users } from '@/components/animate-ui/icons/users'
@@ -84,6 +85,7 @@ export function AdminDashboardClient() {
 
 	const onRefresh = () => {
 		void Promise.all([refetchOrganizers(), refetchAudit()])
+		toast.success('Aktualisierung erfolgreich')
 	}
 
 	// Show loading state while checking authentication

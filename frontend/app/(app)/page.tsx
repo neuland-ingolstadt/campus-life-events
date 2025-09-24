@@ -7,7 +7,6 @@ import {
 	BarChart3,
 	Calendar,
 	Clock,
-	ExternalLink,
 	Plus,
 	TrendingUp,
 	Users
@@ -18,8 +17,9 @@ import type {
 	Event as ApiEvent,
 	Organizer as ApiOrganizer
 } from '@/client/types.gen'
+import { ExternalLink } from '@/components/animate-ui/icons/external-link'
+import { AnimateIcon } from '@/components/animate-ui/icons/icon'
 import QuickActions from '@/components/quick-actions'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
 	Card,
@@ -241,17 +241,12 @@ export default function Dashboard() {
 														</p>
 													</div>
 													<div className="flex items-center gap-2">
-														<Badge
-															variant={
-																event.publish_app ? 'default' : 'secondary'
-															}
-														>
-															{event.publish_app ? 'Veröffentlicht' : 'Entwurf'}
-														</Badge>
 														<Link href={`/events/${event.id}`}>
-															<Button size="sm" variant="ghost">
-																<ExternalLink className="h-3 w-3" />
-															</Button>
+															<AnimateIcon animateOnHover>
+																<Button size="sm" variant="ghost">
+																	<ExternalLink className="h-3 w-3" />
+																</Button>
+															</AnimateIcon>
 														</Link>
 													</div>
 												</div>
@@ -300,9 +295,6 @@ export default function Dashboard() {
 															{format(new Date(event.start_date_time), 'MMM d')}
 														</p>
 													</div>
-													<Badge variant="outline" className="text-xs">
-														{event.publish_app ? 'Veröffentlicht' : 'Entwurf'}
-													</Badge>
 												</div>
 											))}
 										</div>

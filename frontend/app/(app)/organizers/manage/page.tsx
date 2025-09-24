@@ -3,11 +3,13 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
-import { Pencil, RefreshCw, Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useMemo } from 'react'
 import { deleteOrganizer, listOrganizersAdmin } from '@/client'
 import type { OrganizerWithInvite } from '@/client/types.gen'
+import { AnimateIcon } from '@/components/animate-ui/icons/icon'
+import { RefreshCw } from '@/components/animate-ui/icons/refresh-cw'
 import { CreateOrganizerDialog } from '@/components/create-organizer-dialog'
 import { DataTableColumnHeader } from '@/components/data-table/column-header'
 import { DataTable } from '@/components/data-table/data-table'
@@ -374,15 +376,17 @@ export default function ManageOrganizersPage() {
 						</p>
 					</div>
 					<div className="flex gap-2 items-center">
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() => refetch()}
-							className="flex items-center gap-2"
-						>
-							<RefreshCw className="h-4 w-4" />
-							Aktualisieren
-						</Button>
+						<AnimateIcon animateOnHover animateOnTap>
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={() => refetch()}
+								className="flex items-center gap-2"
+							>
+								<RefreshCw className="h-4 w-4" />
+								Aktualisieren
+							</Button>
+						</AnimateIcon>
 						<CreateOrganizerDialog
 							onSuccess={() => {
 								refetch()

@@ -2,6 +2,7 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { deleteEvent, listEvents, listOrganizers } from '@/client'
 import type {
 	Event as ApiEvent,
@@ -99,6 +100,7 @@ export default function EventsPage() {
 				onViewModeChange={(mode) => setViewMode(mode)}
 				onRefresh={() => {
 					void refetch()
+					toast.success('Aktualisierung erfolgreich')
 				}}
 				canCreate={organizerId !== undefined}
 			/>

@@ -1,9 +1,11 @@
 'use client'
 
-import { Grid3X3, List, Plus, RefreshCw } from 'lucide-react'
+import { Grid3X3, List, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { AnimateIcon } from '../animate-ui/icons/icon'
+import { RefreshCw } from '../animate-ui/icons/refresh-cw'
 
 type ViewMode = 'table' | 'calendar'
 
@@ -46,15 +48,17 @@ export function EventsHeader({
 						<Grid3X3 className="h-4 w-4" />
 					</ToggleGroupItem>
 				</ToggleGroup>
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={onRefresh}
-					className="flex items-center gap-2"
-				>
-					<RefreshCw className="h-4 w-4" />
-					Aktualisieren
-				</Button>
+				<AnimateIcon animateOnHover animateOnTap>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={onRefresh}
+						className="flex items-center gap-2"
+					>
+						<RefreshCw className="h-4 w-4" />
+						Aktualisieren
+					</Button>
+				</AnimateIcon>
 				{canCreate && (
 					<Link href="/events/new">
 						<Button size="sm" className="flex items-center gap-2">
