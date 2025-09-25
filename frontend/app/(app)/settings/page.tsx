@@ -187,26 +187,27 @@ export default function SettingsPage() {
 								<InfoIcon className="h-5 w-5" />
 								Informationen
 							</CardTitle>
-							<CardDescription>Wichtige Hinweise zur Nutzung</CardDescription>
+							<CardDescription>Über Campus Life Events</CardDescription>
 						</CardHeader>
 						<CardContent className="space-y-4">
 							<div className="space-y-3">
 								<div className="flex items-start gap-3">
 									<div className="h-2 w-2 bg-current rounded-full mt-2 flex-shrink-0"></div>
 									<p className="text-sm text-muted-foreground">
-										Deine Daten werden sicher und verschlüsselt gespeichert
+										Eine Kooperation von Neuland Ingolstadt e.V. und StudVer
 									</p>
 								</div>
 								<div className="flex items-start gap-3">
 									<div className="h-2 w-2 bg-current rounded-full mt-2 flex-shrink-0"></div>
 									<p className="text-sm text-muted-foreground">
-										Bei Fragen stehen wir gerne zur Verfügung
+										Beauftragt von der THI StudVer, als Nachfolger des
+										Moodle-Kurses
 									</p>
 								</div>
 								<div className="flex items-start gap-3">
 									<div className="h-2 w-2 bg-current rounded-full mt-2 flex-shrink-0"></div>
 									<p className="text-sm text-muted-foreground">
-										Regelmäßige Updates und Verbesserungen
+										Entwickelt und betrieben von Neuland Ingolstadt e.V.
 									</p>
 								</div>
 							</div>
