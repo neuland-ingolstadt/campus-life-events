@@ -1,7 +1,7 @@
 import type { Column } from '@tanstack/react-table'
 import { endOfDay, format, isWithinInterval, startOfDay } from 'date-fns'
 import { CalendarIcon, X } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { DateRange } from 'react-day-picker'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
@@ -24,13 +24,38 @@ export type DateRangeFilter<TData, TValue> = Omit<
 	column: string
 }
 
+function getDateKey(value: Date | string | undefined): number | undefined {
+	if (!value) {
+		return undefined
+	}
+
+	const parsed = value instanceof Date ? value : new Date(value)
+	const timestamp = parsed.getTime()
+
+	return Number.isNaN(timestamp) ? undefined : timestamp
+}
+
 export function DataTableDateRangeFilter<TData, TValue>({
 	column,
 	title
 }: DataTableDateRangeFilterProps<TData, TValue>) {
-	const [dateRange, setDateRange] = useState<DateRange | undefined>(
-		column.getFilterValue() as DateRange | undefined
-	)
+	const filterValue = column.getFilterValue() as DateRange | undefined
+	const [dateRange, setDateRange] = useState<DateRange | undefined>(filterValue)
+	const fromKey = getDateKey(filterValue?.from)
+	const toKey = getDateKey(filterValue?.to)
+
+	useEffect(() => {
+		setDateRange((previous) => {
+			const previousFromKey = getDateKey(previous?.from)
+			const previousToKey = getDateKey(previous?.to)
+
+			if (previousFromKey === fromKey && previousToKey === toKey) {
+				return previous
+			}
+
+			return filterValue
+		})
+	}, [filterValue, fromKey, toKey])
 
 	const handleDateSelect = (range: DateRange | undefined) => {
 		setDateRange(range)

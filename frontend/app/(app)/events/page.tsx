@@ -2,6 +2,7 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ColumnFiltersState } from '@tanstack/react-table'
+import { startOfDay } from 'date-fns'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { deleteEvent, listEvents, listOrganizers } from '@/client'
@@ -16,31 +17,134 @@ import { useEventColumns } from '@/components/events/use-event-columns'
 import { EventsCalendar } from '@/components/events-calendar'
 import { me } from '@/lib/auth'
 
+const DATE_FILTER_ID = 'start_date_time'
+
+type DateFilterValue = { from?: string | Date; to?: string | Date } | undefined
+
+function toValidDate(value: string | Date | undefined): Date | undefined {
+	if (!value) {
+		return undefined
+	}
+
+	const parsed = value instanceof Date ? value : new Date(value)
+
+	if (Number.isNaN(parsed.getTime())) {
+		return undefined
+	}
+
+	return parsed
+}
+
+function createUpcomingEventsFilter(): ColumnFiltersState[number] {
+	return {
+		id: DATE_FILTER_ID,
+		value: {
+			from: startOfDay(new Date()),
+			to: undefined
+		}
+	}
+}
+
+function normalizeColumnFilters(
+	filters: ColumnFiltersState | undefined
+): ColumnFiltersState {
+	if (!Array.isArray(filters)) {
+		return []
+	}
+
+	return filters.reduce<ColumnFiltersState>((acc, filter) => {
+		if (filter.id !== DATE_FILTER_ID) {
+			const value = filter.value
+
+			if (Array.isArray(value)) {
+				acc.push({ ...filter, value: [...value] })
+				return acc
+			}
+
+			if (value && typeof value === 'object') {
+				acc.push({ ...filter, value: { ...value } })
+				return acc
+			}
+
+			acc.push({ ...filter })
+			return acc
+		}
+
+		const value = filter.value as DateFilterValue
+		const from = toValidDate(value?.from)
+		const to = toValidDate(value?.to)
+
+		if (!from && !to) {
+			return acc
+		}
+
+		acc.push({
+			...filter,
+			value: {
+				from,
+				to
+			}
+		})
+
+		return acc
+	}, [])
+}
+
+function loadInitialColumnFilters(
+	defaultFilter: ColumnFiltersState[number]
+): ColumnFiltersState {
+	if (typeof window === 'undefined') {
+		return normalizeColumnFilters([defaultFilter])
+	}
+
+	try {
+		const stored = localStorage.getItem('tableState-events')
+
+		if (!stored) {
+			return normalizeColumnFilters([defaultFilter])
+		}
+
+		const parsed = JSON.parse(stored) as {
+			columnFilters?: ColumnFiltersState
+		}
+
+		const normalized = normalizeColumnFilters(parsed.columnFilters)
+
+		if (normalized.some((filter) => filter.id === defaultFilter.id)) {
+			return normalized
+		}
+
+		return normalizeColumnFilters([...normalized, defaultFilter])
+	} catch (error) {
+		console.error('Failed to parse stored table filters', error)
+		return normalizeColumnFilters([defaultFilter])
+	}
+}
+
 export default function EventsPage() {
 	'use no memo'
 	const qc = useQueryClient()
 	const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
-	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(() => {
-		if (typeof window === 'undefined') {
-			return []
-		}
+	const defaultDateFilter = useMemo(() => createUpcomingEventsFilter(), [])
+	const [columnFiltersState, setColumnFiltersState] =
+		useState<ColumnFiltersState>(() =>
+			loadInitialColumnFilters(defaultDateFilter)
+		)
+	const setColumnFilters = useCallback(
+		(
+			updater:
+				| ColumnFiltersState
+				| ((previous: ColumnFiltersState) => ColumnFiltersState)
+		) => {
+			setColumnFiltersState((previous) => {
+				const next = typeof updater === 'function' ? updater(previous) : updater
 
-		try {
-			const stored = localStorage.getItem('tableState-events')
-			if (!stored) {
-				return []
-			}
-
-			const parsed = JSON.parse(stored) as {
-				columnFilters?: ColumnFiltersState
-			}
-
-			return parsed.columnFilters ?? []
-		} catch (error) {
-			console.error('Failed to parse stored table filters', error)
-			return []
-		}
-	})
+				return normalizeColumnFilters(next)
+			})
+		},
+		[]
+	)
+	const columnFilters = columnFiltersState
 	const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
 	const organizerId = meData?.organizer_id ?? undefined
 	const isAdmin = meData?.account_type === 'ADMIN'
@@ -135,7 +239,7 @@ export default function EventsPage() {
 
 			return hasChanged ? next : previous
 		})
-	}, [organizerId, ownFilterActive])
+	}, [organizerId, ownFilterActive, setColumnFilters])
 
 	const handleOwnFilterChange = useCallback(
 		(state: boolean) => {
@@ -154,7 +258,7 @@ export default function EventsPage() {
 				]
 			})
 		},
-		[organizerId]
+		[organizerId, setColumnFilters]
 	)
 
 	const calendarEvents = useMemo(() => {
