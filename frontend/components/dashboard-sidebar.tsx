@@ -119,7 +119,7 @@ export function DashboardSidebar() {
 				<div className="flex justify-center py-2 md:hidden">
 					<div className="h-1 w-8 rounded-full bg-muted-foreground/30" />
 				</div>
-				<div className="flex items-center gap-2 px-4 py-2">
+				<Link href="/" className="flex items-center gap-2 px-4 py-2">
 					<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
 						<NeulandPalm className="h-6 w-6" color="currentColor" />
 					</div>
@@ -129,7 +129,7 @@ export function DashboardSidebar() {
 							Event-Dashboard
 						</span>
 					</div>
-				</div>
+				</Link>
 			</SidebarHeader>
 			<SidebarContent>
 				<SidebarGroup>

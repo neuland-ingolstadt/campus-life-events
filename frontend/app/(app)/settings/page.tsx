@@ -229,7 +229,7 @@ export default function SettingsPage() {
 					</CardHeader>
 					<CardContent className="space-y-4">
 						<div className="space-y-2">
-							<div className="flex items-center gap-2 bg-muted/50 rounded-lg">
+							<div className="flex items-center gap-2">
 								<GitPullRequest className="h-4 w-4" />
 								<a
 									href="https://github.com/neuland-ingolstadt/campus-life-events"
@@ -241,7 +241,7 @@ export default function SettingsPage() {
 								</a>
 							</div>
 							{process.env.NEXT_PUBLIC_COMMIT_HASH && (
-								<div className="flex items-center gap-2 bg-muted/50 rounded-lg">
+								<div className="flex items-center gap-2">
 									<CodeIcon className="h-4 w-4" />
 									<span className="text-sm font-mono">
 										Commit: {process.env.NEXT_PUBLIC_COMMIT_HASH.slice(0, 8)}
