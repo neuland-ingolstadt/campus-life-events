@@ -6,11 +6,12 @@ import {
 	getFilteredRowModel,
 	getPaginationRowModel,
 	getSortedRowModel,
+	type OnChangeFn,
 	type SortingState,
 	type TableState,
 	useReactTable
 } from '@tanstack/react-table'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
 	DataTableFilterToolbar,
 	type FilterOptions
@@ -32,6 +33,8 @@ type DataTableProps<TData, TValue> = {
 	data: TData[]
 	onClick?: (item: TData) => void
 	initialSorting?: SortingState
+	columnFilters?: ColumnFiltersState
+	onColumnFiltersChange?: (filters: ColumnFiltersState) => void
 } & (
 	| {
 			enableFilter: true
@@ -56,7 +59,9 @@ export function DataTable<TData, TValue>({
 	enableFilter = false,
 	filterOptions,
 	initialPageSize,
-	initialSorting
+	initialSorting,
+	columnFilters: columnFiltersProp,
+	onColumnFiltersChange
 }: DataTableProps<TData, TValue>) {
 	'use no memo'
 	const tableStateKey = useMemo(() => `tableState-${tableId}`, [tableId])
@@ -74,8 +79,28 @@ export function DataTable<TData, TValue>({
 	}, [tableStateKey])
 
 	const [sorting, setSorting] = useState<SortingState>(initialSorting || [])
-	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
-		initialState?.columnFilters ?? []
+	const [uncontrolledColumnFilters, setUncontrolledColumnFilters] =
+		useState<ColumnFiltersState>(initialState?.columnFilters ?? [])
+
+	const isControlled = columnFiltersProp !== undefined
+	const columnFilters = isControlled
+		? (columnFiltersProp ?? [])
+		: uncontrolledColumnFilters
+
+	const handleColumnFiltersChange = useCallback<OnChangeFn<ColumnFiltersState>>(
+		(updater) => {
+			const nextValue =
+				typeof updater === 'function' ? updater(columnFilters) : updater
+
+			if (!isControlled) {
+				setUncontrolledColumnFilters(nextValue)
+			}
+
+			if (onColumnFiltersChange) {
+				onColumnFiltersChange(nextValue)
+			}
+		},
+		[columnFilters, isControlled, onColumnFiltersChange]
 	)
 
 	useEffect(() => {
@@ -102,7 +127,7 @@ export function DataTable<TData, TValue>({
 		},
 		getCoreRowModel: getCoreRowModel(),
 		onSortingChange: setSorting,
-		onColumnFiltersChange: setColumnFilters,
+		onColumnFiltersChange: handleColumnFiltersChange,
 		getPaginationRowModel: enablePagination
 			? getPaginationRowModel()
 			: undefined,
