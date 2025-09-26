@@ -115,6 +115,12 @@ pub(crate) async fn create_event(
         publish_web,
     } = payload;
 
+    if end_date_time < start_date_time {
+        return Err(AppError::validation(
+            "end date time must not be before start date time",
+        ));
+    }
+
     let mut transaction = state.db.begin().await?;
 
     let event = sqlx::query_as!(
@@ -264,6 +270,15 @@ pub(crate) async fn update_event(
     {
         return Err(AppError::unauthorized(
             "cannot update another organizer's event",
+        ));
+    }
+
+    let effective_start = start_date_time.unwrap_or(existing_event.start_date_time);
+    let effective_end = end_date_time.unwrap_or(existing_event.end_date_time);
+
+    if effective_end < effective_start {
+        return Err(AppError::validation(
+            "end date time must not be before start date time",
         ));
     }
 

@@ -46,7 +46,10 @@ export default function DuplicateEventPage() {
 		return data
 	}, [data])
 
-	const initialFormValues = useMemo(() => ({}), [])
+	const initialFormValues = useMemo(
+		() => ({ start_date_time: undefined, end_date_time: undefined }),
+		[]
+	)
 
 	async function onSave(values: CreateEventRequest | UpdateEventRequest) {
 		setSaving(true)

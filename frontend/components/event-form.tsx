@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 
@@ -28,25 +28,41 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import RequiredLabel from './ui/required-label'
 
-const eventSchema = z.object({
-	title_de: z.string().min(1, 'Deutscher Titel ist erforderlich'),
-	title_en: z.string().min(1, 'Englischer Titel ist erforderlich'),
-	description_de: z.string().optional(),
-	description_en: z.string().optional(),
-	start_date_time: z.date({ message: 'Startdatum ist erforderlich' }),
-	end_date_time: z.date({ message: 'Enddatum ist erforderlich' }),
-	event_url: z
-		.string()
-		.optional()
-		.refine((val) => !val || z.string().url().safeParse(val).success, {
-			message: 'Bitte gib eine gültige URL ein'
-		}),
-	location: z.string().optional(),
-	publish_app: z.boolean(),
-	publish_newsletter: z.boolean(),
-	publish_in_ical: z.boolean(),
-	publish_web: z.boolean()
-})
+const END_BEFORE_START_ERROR = 'Enddatum darf nicht vor dem Startdatum liegen'
+
+const eventSchema = z
+	.object({
+		title_de: z.string().min(1, 'Deutscher Titel ist erforderlich'),
+		title_en: z.string().min(1, 'Englischer Titel ist erforderlich'),
+		description_de: z.string().optional(),
+		description_en: z.string().optional(),
+		start_date_time: z.date({ message: 'Startdatum ist erforderlich' }),
+		end_date_time: z.date({ message: 'Enddatum ist erforderlich' }),
+		event_url: z
+			.string()
+			.optional()
+			.refine((val) => !val || z.string().url().safeParse(val).success, {
+				message: 'Bitte gib eine gültige URL ein'
+			}),
+		location: z.string().optional(),
+		publish_app: z.boolean(),
+		publish_newsletter: z.boolean(),
+		publish_in_ical: z.boolean(),
+		publish_web: z.boolean()
+	})
+	.superRefine((data, ctx) => {
+		if (
+			data.start_date_time &&
+			data.end_date_time &&
+			data.end_date_time <= data.start_date_time
+		) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: END_BEFORE_START_ERROR,
+				path: ['end_date_time']
+			})
+		}
+	})
 
 export type EventFormValues = z.infer<typeof eventSchema>
 
@@ -91,6 +107,39 @@ export function EventForm({
 		}
 	})
 
+	const validateChronology = useCallback(
+		(nextStart?: Date, nextEnd?: Date) => {
+			if (!nextStart || !nextEnd) {
+				return
+			}
+			if (nextEnd <= nextStart) {
+				form.setError('end_date_time', {
+					type: 'manual',
+					message: END_BEFORE_START_ERROR
+				})
+				return
+			}
+			form.clearErrors('end_date_time')
+		},
+		[form]
+	)
+
+	const handleStartDateChange = (value?: Date) => {
+		setStartDate(value)
+		if (value) {
+			form.clearErrors('start_date_time')
+		}
+		validateChronology(value, endDate)
+	}
+
+	const handleEndDateChange = (value?: Date) => {
+		setEndDate(value)
+		if (value) {
+			form.clearErrors('end_date_time')
+		}
+		validateChronology(startDate, value)
+	}
+
 	useEffect(() => {
 		const hasInitialValue = <K extends keyof EventFormOverrides>(key: K) =>
 			initialValues && Object.hasOwn(initialValues, key)
@@ -107,7 +156,7 @@ export function EventForm({
 				: undefined
 
 		const nextEndDate = hasInitialValue('end_date_time')
-			? (initialValues?.end_date_time ?? baseEndDate)
+			? initialValues?.end_date_time
 			: event
 				? baseEndDate
 				: undefined
@@ -152,14 +201,15 @@ export function EventForm({
 				? initialValues?.start_date_time
 				: baseValues.start_date_time,
 			end_date_time: hasInitialValue('end_date_time')
-				? (initialValues?.end_date_time ?? baseValues.end_date_time)
+				? initialValues?.end_date_time
 				: baseValues.end_date_time
 		} as EventFormValues
 
 		form.reset(resolvedValues)
 		setStartDate(nextStartDate)
 		setEndDate(nextEndDate)
-	}, [event, form, initialValues])
+		validateChronology(nextStartDate, nextEndDate)
+	}, [event, form, initialValues, validateChronology])
 
 	useEffect(() => {
 		if (startDate) {
@@ -263,7 +313,7 @@ export function EventForm({
 								label="Beginn"
 								required
 								value={startDate}
-								onValueChange={setStartDate}
+								onValueChange={handleStartDateChange}
 							/>
 							{form.formState.errors.start_date_time && (
 								<p className="text-sm text-destructive">
@@ -276,7 +326,7 @@ export function EventForm({
 								label="Ende"
 								required
 								value={endDate}
-								onValueChange={setEndDate}
+								onValueChange={handleEndDateChange}
 							/>
 							{form.formState.errors.end_date_time && (
 								<p className="text-sm text-destructive">
