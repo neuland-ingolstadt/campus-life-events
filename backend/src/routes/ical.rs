@@ -319,7 +319,7 @@ pub(crate) async fn list_organizer_ical_events(
     }
 
     let events = sqlx::query_as::<_, Event>(
-        "SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at FROM events WHERE organizer_id = $1 AND publish_in_ical = true ORDER BY start_date_time ASC",
+        "SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at FROM events WHERE organizer_id = $1 AND publish_in_ical = true AND publish_app = true ORDER BY start_date_time ASC",
     )
     .bind(organizer_id)
     .fetch_all(&state.db)

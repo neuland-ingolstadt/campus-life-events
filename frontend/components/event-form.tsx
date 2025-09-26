@@ -472,7 +472,7 @@ export function EventForm({
 												iCal-Kalender
 											</FormLabel>
 											<FormDescription className="text-xs">
-												Dieses Event in iCal-Kalendern anzeigen.
+												Dieses Event im eigenen Vereins-iCal aufführen.
 											</FormDescription>
 										</div>
 										<FormControl>
@@ -507,6 +507,11 @@ export function EventForm({
 								)}
 							/>
 						</div>
+						<p className="text-xs text-muted-foreground -mt-3">
+							Das Event wird nur in der gemeinsamen iCal-Kalender aller Vereine
+							angezeigt, wenn „iCal-Kalender" und gleichzeitig „Neuland Next
+							App" aktiviert sind.
+						</p>
 					</div>
 				</div>
 
