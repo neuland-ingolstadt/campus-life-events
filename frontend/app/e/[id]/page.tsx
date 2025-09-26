@@ -2,7 +2,7 @@ import { de } from 'date-fns/locale'
 import { formatInTimeZone } from 'date-fns-tz'
 import { Clock, ExternalLink, MapPin, Share2, Users } from 'lucide-react'
 import { notFound } from 'next/navigation'
-import { PublicFooter } from '@/components/public-footer'
+import { AuthFooter } from '@/components/auth/auth-footer'
 import { ShareButtons } from '@/components/share-buttons'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -294,8 +294,7 @@ export default async function PublicEventPage({
 				</div>
 			</div>
 
-			{/* Footer */}
-			<PublicFooter />
+			<AuthFooter />
 		</div>
 	)
 }

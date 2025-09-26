@@ -35,7 +35,7 @@ export function AuthLeftSide({ children }: AuthLeftSideProps) {
 							Campus Life Events
 						</h1>
 						<p className="mt-4 text-sm text-foreground/90 font-medium">
-							made by Neuland for StudVer at THI
+							powered by Neuland Ingolstadt e.V.
 						</p>
 						{children && <div className="mt-6">{children}</div>}
 					</CardContent>

@@ -12,7 +12,7 @@ export function AuthMobileHeader() {
 				<div className="flex flex-col">
 					<h1 className="text-lg font-semibold">Campus Life Events</h1>
 					<p className="text-xs text-muted-foreground">
-						made by Neuland for StudVer at THI
+						powered by Neuland Ingolstadt e.V.
 					</p>
 				</div>
 			</Link>
