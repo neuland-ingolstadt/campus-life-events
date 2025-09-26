@@ -70,28 +70,21 @@ export function useEventColumns({
 				header: ({ column }) => (
 					<DataTableColumnHeader column={column} title="Enddatum" />
 				),
-				cell: ({ row }) =>
-					row.original.end_date_time ? (
-						<div className="flex items-center gap-2 text-sm">
-							<div>
-								<div className="font-medium">
-									{format(new Date(row.original.end_date_time), 'MMM dd, yyyy')}
-								</div>
-								<div className="text-xs text-muted-foreground">
-									{format(new Date(row.original.end_date_time), 'HH:mm')}
-								</div>
+				cell: ({ row }) => (
+					<div className="flex items-center gap-2 text-sm">
+						<div>
+							<div className="font-medium">
+								{format(new Date(row.original.end_date_time), 'MMM dd, yyyy')}
+							</div>
+							<div className="text-xs text-muted-foreground">
+								{format(new Date(row.original.end_date_time), 'HH:mm')}
 							</div>
 						</div>
-					) : (
-						<span className="text-muted-foreground text-sm">—</span>
-					),
-				sortingFn: (a, b, id) => {
-					const av = a.getValue(id) as string | null
-					const bv = b.getValue(id) as string | null
-					const at = av ? new Date(av).getTime() : 0
-					const bt = bv ? new Date(bv).getTime() : 0
-					return at - bt
-				},
+					</div>
+				),
+				sortingFn: (a, b, id) =>
+					new Date(a.getValue(id) as string).getTime() -
+					new Date(b.getValue(id) as string).getTime(),
 				size: 150
 			},
 			{

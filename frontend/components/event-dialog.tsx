@@ -49,7 +49,7 @@ const eventSchema = z.object({
 	start_date_time: z.date().refine((date) => date instanceof Date, {
 		message: 'Startdatum ist erforderlich'
 	}),
-	end_date_time: z.date().optional(),
+	end_date_time: z.date({ message: 'Enddatum ist erforderlich' }),
 	event_url: z.string().url().optional().or(z.literal('')),
 	location: z.string().optional(),
 	publish_app: z.boolean(),
@@ -91,7 +91,7 @@ export function EventDialog({
 			description_de: '',
 			description_en: '',
 			start_date_time: new Date(),
-			end_date_time: undefined,
+			end_date_time: new Date(),
 			event_url: '',
 			location: '',
 			publish_app: true,
@@ -103,14 +103,12 @@ export function EventDialog({
 	useEffect(() => {
 		if (event) {
 			const startDateTime = new Date(event.start_date_time)
-			const endDateTime = event.end_date_time
-				? new Date(event.end_date_time)
-				: undefined
+			const endDateTime = new Date(event.end_date_time)
 
 			setStartDate(startDateTime)
 			setEndDate(endDateTime)
 			setStartTime(format(startDateTime, 'HH:mm'))
-			setEndTime(endDateTime ? format(endDateTime, 'HH:mm') : '')
+			setEndTime(format(endDateTime, 'HH:mm'))
 
 			form.reset({
 				title_de: event.title_de,
@@ -126,28 +124,45 @@ export function EventDialog({
 				publish_in_ical: event.publish_in_ical
 			})
 		} else {
+			const now = new Date()
 			form.reset({
 				title_de: '',
 				title_en: '',
 				description_de: '',
 				description_en: '',
-				start_date_time: new Date(),
-				end_date_time: undefined,
+				start_date_time: now,
+				end_date_time: now,
 				event_url: '',
 				location: '',
 				publish_app: true,
 				publish_newsletter: true,
 				publish_in_ical: true
 			})
-			setStartDate(new Date())
-			setEndDate(undefined)
+			setStartDate(now)
+			setEndDate(now)
 			setStartTime('')
 			setEndTime('')
 		}
 	}, [event, form])
 
 	const onSubmit = (values: EventFormValues) => {
-		if (!startDate) return
+		if (!startDate) {
+			form.setError('start_date_time', {
+				type: 'manual',
+				message: 'Startdatum ist erforderlich'
+			})
+			return
+		}
+
+		if (!endDate) {
+			form.setError('end_date_time', {
+				type: 'manual',
+				message: 'Enddatum ist erforderlich'
+			})
+			return
+		}
+
+		form.clearErrors(['start_date_time', 'end_date_time'])
 
 		const startDateTime = new Date(startDate)
 		if (startTime) {
@@ -155,19 +170,16 @@ export function EventDialog({
 			startDateTime.setHours(hours, minutes, 0, 0)
 		}
 
-		let endDateTime: Date | undefined
-		if (endDate) {
-			endDateTime = new Date(endDate)
-			if (endTime) {
-				const [hours, minutes] = endTime.split(':').map(Number)
-				endDateTime.setHours(hours, minutes, 0, 0)
-			}
+		const endDateTime = new Date(endDate)
+		if (endTime) {
+			const [hours, minutes] = endTime.split(':').map(Number)
+			endDateTime.setHours(hours, minutes, 0, 0)
 		}
 
 		const eventData = {
 			...values,
 			start_date_time: startDateTime.toISOString(),
-			end_date_time: endDateTime?.toISOString(),
+			end_date_time: endDateTime.toISOString(),
 			event_url: values.event_url || undefined,
 			location: values.location || undefined,
 			description_de: values.description_de || undefined,
@@ -294,10 +306,15 @@ export function EventDialog({
 										className="w-32"
 									/>
 								</div>
+								{form.formState.errors.start_date_time && (
+									<p className="text-sm text-destructive">
+										{form.formState.errors.start_date_time.message}
+									</p>
+								)}
 							</div>
 
 							<div className="space-y-2">
-								<FormLabel>Enddatum & Uhrzeit</FormLabel>
+								<FormLabel>Enddatum & Uhrzeit *</FormLabel>
 								<div className="flex gap-2">
 									<Popover>
 										<PopoverTrigger asChild>
@@ -328,6 +345,11 @@ export function EventDialog({
 										className="w-32"
 									/>
 								</div>
+								{form.formState.errors.end_date_time && (
+									<p className="text-sm text-destructive">
+										{form.formState.errors.end_date_time.message}
+									</p>
+								)}
 							</div>
 						</div>
 

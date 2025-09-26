@@ -34,7 +34,7 @@ const eventSchema = z.object({
 	description_de: z.string().optional(),
 	description_en: z.string().optional(),
 	start_date_time: z.date({ message: 'Startdatum ist erforderlich' }),
-	end_date_time: z.date().optional(),
+	end_date_time: z.date({ message: 'Enddatum ist erforderlich' }),
 	event_url: z
 		.string()
 		.optional()
@@ -80,13 +80,14 @@ export function EventForm({
 			title_en: '',
 			description_de: '',
 			description_en: '',
-			start_date_time: new Date(),
+			start_date_time: undefined,
 			end_date_time: undefined,
 			event_url: '',
 			location: '',
 			publish_app: true,
 			publish_newsletter: true,
-			publish_in_ical: true
+			publish_in_ical: true,
+			publish_web: true
 		}
 	})
 
@@ -95,21 +96,26 @@ export function EventForm({
 			initialValues && Object.hasOwn(initialValues, key)
 
 		const baseStartDate = event ? new Date(event.start_date_time) : new Date()
-		const baseEndDate = event?.end_date_time
+		const baseEndDate = event
 			? new Date(event.end_date_time)
-			: undefined
+			: new Date(baseStartDate)
 
 		const nextStartDate = hasInitialValue('start_date_time')
 			? initialValues?.start_date_time
 			: event
 				? baseStartDate
-				: new Date()
+				: undefined
 
 		const nextEndDate = hasInitialValue('end_date_time')
-			? initialValues?.end_date_time
-			: baseEndDate
+			? (initialValues?.end_date_time ?? baseEndDate)
+			: event
+				? baseEndDate
+				: undefined
 
-		const baseValues: EventFormValues = event
+		const baseValues: Partial<EventFormValues> & {
+			start_date_time?: Date | undefined
+			end_date_time?: Date | undefined
+		} = event
 			? {
 					title_de: event.title_de,
 					title_en: event.title_en,
@@ -129,7 +135,7 @@ export function EventForm({
 					title_en: '',
 					description_de: '',
 					description_en: '',
-					start_date_time: new Date(),
+					start_date_time: undefined,
 					end_date_time: undefined,
 					event_url: '',
 					location: '',
@@ -142,29 +148,60 @@ export function EventForm({
 		const resolvedValues = {
 			...baseValues,
 			...initialValues,
-			start_date_time: (hasInitialValue('start_date_time')
+			start_date_time: hasInitialValue('start_date_time')
 				? initialValues?.start_date_time
-				: baseValues.start_date_time) as Date,
+				: baseValues.start_date_time,
 			end_date_time: hasInitialValue('end_date_time')
-				? initialValues?.end_date_time
+				? (initialValues?.end_date_time ?? baseValues.end_date_time)
 				: baseValues.end_date_time
-		}
+		} as EventFormValues
 
 		form.reset(resolvedValues)
 		setStartDate(nextStartDate)
 		setEndDate(nextEndDate)
 	}, [event, form, initialValues])
 
-	const onSubmit = async (values: EventFormValues) => {
-		if (!startDate) return
+	useEffect(() => {
+		if (startDate) {
+			form.setValue('start_date_time', startDate)
+		}
+		if (endDate) {
+			form.setValue('end_date_time', endDate)
+		}
+	}, [startDate, endDate, form])
 
-		const startDateTime = new Date(startDate)
-		const endDateTime = endDate ? new Date(endDate) : undefined
+	const onSubmit = async (values: EventFormValues) => {
+		const startDateTime = startDate || values.start_date_time
+		const endDateTime = endDate || values.end_date_time
+
+		if (!startDateTime || !endDateTime) {
+			if (!startDateTime) {
+				form.setError('start_date_time', {
+					type: 'manual',
+					message: 'Startdatum ist erforderlich'
+				})
+			}
+			if (!endDateTime) {
+				form.setError('end_date_time', {
+					type: 'manual',
+					message: 'Enddatum ist erforderlich'
+				})
+			}
+			return
+		}
+
+		form.clearErrors(['start_date_time', 'end_date_time'])
 
 		const payload = {
 			...values,
-			start_date_time: startDateTime.toISOString(),
-			end_date_time: endDateTime?.toISOString(),
+			start_date_time: (startDateTime instanceof Date
+				? startDateTime
+				: new Date(startDateTime)
+			).toISOString(),
+			end_date_time: (endDateTime instanceof Date
+				? endDateTime
+				: new Date(endDateTime)
+			).toISOString(),
 			event_url: values.event_url || undefined,
 			location: values.location || undefined,
 			description_de: values.description_de || undefined,
@@ -221,18 +258,32 @@ export function EventForm({
 				<div>
 					<h2 className="text-xl font-bold tracking-tight">Zeitplan</h2>
 					<div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-6">
-						<DateTimeField
-							label="Beginn"
-							required
-							value={startDate}
-							onValueChange={setStartDate}
-						/>
-						<DateTimeField
-							label="Ende"
-							value={endDate}
-							onValueChange={setEndDate}
-							description="Optional. Leer lassen, wenn keine Endzeit vorhanden ist."
-						/>
+						<div className="space-y-2">
+							<DateTimeField
+								label="Beginn"
+								required
+								value={startDate}
+								onValueChange={setStartDate}
+							/>
+							{form.formState.errors.start_date_time && (
+								<p className="text-sm text-destructive">
+									{form.formState.errors.start_date_time.message}
+								</p>
+							)}
+						</div>
+						<div className="space-y-2">
+							<DateTimeField
+								label="Ende"
+								required
+								value={endDate}
+								onValueChange={setEndDate}
+							/>
+							{form.formState.errors.end_date_time && (
+								<p className="text-sm text-destructive">
+									{form.formState.errors.end_date_time.message}
+								</p>
+							)}
+						</div>
 					</div>
 				</div>
 

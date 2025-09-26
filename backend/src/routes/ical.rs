@@ -25,7 +25,7 @@ struct EventWithOrganizer {
     pub description_de: Option<String>,
     pub description_en: Option<String>,
     pub start_date_time: DateTime<Utc>,
-    pub end_date_time: Option<DateTime<Utc>>,
+    pub end_date_time: DateTime<Utc>,
     pub event_url: Option<String>,
     pub location: Option<String>,
     pub organizer_location: Option<String>,
@@ -72,10 +72,7 @@ impl EventWithOrganizer {
         start_property.add_parameter("TZID", BERLIN_TZID);
         ical_event.append_property(start_property);
 
-        let end_time = self
-            .end_date_time
-            .unwrap_or_else(|| self.start_date_time + chrono::Duration::hours(2));
-        let end_local = end_time.with_timezone(&Berlin);
+        let end_local = self.end_date_time.with_timezone(&Berlin);
         let mut end_property =
             Property::new("DTEND", &end_local.format("%Y%m%dT%H%M%S").to_string());
         end_property.add_parameter("TZID", BERLIN_TZID);
@@ -103,7 +100,7 @@ struct EventWithOrganizerRow {
     pub description_de: Option<String>,
     pub description_en: Option<String>,
     pub start_date_time: DateTime<Utc>,
-    pub end_date_time: Option<DateTime<Utc>>,
+    pub end_date_time: DateTime<Utc>,
     pub event_url: Option<String>,
     pub location: Option<String>,
     pub organizer_location: Option<String>,

@@ -194,11 +194,12 @@ export function generateNewsletterHTML(
 
 	const renderEvent = (event: ApiEventWithOrganizer) => {
 		const startDate = new Date(event.start_date_time)
-		const endDate = event.end_date_time ? new Date(event.end_date_time) : null
+		const endDate = new Date(event.end_date_time)
 		const isAllDay =
 			startDate.getHours() === 0 &&
 			startDate.getMinutes() === 0 &&
-			(!endDate || (endDate.getHours() === 0 && endDate.getMinutes() === 0))
+			endDate.getHours() === 0 &&
+			endDate.getMinutes() === 0
 
 		const organizerLink = event.organizer_website
 			? `<a href="${escapeHtml(event.organizer_website)}" class="organizer" target="_blank" style="${inlineStyles.organizerLink}">${escapeHtml(event.organizer_name)}</a>`
@@ -218,7 +219,7 @@ ${
 		? `
 <div class="meta-item" style="${inlineStyles.metaItem}">
 <span class="meta-icon" style="${inlineStyles.metaIcon}">🕐</span>
-<span class="meta-text" style="${inlineStyles.metaText}">${formatTime(event.start_date_time)}${endDate ? ` - ${formatTime(event.end_date_time || '')}` : ''}</span>
+<span class="meta-text" style="${inlineStyles.metaText}">${formatTime(event.start_date_time)} - ${formatTime(event.end_date_time)}</span>
 </div>
 `
 		: ''

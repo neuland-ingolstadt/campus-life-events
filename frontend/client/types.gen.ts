@@ -41,7 +41,7 @@ export type ChangePasswordRequest = {
 export type CreateEventRequest = {
     description_de?: string | null;
     description_en?: string | null;
-    end_date_time?: string | null;
+    end_date_time: string;
     event_url?: string | null;
     location?: string | null;
     publish_app?: boolean;
@@ -66,7 +66,7 @@ export type Event = {
     created_at: string;
     description_de?: string | null;
     description_en?: string | null;
-    end_date_time?: string | null;
+    end_date_time: string;
     event_url?: string | null;
     id: number;
     location?: string | null;
@@ -85,7 +85,7 @@ export type EventWithOrganizer = {
     created_at: string;
     description_de?: string | null;
     description_en?: string | null;
-    end_date_time?: string | null;
+    end_date_time: string;
     event_url?: string | null;
     id: number;
     location?: string | null;
@@ -175,7 +175,7 @@ export type OrganizerWithInvite = {
 export type PublicEventResponse = {
     description_de?: string | null;
     description_en?: string | null;
-    end_date_time?: string | null;
+    end_date_time: string;
     event_url?: string | null;
     id: number;
     location?: string | null;

@@ -138,9 +138,7 @@ export function EventsCalendar({
 		id: event.id,
 		title: event.title_de,
 		start: new Date(event.start_date_time),
-		end: event.end_date_time
-			? new Date(event.end_date_time)
-			: new Date(event.start_date_time),
+		end: new Date(event.end_date_time),
 		resource: {
 			...event,
 			organizerName: getOrganizerName(event.organizer_id)

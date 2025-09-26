@@ -55,7 +55,7 @@ pub struct PublicEventResponse {
     pub description_de: Option<String>,
     pub description_en: Option<String>,
     pub start_date_time: DateTime<Utc>,
-    pub end_date_time: Option<DateTime<Utc>>,
+    pub end_date_time: DateTime<Utc>,
     pub event_url: Option<String>,
     pub location: Option<String>,
 }

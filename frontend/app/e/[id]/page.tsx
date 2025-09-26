@@ -16,7 +16,7 @@ type Event = {
 	description_de?: string
 	description_en?: string
 	start_date_time: string
-	end_date_time?: string
+	end_date_time: string
 	event_url?: string
 	location?: string
 	publish_app: boolean
@@ -147,11 +147,9 @@ export default async function PublicEventPage({
 											<p className="font-semibold">
 												{formatDateTime(event.start_date_time)}
 											</p>
-											{event.end_date_time && (
-												<p className="text-sm text-muted-foreground">
-													bis {formatTime(event.end_date_time)}
-												</p>
-											)}
+											<p className="text-sm text-muted-foreground">
+												bis {formatTime(event.end_date_time)}
+											</p>
 										</div>
 									</div>
 
