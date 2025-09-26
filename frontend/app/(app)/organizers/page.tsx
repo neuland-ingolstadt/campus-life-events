@@ -95,8 +95,12 @@ export default function OrganizersPage() {
 								{organizers
 									.filter((o) => o.id === organizerId)
 									.map((o) => (
-										<Card key={o.id}>
-											<CardHeader>
+										<Card
+											key={o.id}
+											className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg"
+										>
+											<div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+											<CardHeader className="relative">
 												<div className="flex flex-row items-start justify-between gap-4">
 													<div className="flex-1 space-y-2">
 														<CardTitle className="text-xl flex items-center gap-3">
@@ -118,7 +122,7 @@ export default function OrganizersPage() {
 													</div>
 												</div>
 											</CardHeader>
-											<CardContent className="space-y-4">
+											<CardContent className="space-y-4 relative">
 												{isProfileIncomplete && (
 													<div className="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-amber-800 dark:bg-amber-950">
 														<div className="flex items-start gap-3">
@@ -258,10 +262,11 @@ export default function OrganizersPage() {
 									.map((o) => (
 										<Card
 											key={o.id}
-											className="cursor-pointer hover:bg-muted-foreground/5"
+											className="cursor-pointer group relative overflow-hidden transition-all duration-300 hover:shadow-lg"
 											onClick={() => setViewing(o)}
 										>
-											<CardHeader className="pb-3">
+											<div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+											<CardHeader className="pb-3 relative">
 												<div className="flex items-center gap-3">
 													<Avatar className="h-10 w-10 flex-shrink-0">
 														<AvatarFallback className=" from-primary/90 to-primary bg-gradient-to-br text-primary-foreground font-semibold text-lg">
@@ -275,7 +280,7 @@ export default function OrganizersPage() {
 													</div>
 												</div>
 											</CardHeader>
-											<CardContent className="space-y-3">
+											<CardContent className="space-y-3 relative">
 												<p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
 													{o.description_de ||
 														o.description_en ||

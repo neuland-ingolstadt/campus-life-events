@@ -233,35 +233,45 @@ export default function AnalyticsPage() {
 							key: 'total',
 							title: 'Änderungen gesamt',
 							value: total,
-							color: 'var(--chart-2)'
+							color: 'var(--chart-2)',
+							gradient: 'from-blue-500/5 to-cyan-500/5'
 						},
 						{
 							key: 'create',
 							title: 'Erstellungen',
 							value: byType.CREATE || 0,
-							color: 'var(--chart-3)'
+							color: 'var(--chart-3)',
+							gradient: 'from-green-500/5 to-emerald-500/5'
 						},
 						{
 							key: 'update',
 							title: 'Aktualisierungen',
 							value: byType.UPDATE || 0,
-							color: 'var(--chart-4)'
+							color: 'var(--chart-4)',
+							gradient: 'from-purple-500/5 to-pink-500/5'
 						},
 						{
 							key: 'delete',
 							title: 'Löschungen',
 							value: byType.DELETE || 0,
-							color: 'var(--chart-5)'
+							color: 'var(--chart-5)',
+							gradient: 'from-red-500/5 to-orange-500/5'
 						}
 					].map((kpi) => (
-						<Card key={kpi.key} className="flex flex-col">
-							<CardHeader className="items-center pb-0">
+						<Card
+							key={kpi.key}
+							className="flex flex-col group relative overflow-hidden transition-all duration-300 hover:shadow-lg"
+						>
+							<div
+								className={`absolute inset-0 bg-gradient-to-br ${kpi.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+							/>
+							<CardHeader className="items-center pb-0 relative">
 								<CardTitle className="text-center line-clamp-1">
 									{kpi.title}
 								</CardTitle>
 								<CardDescription>Letzte {days} Tage</CardDescription>
 							</CardHeader>
-							<CardContent className="flex-1 pb-0">
+							<CardContent className="flex-1 pb-0 relative">
 								<ChartContainer
 									config={{
 										value: {
@@ -341,14 +351,15 @@ export default function AnalyticsPage() {
 
 				<div className="grid gap-6 lg:grid-cols-2">
 					{/* Timeline line chart */}
-					<Card>
-						<CardHeader>
+					<Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg">
+						<div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+						<CardHeader className="relative">
 							<CardTitle>Veränderungen im Zeitverlauf</CardTitle>
 							<CardDescription>
 								Tägliche Anzahl nach Typ gruppiert
 							</CardDescription>
 						</CardHeader>
-						<CardContent>
+						<CardContent className="relative">
 							<ChartContainer
 								config={{
 									CREATE: { label: 'Create', color: COLORS.CREATE },
@@ -399,12 +410,13 @@ export default function AnalyticsPage() {
 					</Card>
 
 					{/* Top changed events */}
-					<Card>
-						<CardHeader>
+					<Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg">
+						<div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+						<CardHeader className="relative">
 							<CardTitle>Meist geänderte Events</CardTitle>
 							<CardDescription>Meiste Aktivität im Zeitraum</CardDescription>
 						</CardHeader>
-						<CardContent>
+						<CardContent className="relative">
 							<ChartContainer
 								config={{
 									count: {
@@ -443,12 +455,13 @@ export default function AnalyticsPage() {
 
 				{/* Distribution by type (fancy pie chart) */}
 				<div className="grid gap-6 lg:grid-cols-3">
-					<Card className="lg:col-span-1">
-						<CardHeader>
+					<Card className="lg:col-span-1 group relative overflow-hidden transition-all duration-300 hover:shadow-lg">
+						<div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+						<CardHeader className="relative">
 							<CardTitle>Verteilung nach Typ</CardTitle>
 							<CardDescription>Create / Update / Delete</CardDescription>
 						</CardHeader>
-						<CardContent>
+						<CardContent className="relative">
 							<ChartContainer
 								config={{
 									CREATE: { label: 'Create', color: COLORS.CREATE },
@@ -488,12 +501,13 @@ export default function AnalyticsPage() {
 					</Card>
 
 					{/* Audit logs table */}
-					<Card className="lg:col-span-2">
-						<CardHeader>
+					<Card className="lg:col-span-2 group relative overflow-hidden transition-all duration-300 hover:shadow-lg">
+						<div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+						<CardHeader className="relative">
 							<CardTitle>Audit-Log</CardTitle>
 							<CardDescription>Einträge im gewählten Zeitraum</CardDescription>
 						</CardHeader>
-						<CardContent>
+						<CardContent className="relative">
 							<DataTable<AuditRow, unknown>
 								tableId="analytics-audit"
 								columns={[

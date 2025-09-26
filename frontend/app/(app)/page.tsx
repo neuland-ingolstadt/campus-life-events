@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import {
+	Activity,
 	AlertTriangle,
 	BarChart3,
 	Calendar,
@@ -20,6 +21,7 @@ import type {
 import { ExternalLink } from '@/components/animate-ui/icons/external-link'
 import { AnimateIcon } from '@/components/animate-ui/icons/icon'
 import QuickActions from '@/components/quick-actions'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
 	Card,
@@ -28,7 +30,15 @@ import {
 	CardHeader,
 	CardTitle
 } from '@/components/ui/card'
+import {
+	HoverCard,
+	HoverCardContent,
+	HoverCardTrigger
+} from '@/components/ui/hover-card'
+import { Progress } from '@/components/ui/progress'
+import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import { Skeleton } from '@/components/ui/skeleton'
 import { me } from '@/lib/auth'
 
 export default function Dashboard() {
@@ -81,25 +91,33 @@ export default function Dashboard() {
 			title: 'Deine Events',
 			value: userEvents.length || 0,
 			icon: Calendar,
-			description: 'Events, die du erstellt hast'
+			description: 'Events, die du erstellt hast',
+			color: 'text-blue-600',
+			gradient: 'from-blue-500/10 to-cyan-500/10'
 		},
 		{
 			title: 'Anstehende Events',
 			value: userUpcomingEvents.length,
 			icon: Clock,
-			description: 'Events, die du erstellt hast und die bevorstehen'
+			description: 'Events, die du erstellt hast und die bevorstehen',
+			color: 'text-green-600',
+			gradient: 'from-green-500/10 to-emerald-500/10'
 		},
 		{
 			title: 'Veröffentlicht',
 			value: userPublishedEvents.length,
 			icon: TrendingUp,
-			description: 'In der App live'
+			description: 'In der App live',
+			color: 'text-purple-600',
+			gradient: 'from-purple-500/10 to-pink-500/10'
 		},
 		{
 			title: 'Alle Vereine',
 			value: organizerList.length,
 			icon: Users,
-			description: 'Alle Vereine'
+			description: 'Alle Vereine',
+			color: 'text-orange-600',
+			gradient: 'from-orange-500/10 to-yellow-500/10'
 		}
 	]
 
@@ -172,44 +190,98 @@ export default function Dashboard() {
 				) : (
 					<>
 						<div className="space-y-4">
-							<h3 className="text-lg font-semibold">Übersicht</h3>
+							<div className="flex items-center gap-2">
+								<h3 className="text-lg font-semibold">Übersicht</h3>
+								<Badge variant="secondary" className="ml-auto">
+									<Activity className="h-3 w-3 mr-1" />
+									Aktivitäten
+								</Badge>
+							</div>
 							<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-								{stats.map((stat) => (
-									<Card key={stat.title}>
-										<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-											<CardTitle className="text-sm font-medium">
-												{stat.title}
-											</CardTitle>
-											<stat.icon className="h-4 w-4 text-muted-foreground" />
-										</CardHeader>
-										<CardContent>
-											<div className="text-2xl font-bold">{stat.value}</div>
-											<p className="text-xs text-muted-foreground">
-												{stat.description}
-											</p>
-										</CardContent>
+								{stats.map((stat, index) => (
+									<Card
+										key={stat.title}
+										className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg"
+									>
+										<div
+											className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+										/>
+										<div className="relative">
+											<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+												<CardTitle className="text-sm font-medium">
+													{stat.title}
+												</CardTitle>
+												<stat.icon className={`h-4 w-4`} />
+											</CardHeader>
+											<CardContent>
+												<div className="flex items-center">
+													<div className={`text-2xl font-bold ${stat.color}`}>
+														{stat.value}
+													</div>
+												</div>
+												<div className="space-y-2">
+													<p className="text-xs text-muted-foreground">
+														{stat.description}
+													</p>
+													{index === 1 && userUpcomingEvents.length > 0 && (
+														<div className="space-y-1">
+															<div className="flex justify-between text-xs text-muted-foreground">
+																<span>Fortschritt</span>
+																<span>
+																	{userUpcomingEvents.length}/
+																	{userEvents.length}
+																</span>
+															</div>
+															<Progress
+																value={
+																	userEvents.length > 0
+																		? (userUpcomingEvents.length /
+																				userEvents.length) *
+																			100
+																		: 0
+																}
+																className="h-1"
+															/>
+														</div>
+													)}
+												</div>
+											</CardContent>
+										</div>
 									</Card>
 								))}
 							</div>
 						</div>
 
+						<Separator className="my-6" />
+
 						{/* Your Events */}
 						<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-							<Card className="col-span-4">
-								<CardHeader>
-									<CardTitle>Deine anstehenden Events</CardTitle>
-									<CardDescription>
-										Events, die du erstellt hast und die bevorstehen
-									</CardDescription>
+							<Card className="col-span-4 group relative overflow-hidden border-primary/20 hover:border-primary/40 transition-all duration-300">
+								<div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+								<CardHeader className="relative">
+									<div className="flex items-center justify-between">
+										<div>
+											<CardTitle className="flex items-center gap-2">
+												<Calendar className="h-5 w-5 text-primary" />
+												Deine anstehenden Events
+											</CardTitle>
+											<CardDescription>
+												Events, die du erstellt hast und die bevorstehen
+											</CardDescription>
+										</div>
+									</div>
 								</CardHeader>
-								<CardContent>
+								<CardContent className="relative">
 									{eventsLoading ? (
-										<div className="space-y-2">
+										<div className="space-y-3">
 											{Array.from({ length: 3 }, (_, i) => (
 												<div
 													key={`upcoming-skeleton-${Date.now()}-${i}`}
-													className="h-16 bg-muted animate-pulse rounded"
-												/>
+													className="space-y-2"
+												>
+													<Skeleton className="h-4 w-3/4" />
+													<Skeleton className="h-3 w-1/2" />
+												</div>
 											))}
 										</div>
 									) : userUpcomingEvents.length === 0 ? (
@@ -226,56 +298,111 @@ export default function Dashboard() {
 											</Link>
 										</div>
 									) : (
-										<div className="space-y-4">
+										<div className="space-y-3">
 											{userUpcomingEvents.slice(0, 5).map((event) => (
-												<div
-													key={event.id}
-													className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-												>
-													<div className="space-y-1">
-														<p className="text-sm font-medium leading-none">
-															{event.title_de}
-														</p>
-														<p className="text-sm text-muted-foreground">
-															{format(new Date(event.start_date_time), 'PPpp')}
-														</p>
-													</div>
-													<div className="flex items-center gap-2">
-														<Link href={`/events/${event.id}`}>
-															<AnimateIcon animateOnHover>
-																<Button size="sm" variant="ghost">
-																	<ExternalLink className="h-3 w-3" />
-																</Button>
-															</AnimateIcon>
-														</Link>
-													</div>
-												</div>
+												<HoverCard key={event.id}>
+													<HoverCardTrigger asChild>
+														<div className="flex items-center justify-between p-3 rounded-lg border hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all duration-200 hover:shadow-sm cursor-pointer">
+															<div className="space-y-1">
+																<div className="flex items-center gap-2">
+																	<p className="text-sm font-medium leading-none">
+																		{event.title_de}
+																	</p>
+																	{event.publish_app && (
+																		<Badge
+																			variant="secondary"
+																			className="text-xs"
+																		>
+																			<TrendingUp className="h-3 w-3 mr-1" />
+																			Live
+																		</Badge>
+																	)}
+																</div>
+																<p className="text-sm text-muted-foreground">
+																	{format(
+																		new Date(event.start_date_time),
+																		'PPpp'
+																	)}
+																</p>
+															</div>
+															<div className="flex items-center gap-2">
+																<Link href={`/events/${event.id}`}>
+																	<AnimateIcon animateOnHover>
+																		<Button size="sm" variant="ghost">
+																			<ExternalLink className="h-3 w-3" />
+																		</Button>
+																	</AnimateIcon>
+																</Link>
+															</div>
+														</div>
+													</HoverCardTrigger>
+													<HoverCardContent className="w-80">
+														<div className="space-y-2">
+															<h4 className="font-semibold text-sm">
+																{event.title_de}
+															</h4>
+															<p className="text-xs text-muted-foreground">
+																{event.title_en
+																	? event.title_en
+																	: 'No English title'}
+															</p>
+															<div className="flex items-center gap-2">
+																<Clock className="h-3 w-3 text-muted-foreground" />
+																<span className="text-xs">
+																	{format(
+																		new Date(event.start_date_time),
+																		'PPpp'
+																	)}
+																</span>
+															</div>
+															{event.publish_app && (
+																<div className="flex items-center gap-1 mt-2">
+																	<TrendingUp className="h-3 w-3 text-green-600" />
+																	<span className="text-xs text-green-600 font-medium">
+																		Veröffentlicht und live
+																	</span>
+																</div>
+															)}
+														</div>
+													</HoverCardContent>
+												</HoverCard>
 											))}
 										</div>
 									)}
 								</CardContent>
 							</Card>
 
-							<Card className="col-span-3">
-								<CardHeader>
-									<CardTitle>Aktivitäten</CardTitle>
-									<CardDescription>
-										Deine letzten Events und Updates
-									</CardDescription>
+							<Card className="col-span-3 group relative overflow-hidden border-primary/20 hover:border-primary/40 transition-all duration-300">
+								<div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+								<CardHeader className="relative">
+									<div className="flex items-center justify-between">
+										<div>
+											<CardTitle className="flex items-center gap-2">
+												<Activity className="h-5 w-5 text-primary" />
+												Aktivitäten
+											</CardTitle>
+											<CardDescription>
+												Deine letzten Events und Updates
+											</CardDescription>
+										</div>
+									</div>
 								</CardHeader>
-								<CardContent>
+								<CardContent className="relative">
 									{eventsLoading ? (
-										<div className="space-y-2">
+										<div className="space-y-3">
 											{Array.from({ length: 3 }, (_, i) => (
 												<div
 													key={`recent-skeleton-${Date.now()}-${i}`}
-													className="h-12 bg-muted animate-pulse rounded"
-												/>
+													className="space-y-2"
+												>
+													<Skeleton className="h-3 w-full" />
+													<Skeleton className="h-2 w-1/3" />
+												</div>
 											))}
 										</div>
 									) : userEvents.length === 0 ? (
 										<div className="text-center py-6">
-											<BarChart3 className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+											<BarChart3 className="h-8 w-8 text-muted-foreground mx-auto mb-4" />
 											<p className="text-sm text-muted-foreground">
 												Noch keine Events
 											</p>
@@ -285,16 +412,24 @@ export default function Dashboard() {
 											{userEvents.slice(0, 4).map((event) => (
 												<div
 													key={event.id}
-													className="flex items-center justify-between p-2 rounded border"
+													className="flex items-center justify-between p-2 rounded border hover:bg-purple-50/50 dark:hover:bg-purple-950/20 transition-colors duration-200"
 												>
 													<div className="space-y-1">
 														<p className="text-sm font-medium leading-none line-clamp-1">
 															{event.title_de}
 														</p>
 														<p className="text-xs text-muted-foreground">
-															{format(new Date(event.start_date_time), 'MMM d')}
+															{format(
+																new Date(event.start_date_time),
+																'MMM d, yyyy'
+															)}
 														</p>
 													</div>
+													{event.publish_app && (
+														<Badge variant="outline" className="text-xs">
+															Live
+														</Badge>
+													)}
 												</div>
 											))}
 										</div>

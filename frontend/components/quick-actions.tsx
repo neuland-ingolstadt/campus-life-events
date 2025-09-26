@@ -56,8 +56,9 @@ export function QuickActions({
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
 				{actions.map((action) => (
 					<Link key={action.title} href={action.href} className="block">
-						<Card className="cursor-pointer">
-							<CardContent className="px-4 py-4">
+						<Card className="cursor-pointer group relative overflow-hidden transition-all duration-300 hover:shadow-lg">
+							<div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+							<CardContent className="px-4 py-4 relative">
 								<div className="flex items-start gap-3 sm:gap-4">
 									<div className="rounded-full from-primary/90 to-primary bg-gradient-to-br text-primary-foreground ring-1 ring-border h-10 w-10 sm:h-9 sm:w-9 flex items-center justify-center flex-shrink-0">
 										<action.icon className="h-5 w-5" />

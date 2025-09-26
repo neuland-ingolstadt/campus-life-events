@@ -87,12 +87,13 @@ export default function SettingsPage() {
 
 			<div className="flex-1 p-4 md:p-8 space-y-4 pt-6">
 				<h2 className="text-3xl font-bold tracking-tight">Passwort</h2>
-				<Card>
-					<CardHeader>
+				<Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg">
+					<div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+					<CardHeader className="relative">
 						<CardTitle>Passwort ändern</CardTitle>
 						<CardDescription>Aktualisiere dein Passwort</CardDescription>
 					</CardHeader>
-					<CardContent>
+					<CardContent className="relative">
 						<form className="space-y-4" onSubmit={onSubmit}>
 							<div className="space-y-2">
 								<Label htmlFor={currentId}>Aktuelles Passwort</Label>
@@ -152,8 +153,9 @@ export default function SettingsPage() {
 				<h2 className="text-3xl font-bold tracking-tight">Sonstiges</h2>
 
 				<div className="grid gap-6 md:grid-cols-2">
-					<Card>
-						<CardHeader className="pb-3">
+					<Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg">
+						<div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+						<CardHeader className="pb-3 relative">
 							<CardTitle className="flex items-center gap-2">
 								<CircleQuestionMarkIcon className="h-5 w-5" />
 								Kontakt & Support
@@ -162,7 +164,7 @@ export default function SettingsPage() {
 								Hilfe bei Problemen oder Kontenänderungen
 							</CardDescription>
 						</CardHeader>
-						<CardContent className="space-y-4">
+						<CardContent className="space-y-4 relative">
 							<div className="space-y-2">
 								<p className="text-sm text-muted-foreground">
 									Du möchtest deine E-Mail-Adresse ändern oder hast ein Problem
@@ -181,15 +183,16 @@ export default function SettingsPage() {
 						</CardContent>
 					</Card>
 
-					<Card>
-						<CardHeader className="pb-3">
+					<Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg">
+						<div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+						<CardHeader className="pb-3 relative">
 							<CardTitle className="flex items-center gap-2">
 								<InfoIcon className="h-5 w-5" />
 								Informationen
 							</CardTitle>
 							<CardDescription>Über Campus Life Events</CardDescription>
 						</CardHeader>
-						<CardContent className="space-y-4">
+						<CardContent className="space-y-4 relative">
 							<div className="space-y-3">
 								<div className="flex items-start gap-3">
 									<div className="h-2 w-2 bg-current rounded-full mt-2 flex-shrink-0"></div>
@@ -219,15 +222,16 @@ export default function SettingsPage() {
 			<div className="flex-1 p-4 md:p-8 space-y-6 pt-2">
 				<h2 className="text-3xl font-bold tracking-tight">Über</h2>
 
-				<Card>
-					<CardHeader className="pb-3">
+				<Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg">
+					<div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+					<CardHeader className="pb-3 relative">
 						<CardTitle className="flex items-center gap-2">
 							<GithubIcon className="h-5 w-5" />
 							GitHub
 						</CardTitle>
 						<CardDescription>Quellcode und Entwicklung</CardDescription>
 					</CardHeader>
-					<CardContent className="space-y-4">
+					<CardContent className="space-y-4 relative">
 						<div className="space-y-2">
 							<div className="flex items-center gap-2">
 								<GitPullRequest className="h-4 w-4" />

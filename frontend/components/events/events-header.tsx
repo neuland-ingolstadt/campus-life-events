@@ -65,10 +65,18 @@ export function EventsHeader({
 					}}
 					className="border rounded-md"
 				>
-					<ToggleGroupItem value="table" aria-label="Tabellenansicht">
+					<ToggleGroupItem
+						value="table"
+						aria-label="Tabellenansicht"
+						className="cursor-pointer"
+					>
 						<List className="h-4 w-4" />
 					</ToggleGroupItem>
-					<ToggleGroupItem value="calendar" aria-label="Kalenderansicht">
+					<ToggleGroupItem
+						value="calendar"
+						aria-label="Kalenderansicht"
+						className="cursor-pointer"
+					>
 						<Grid3X3 className="h-4 w-4" />
 					</ToggleGroupItem>
 				</ToggleGroup>
