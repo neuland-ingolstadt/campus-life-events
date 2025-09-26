@@ -1,6 +1,6 @@
 'use client'
 
-import { Copy, Instagram, MessageCircle, Share2 } from 'lucide-react'
+import { Copy, MessageCircle, Share2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 
@@ -12,14 +12,6 @@ export function ShareButtons({ eventTitle }: ShareButtonsProps) {
 	const handleCopyLink = () => {
 		navigator.clipboard.writeText(window.location.href)
 		toast.success('Link wurde in die Zwischenablage kopiert!')
-	}
-
-	const handleInstagramShare = () => {
-		const shareUrl = `https://www.instagram.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`
-		const newWindow = window.open(shareUrl, '_blank', 'noopener,noreferrer')
-		if (!newWindow) {
-			handleCopyLink()
-		}
 	}
 
 	const handleWhatsAppShare = () => {
@@ -62,14 +54,6 @@ export function ShareButtons({ eventTitle }: ShareButtonsProps) {
 			>
 				<MessageCircle className="h-4 w-4 mr-2" />
 				WhatsApp
-			</Button>
-			<Button
-				variant="outline"
-				className="w-full"
-				onClick={handleInstagramShare}
-			>
-				<Instagram className="h-4 w-4 mr-2" />
-				Instagram
 			</Button>
 		</>
 	)
