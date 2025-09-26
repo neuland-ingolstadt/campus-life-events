@@ -53,9 +53,11 @@ function EventComponent({
 		(organizerId !== undefined && organizerId === event.resource.organizer_id)
 
 	return (
-		<div className="flex flex-col">
-			<div className="font-medium text-xs truncate">{event.title}</div>
-			<div className="text-xs opacity-90 truncate">
+		<div className="flex flex-col text-white">
+			<div className="font-medium text-xs truncate text-white">
+				{event.title}
+			</div>
+			<div className="text-xs opacity-90 truncate text-white">
 				{event.resource.organizerName}
 			</div>
 			{isOwnEvent && (
@@ -64,10 +66,10 @@ function EventComponent({
 						<Button
 							variant="ghost"
 							size="sm"
-							className="h-4 px-1 text-xs hover:bg-white/20"
+							className="h-4 px-1 text-xs hover:bg-white/20 text-white"
 							onClick={(e) => e.stopPropagation()}
 						>
-							<Pencil className="h-3 w-3" />
+							<Pencil className="h-3 w-3 " color="lightgrey" />
 						</Button>
 					</Link>
 					<AlertDialog>
@@ -75,10 +77,10 @@ function EventComponent({
 							<Button
 								variant="ghost"
 								size="sm"
-								className="h-4 px-1 text-xs hover:bg-white/20"
+								className="h-4 px-1 text-xs hover:bg-white/20 text-white"
 								onClick={(e) => e.stopPropagation()}
 							>
-								<Trash2 className="h-3 w-3" />
+								<Trash2 className="h-3 w-3 " color="lightgrey" />
 							</Button>
 						</AlertDialogTrigger>
 						<AlertDialogContent>
@@ -163,7 +165,7 @@ export function EventsCalendar({
 	}
 
 	return (
-		<div className="h-[600px] w-full">
+		<div className="h-[600px] bg-background w-full force-light-theme">
 			<Calendar
 				localizer={localizer}
 				events={calendarEvents}
