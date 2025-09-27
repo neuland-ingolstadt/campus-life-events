@@ -6,6 +6,7 @@ import { useMemo } from 'react'
 import type { Event as ApiEvent } from '@/client/types.gen'
 import { DataTableColumnHeader } from '@/components/data-table/column-header'
 import { dateRangeFilter } from '@/components/data-table/date-range-filter'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import { EventActionsCell } from './event-actions-cell'
 
 interface UseEventColumnsProps {
@@ -111,30 +112,38 @@ export function useEventColumns({
 					<DataTableColumnHeader column={column} title="Sichtbarkeit" />
 				),
 				accessorFn: (row) => {
-					const isPublic =
-						(row.publish_app || row.publish_newsletter) && row.publish_in_ical
+					const isPublic = row.publish_app || row.publish_newsletter
 					return isPublic ? 'public' : 'internal'
 				},
 				cell: ({ getValue }) => {
 					const visibility = getValue<string>()
 					const isPublic = visibility === 'public'
 					return (
-						<div
-							className={` border border-primary/20 rounded-full px-2 py-1 inline-block ${
-								isPublic
-									? ' border border-border text-blue-500 bg-blue-500/5'
-									: ' border border-border text-purple-500 bg-purple-500/5'
-							}`}
-						>
-							{isPublic ? 'Extern' : 'Intern'}
-						</div>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<div
+									className={` border border-primary/20 rounded-full px-2 py-1 inline-block ${
+										isPublic
+											? ' border border-border text-blue-500 bg-blue-500/5'
+											: ' border border-border text-purple-500 bg-purple-500/5'
+									}`}
+								>
+									{isPublic ? 'Extern' : 'Intern'}
+								</div>
+							</TooltipTrigger>
+							<TooltipContent>
+								{isPublic
+									? 'Öffentliches Event: Beworben in Newsletter / App'
+									: 'Internes Event: Nicht im Newsletter / App'}
+							</TooltipContent>
+						</Tooltip>
 					)
 				},
 				sortingFn: 'alphanumeric',
 				filterFn: (row, _id, value: string[]) => {
 					if (!value?.length) return true
 					const isPublic =
-						row.original.publish_app && row.original.publish_in_ical
+						row.original.publish_app || row.original.publish_newsletter
 					const visibility = isPublic ? 'public' : 'internal'
 					return value.includes(visibility)
 				},
