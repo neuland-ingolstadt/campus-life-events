@@ -347,6 +347,14 @@ export default function EventsPage() {
 								column: 'organizer',
 								title: 'Verein',
 								options: organizerOptions
+							},
+							{
+								column: 'visibility',
+								title: 'Sichtbarkeit',
+								options: [
+									{ label: 'Öffentlich', value: 'public' },
+									{ label: 'Intern', value: 'internal' }
+								]
 							}
 						],
 						dateRangeFilters: [

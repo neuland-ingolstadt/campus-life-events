@@ -106,6 +106,41 @@ export function useEventColumns({
 				size: 150
 			},
 			{
+				id: 'visibility',
+				header: ({ column }) => (
+					<DataTableColumnHeader column={column} title="Sichtbarkeit" />
+				),
+				accessorFn: (row) => {
+					const isPublic =
+						(row.publish_app || row.publish_newsletter) && row.publish_in_ical
+					return isPublic ? 'public' : 'internal'
+				},
+				cell: ({ getValue }) => {
+					const visibility = getValue<string>()
+					const isPublic = visibility === 'public'
+					return (
+						<div
+							className={` border border-primary/20 rounded-full px-2 py-1 inline-block ${
+								isPublic
+									? ' border border-border text-blue-500 bg-blue-500/5'
+									: ' border border-border text-purple-500 bg-purple-500/5'
+							}`}
+						>
+							{isPublic ? 'Extern' : 'Intern'}
+						</div>
+					)
+				},
+				sortingFn: 'alphanumeric',
+				filterFn: (row, _id, value: string[]) => {
+					if (!value?.length) return true
+					const isPublic =
+						row.original.publish_app && row.original.publish_in_ical
+					const visibility = isPublic ? 'public' : 'internal'
+					return value.includes(visibility)
+				},
+				size: 120
+			},
+			{
 				id: 'actions',
 				header: 'Aktionen',
 				enableHiding: false,
