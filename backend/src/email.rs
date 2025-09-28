@@ -228,11 +228,11 @@ Was dich erwartet:\n\
 - Moderne Benutzeroberfläche: Der bisherige Moodle-Kurs wird durch diese neue Plattform ersetzt\n\
 - Ein eigener iCal-Kalender für deine Veranstaltungen, zum einfachen Import in Kalender-Apps\n\
 - Echtzeit-Updates: Sofortige Synchronisation zwischen allen Plattformen\n\
-Bitte richte dein Konto über folgenden Link ein (gültig für 7 Tage):\n\
+Bitte richte dein Konto über folgenden Link ein (gültig für 7 Tage):\n\n\
 {registration_url}\n\n\
 Bitte verwende ein sicheres Passwort, um dein Konto zu schützen und teile es nur mit den Organisator*innen deines Vereins.
 Um es nicht zu vergessen, kannst du entsprechend der Passwort-Richtlinien dein bestehendes Moodle-Passwort verwenden.\n\n
-Viele Grüße\nDas Neuland und StudVer Team\n\n\n\
+Viele Grüße\nDas Neuland und StudVer Team\n\n\
 Campus Life Events ist ein Projekt der THI StudVer und wird von Neuland Ingolstadt e.V. entwickelt und betrieben."
         )
     }
@@ -242,7 +242,7 @@ Campus Life Events ist ein Projekt der THI StudVer und wird von Neuland Ingolsta
             "Hallo {display_name},\n\n\
 du wurdest als Administrator*in für Campus Life Events eingeladen.\n\
 Über den Adminbereich kannst du Vereine verwalten, neue Accounts einladen und das Audit-Log einsehen.\n\n\
-Bitte richte dein Konto über folgenden Link ein (gültig für 7 Tage):\n\
+Bitte richte dein Konto über folgenden Link ein (gültig für 7 Tage):\n\n\
 {registration_url}\n\n\
 Viele Grüße\nDas Neuland und StudVer Team\n\n\
 Campus Life Events ist ein Projekt der THI StudVer und wird von Neuland Ingolstadt e.V. entwickelt und betrieben."
@@ -265,7 +265,6 @@ Campus Life Events ist ein Projekt der THI StudVer und wird von Neuland Ingolsta
 herzlich willkommen bei Campus Life Events! 🎉\n\
 Dein Konto wurde erfolgreich aktiviert und du kannst dich jetzt in die Plattform einloggen.\n\n\
 {role_description}\n\
-Du kannst dich jederzeit über die Login-Seite anmelden und die Plattform nutzen.\n\
 Bei Fragen oder Problemen wende dich gerne an uns.\n\n\
 Viele Grüße\nDas Neuland und StudVer Team\n\n\n\
 Campus Life Events ist ein Projekt der THI StudVer und wird von Neuland Ingolstadt e.V. entwickelt und betrieben."
