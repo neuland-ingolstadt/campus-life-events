@@ -472,7 +472,7 @@ export function EventForm({
 												iCal-Kalender
 											</FormLabel>
 											<FormDescription className="text-xs">
-												Dieses Event im eigenen Vereins-iCal aufführen.
+												Dieses Event im eigenen Vereins-iCal Kalender aufführen.
 											</FormDescription>
 										</div>
 										<FormControl>
@@ -494,7 +494,7 @@ export function EventForm({
 												Öffentliche Event-Seite
 											</FormLabel>
 											<FormDescription className="text-xs">
-												Eigene öffentliche Event-Seite erstellen.
+												Eigene öffentliche Event-Seite zum Teilen erstellen.
 											</FormDescription>
 										</div>
 										<FormControl>

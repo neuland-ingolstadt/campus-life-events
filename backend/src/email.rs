@@ -226,10 +226,12 @@ Was dich erwartet:\n\
 - Campus Life Newsletter: Automatische Integration in den wöchentlichen Newsletter für alle Studierenden\n\
 - Neuland Next App Integration: Deine Veranstaltungen werden direkt in der App präsentiert\n\
 - Moderne Benutzeroberfläche: Der bisherige Moodle-Kurs wird durch diese neue Plattform ersetzt\n\
+- Ein eigener iCal-Kalender für deine Veranstaltungen, zum einfachen Import in Kalender-Apps\n\
 - Echtzeit-Updates: Sofortige Synchronisation zwischen allen Plattformen\n\
 Bitte richte dein Konto über folgenden Link ein (gültig für 7 Tage):\n\
 {registration_url}\n\n\
-Viele Grüße\nDas Neuland und StudVer Team\n\n\
+Bitte verwende ein sicheres Passwort, um dein Konto zu schützen und teile es nur mit den Organisator*innen deines Vereins.\n\n\
+Viele Grüße\nDas Neuland und StudVer Team\n\n\n\
 Campus Life Events ist ein Projekt der THI StudVer und wird von Neuland Ingolstadt e.V. entwickelt und betrieben."
         )
     }

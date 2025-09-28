@@ -17,10 +17,11 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import RequiredLabel from '@/components/ui/required-label'
+import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 
 const organizerSchema = z.object({
-	name: z.string().min(1, 'Name ist erforderlich'),
+	name: z.string().trim().min(1, 'Name ist erforderlich'),
 	description_de: z.string().optional(),
 	description_en: z.string().optional(),
 	website_url: z
@@ -35,7 +36,15 @@ const organizerSchema = z.object({
 		.refine((val) => !val || z.string().url().safeParse(val).success, {
 			message: 'Bitte gib eine gültige URL ein'
 		}),
-	location: z.string().optional()
+	linkedin_url: z
+		.string()
+		.optional()
+		.refine((val) => !val || z.string().url().safeParse(val).success, {
+			message: 'Bitte gib eine gültige URL ein'
+		}),
+	registration_number: z.string().optional(),
+	location: z.string().optional(),
+	non_profit: z.boolean()
 })
 
 export type OrganizerFormValues = z.infer<typeof organizerSchema>
@@ -57,7 +66,10 @@ export function OrganizerForm({
 			description_en: '',
 			website_url: '',
 			instagram_url: '',
-			location: ''
+			linkedin_url: '',
+			registration_number: '',
+			location: '',
+			non_profit: false
 		}
 	})
 
@@ -69,7 +81,10 @@ export function OrganizerForm({
 				description_en: organizer.description_en || '',
 				website_url: organizer.website_url || '',
 				instagram_url: organizer.instagram_url || '',
-				location: organizer.location || ''
+				linkedin_url: organizer.linkedin_url || '',
+				registration_number: organizer.registration_number || '',
+				location: organizer.location || '',
+				non_profit: organizer.non_profit
 			})
 		} else {
 			form.reset({
@@ -78,19 +93,40 @@ export function OrganizerForm({
 				description_en: '',
 				website_url: '',
 				instagram_url: '',
-				location: ''
+				linkedin_url: '',
+				registration_number: '',
+				location: '',
+				non_profit: false
 			})
 		}
 	}, [organizer, form])
 
 	const onSubmit = async (values: OrganizerFormValues) => {
 		const payload: UpdateOrganizerRequest = {
-			...values,
-			website_url: values.website_url || undefined,
-			instagram_url: values.instagram_url || undefined,
-			location: values.location || undefined,
-			description_de: values.description_de || undefined,
-			description_en: values.description_en || undefined
+			name: values.name.trim(),
+			description_de: values.description_de?.trim()
+				? values.description_de.trim()
+				: undefined,
+			description_en: values.description_en?.trim()
+				? values.description_en.trim()
+				: undefined,
+			website_url: values.website_url?.trim()
+				? values.website_url.trim()
+				: undefined,
+			instagram_url: values.instagram_url?.trim()
+				? values.instagram_url.trim()
+				: undefined,
+			linkedin_url: values.linkedin_url?.trim()
+				? values.linkedin_url.trim()
+				: undefined,
+			registration_number: values.registration_number?.trim()
+				? values.registration_number.trim()
+				: undefined,
+			location: values.location?.trim() ? values.location.trim() : undefined,
+			non_profit:
+				organizer && values.non_profit === organizer.non_profit
+					? undefined
+					: values.non_profit
 		}
 		await onSave(payload)
 	}
@@ -187,7 +223,7 @@ export function OrganizerForm({
 							)}
 						/>
 
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 							<FormField
 								control={form.control}
 								name="website_url"
@@ -223,7 +259,70 @@ export function OrganizerForm({
 									</FormItem>
 								)}
 							/>
+							<FormField
+								control={form.control}
+								name="linkedin_url"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>LinkedIn-URL</FormLabel>
+										<FormControl>
+											<Input
+												placeholder="https://linkedin.com/company/verein"
+												{...field}
+											/>
+										</FormControl>
+										<FormDescription>
+											Optionale LinkedIn-Profil-URL
+										</FormDescription>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
 						</div>
+					</div>
+				</div>
+
+				<div>
+					<h2 className="text-xl font-bold tracking-tight">Weitere Angaben</h2>
+					<div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+						<FormField
+							control={form.control}
+							name="registration_number"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Registrierungsnummer</FormLabel>
+									<FormControl>
+										<Input placeholder="z. B. VR 12345" {...field} />
+									</FormControl>
+									<FormDescription>
+										Optionaler Eintrag aus dem Vereinsregister
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="non_profit"
+							render={({ field }) => (
+								<FormItem className="flex items-center justify-between rounded-md border p-4">
+									<div className="space-y-1">
+										<FormLabel className="text-sm font-medium">
+											Gemeinnütziger Verein
+										</FormLabel>
+										<FormDescription className="text-xs">
+											Kennzeichnet euren Verein als gemeinnützig
+										</FormDescription>
+									</div>
+									<FormControl>
+										<Switch
+											checked={field.value}
+											onCheckedChange={field.onChange}
+										/>
+									</FormControl>
+								</FormItem>
+							)}
+						/>
 					</div>
 				</div>
 

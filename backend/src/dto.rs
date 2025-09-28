@@ -24,6 +24,9 @@ pub struct UpdateOrganizerRequest {
     pub website_url: Option<String>,
     pub instagram_url: Option<String>,
     pub location: Option<String>,
+    pub linkedin_url: Option<String>,
+    pub registration_number: Option<String>,
+    pub non_profit: Option<bool>,
 }
 
 impl UpdateOrganizerRequest {
@@ -34,6 +37,9 @@ impl UpdateOrganizerRequest {
             || self.website_url.is_some()
             || self.instagram_url.is_some()
             || self.location.is_some()
+            || self.linkedin_url.is_some()
+            || self.registration_number.is_some()
+            || self.non_profit.is_some()
     }
 }
 

@@ -122,7 +122,7 @@ export function useEventColumns({
 						<Tooltip>
 							<TooltipTrigger asChild>
 								<div
-									className={` border border-primary/20 rounded-full px-2 py-1 inline-block ${
+									className={` border border-primary/20 rounded-full px-2 py-1 inline-block text-xs ${
 										isPublic
 											? ' border border-border text-blue-500 bg-blue-500/5'
 											: ' border border-border text-purple-500 bg-purple-500/5'

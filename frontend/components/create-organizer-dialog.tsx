@@ -29,8 +29,8 @@ import { Input } from '@/components/ui/input'
 import RequiredLabel from '@/components/ui/required-label'
 
 const createOrganizerSchema = z.object({
-	name: z.string().min(1, 'Name ist erforderlich'),
-	email: z.string().email('Bitte gib eine gültige E-Mail-Adresse ein')
+	name: z.string().trim().min(1, 'Name ist erforderlich'),
+	email: z.string().trim().email('Bitte gib eine gültige E-Mail-Adresse ein')
 })
 
 export type CreateOrganizerFormValues = z.infer<typeof createOrganizerSchema>
@@ -55,8 +55,8 @@ export function CreateOrganizerDialog({
 		setIsLoading(true)
 		try {
 			const payload: CreateOrganizerRequest = {
-				name: values.name,
-				email: values.email
+				name: values.name.trim(),
+				email: values.email.trim()
 			}
 			await createOrganizer({ body: payload })
 			form.reset()

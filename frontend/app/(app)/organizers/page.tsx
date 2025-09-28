@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
 	AlertTriangle,
 	Instagram,
+	Linkedin,
 	Pencil,
 	User2Icon,
 	UsersIcon
@@ -217,6 +218,40 @@ export default function OrganizersPage() {
 																	Kein Instagram
 																</div>
 															)}
+															{o.linkedin_url ? (
+																<a
+																	href={o.linkedin_url}
+																	target="_blank"
+																	rel="noreferrer"
+																	className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-sky-600 hover:bg-sky-50 transition-colors"
+																>
+																	<Linkedin className="h-4 w-4" />
+																	LinkedIn
+																</a>
+															) : (
+																<div className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-muted-foreground">
+																	<Linkedin className="h-4 w-4" />
+																	Kein LinkedIn
+																</div>
+															)}
+														</div>
+														<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mt-3">
+															<div className="space-y-1">
+																<p className="font-medium text-foreground">
+																	Registrierungsnummer
+																</p>
+																<p className="text-muted-foreground">
+																	{o.registration_number || 'Keine Angabe'}
+																</p>
+															</div>
+															<div className="space-y-1">
+																<p className="font-medium text-foreground">
+																	Gemeinnützig
+																</p>
+																<p className="text-muted-foreground">
+																	{o.non_profit ? 'Ja' : 'Nein'}
+																</p>
+															</div>
 														</div>
 													</div>
 												</div>

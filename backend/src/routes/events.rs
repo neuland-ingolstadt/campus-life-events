@@ -476,7 +476,7 @@ pub(crate) async fn get_newsletter_data(
     // Get all organizers for the footer
     let all_organizers = sqlx::query_as!(
         Organizer,
-        "SELECT id, name, description_de, description_en, website_url, instagram_url, location, newsletter, created_at, updated_at FROM organizers ORDER BY name"
+        "SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at FROM organizers ORDER BY name"
     )
     .fetch_all(&state.db)
     .await?;

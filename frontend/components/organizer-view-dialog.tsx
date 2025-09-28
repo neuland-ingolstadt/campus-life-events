@@ -41,7 +41,7 @@ export function OrganizerViewDialog({ open, onOpenChange, organizer }: Props) {
 								</p>
 							</div>
 						)}
-						<div className="grid grid-cols-2 gap-4">
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div>
 								<div className="font-medium mb-1">Website</div>
 								{organizer.website_url ? (
@@ -71,6 +71,39 @@ export function OrganizerViewDialog({ open, onOpenChange, organizer }: Props) {
 								) : (
 									<span className="text-muted-foreground">–</span>
 								)}
+							</div>
+							<div>
+								<div className="font-medium mb-1">LinkedIn</div>
+								{organizer.linkedin_url ? (
+									<a
+										href={organizer.linkedin_url}
+										target="_blank"
+										rel="noreferrer"
+										className="text-primary hover:underline break-all"
+									>
+										{organizer.linkedin_url}
+									</a>
+								) : (
+									<span className="text-muted-foreground">–</span>
+								)}
+							</div>
+						</div>
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div>
+								<div className="font-medium mb-1">Registrierungsnummer</div>
+								{organizer.registration_number ? (
+									<span className="text-muted-foreground">
+										{organizer.registration_number}
+									</span>
+								) : (
+									<span className="text-muted-foreground">–</span>
+								)}
+							</div>
+							<div>
+								<div className="font-medium mb-1">Gemeinnützig</div>
+								<span className="text-muted-foreground">
+									{organizer.non_profit ? 'Ja' : 'Nein'}
+								</span>
 							</div>
 						</div>
 						<div className="text-xs text-muted-foreground">

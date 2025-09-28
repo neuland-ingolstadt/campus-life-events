@@ -22,8 +22,8 @@ import RequiredLabel from '@/components/ui/required-label'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 
 const createOrganizerSchema = z.object({
-	name: z.string().min(1, 'Name ist erforderlich'),
-	email: z.string().email('Bitte gib eine gültige E-Mail-Adresse ein')
+	name: z.string().trim().min(1, 'Name ist erforderlich'),
+	email: z.string().trim().email('Bitte gib eine gültige E-Mail-Adresse ein')
 })
 
 export type CreateOrganizerFormValues = z.infer<typeof createOrganizerSchema>
@@ -45,8 +45,8 @@ export default function NewOrganizerPage() {
 		setIsLoading(true)
 		try {
 			const payload: CreateOrganizerRequest = {
-				name: values.name,
-				email: values.email
+				name: values.name.trim(),
+				email: values.email.trim()
 			}
 			await createOrganizer({ body: payload })
 			await qc.invalidateQueries({ queryKey: ['organizers'] })

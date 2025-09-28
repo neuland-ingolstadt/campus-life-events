@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO organizers (name)\n        VALUES ($1)\n        RETURNING id, name, description_de, description_en, website_url, instagram_url, location, newsletter, created_at, updated_at\n        ",
+  "query": "SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at FROM organizers ORDER BY name",
   "describe": {
     "columns": [
       {
@@ -40,24 +40,37 @@
       },
       {
         "ordinal": 7,
+        "name": "linkedin_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "registration_number",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "non_profit",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 10,
         "name": "newsletter",
         "type_info": "Bool"
       },
       {
-        "ordinal": 8,
+        "ordinal": 11,
         "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 9,
+        "ordinal": 12,
         "name": "updated_at",
         "type_info": "Timestamptz"
       }
     ],
     "parameters": {
-      "Left": [
-        "Text"
-      ]
+      "Left": []
     },
     "nullable": [
       false,
@@ -67,10 +80,13 @@
       true,
       true,
       true,
+      true,
+      true,
+      false,
       false,
       false,
       false
     ]
   },
-  "hash": "aa1a957cd95d419a0012cb2b82b2f2c7060730399bc1306b6c54d228cffa0f68"
+  "hash": "f846133876dc11ec118ab539cabff1a98620de5b76ca69db60a8c2476c348fe9"
 }

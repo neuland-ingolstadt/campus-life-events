@@ -194,7 +194,7 @@ pub(crate) async fn get_organizer_events_ical(
     let organizer = sqlx::query_as!(
         Organizer,
         r#"
-        SELECT id, name, description_de, description_en, website_url, instagram_url, location, newsletter, created_at, updated_at
+        SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at
         FROM organizers
         WHERE id = $1
         "#,

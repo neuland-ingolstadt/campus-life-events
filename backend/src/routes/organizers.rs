@@ -34,7 +34,7 @@ pub(crate) async fn list_organizers(
     let organizers = sqlx::query_as!(
         Organizer,
         r#"
-        SELECT id, name, description_de, description_en, website_url, instagram_url, location, newsletter, created_at, updated_at
+        SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at
         FROM organizers
         ORDER BY name
         "#
@@ -70,7 +70,7 @@ pub(crate) async fn create_organizer(
         r#"
         INSERT INTO organizers (name)
         VALUES ($1)
-        RETURNING id, name, description_de, description_en, website_url, instagram_url, location, newsletter, created_at, updated_at
+        RETURNING id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at
         "#,
         &payload.name
     )
@@ -189,7 +189,7 @@ pub(crate) async fn get_organizer(
     let organizer = sqlx::query_as!(
         Organizer,
         r#"
-        SELECT id, name, description_de, description_en, website_url, instagram_url, location, newsletter, created_at, updated_at
+        SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at
         FROM organizers
         WHERE id = $1
         "#,
@@ -229,6 +229,9 @@ pub(crate) async fn update_organizer(
         website_url,
         instagram_url,
         location,
+        linkedin_url,
+        registration_number,
+        non_profit,
     } = payload;
 
     if !has_updates {
@@ -259,10 +262,21 @@ pub(crate) async fn update_organizer(
     if let Some(location) = location {
         builder.push(", location = ").push_bind(location);
     }
+    if let Some(linkedin_url) = linkedin_url {
+        builder.push(", linkedin_url = ").push_bind(linkedin_url);
+    }
+    if let Some(registration_number) = registration_number {
+        builder
+            .push(", registration_number = ")
+            .push_bind(registration_number);
+    }
+    if let Some(non_profit) = non_profit {
+        builder.push(", non_profit = ").push_bind(non_profit);
+    }
 
     builder.push(" WHERE id = ").push_bind(id);
     builder.push(
-        " RETURNING id, name, description_de, description_en, website_url, instagram_url, location, newsletter, created_at, updated_at",
+        " RETURNING id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at",
     );
 
     let organizer = builder

@@ -35,7 +35,6 @@ import {
 	HoverCardContent,
 	HoverCardTrigger
 } from '@/components/ui/hover-card'
-import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -198,7 +197,7 @@ export default function Dashboard() {
 								</Badge>
 							</div>
 							<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-								{stats.map((stat, index) => (
+								{stats.map((stat, _index) => (
 									<Card
 										key={stat.title}
 										className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg"
@@ -223,27 +222,6 @@ export default function Dashboard() {
 													<p className="text-xs text-muted-foreground">
 														{stat.description}
 													</p>
-													{index === 1 && userUpcomingEvents.length > 0 && (
-														<div className="space-y-1">
-															<div className="flex justify-between text-xs text-muted-foreground">
-																<span>Fortschritt</span>
-																<span>
-																	{userUpcomingEvents.length}/
-																	{userEvents.length}
-																</span>
-															</div>
-															<Progress
-																value={
-																	userEvents.length > 0
-																		? (userUpcomingEvents.length /
-																				userEvents.length) *
-																			100
-																		: 0
-																}
-																className="h-1"
-															/>
-														</div>
-													)}
 												</div>
 											</CardContent>
 										</div>

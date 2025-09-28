@@ -69,4 +69,7 @@ pub struct PublicOrganizerResponse {
     pub website_url: Option<String>,
     pub instagram_url: Option<String>,
     pub location: Option<String>,
+    pub linkedin_url: Option<String>,
+    pub registration_number: Option<String>,
+    pub non_profit: bool,
 }

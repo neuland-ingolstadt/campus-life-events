@@ -90,7 +90,7 @@ pub(crate) async fn list_public_organizers(
     let organizers = sqlx::query_as!(
         Organizer,
         r#"
-        SELECT id, name, description_de, description_en, website_url, instagram_url, location, newsletter, created_at, updated_at
+        SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at
         FROM organizers
         ORDER BY name ASC
         "#
@@ -108,6 +108,9 @@ pub(crate) async fn list_public_organizers(
             website_url: organizer.website_url,
             instagram_url: organizer.instagram_url,
             location: organizer.location,
+            linkedin_url: organizer.linkedin_url,
+            registration_number: organizer.registration_number,
+            non_profit: organizer.non_profit,
         })
         .collect();
 
@@ -173,7 +176,7 @@ pub(crate) async fn get_public_organizer(
     let organizer = sqlx::query_as!(
         Organizer,
         r#"
-        SELECT id, name, description_de, description_en, website_url, instagram_url, location, newsletter, created_at, updated_at
+        SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at
         FROM organizers
         WHERE id = $1
         "#,
@@ -192,6 +195,9 @@ pub(crate) async fn get_public_organizer(
                 website_url: organizer.website_url,
                 instagram_url: organizer.instagram_url,
                 location: organizer.location,
+                linkedin_url: organizer.linkedin_url,
+                registration_number: organizer.registration_number,
+                non_profit: organizer.non_profit,
             };
             Ok(Json(public_organizer))
         }

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, name, description_de, description_en, website_url, instagram_url, location, newsletter, created_at, updated_at\n        FROM organizers\n        ORDER BY name ASC\n        ",
+  "query": "\n        SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at\n        FROM organizers\n        ORDER BY name ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -40,16 +40,31 @@
       },
       {
         "ordinal": 7,
+        "name": "linkedin_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "registration_number",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "non_profit",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 10,
         "name": "newsletter",
         "type_info": "Bool"
       },
       {
-        "ordinal": 8,
+        "ordinal": 11,
         "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 9,
+        "ordinal": 12,
         "name": "updated_at",
         "type_info": "Timestamptz"
       }
@@ -65,10 +80,13 @@
       true,
       true,
       true,
+      true,
+      true,
+      false,
       false,
       false,
       false
     ]
   },
-  "hash": "80054f8cc8f02a7e5101089128d894db3f946c5554a1abdad9c4440d7c3be997"
+  "hash": "d0b6cb9125655465782f46b182c6887d5c52663e3558806978285068608a4b09"
 }
