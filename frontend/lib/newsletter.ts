@@ -316,8 +316,10 @@ ${new Date(event.start_date_time).toLocaleTimeString('de-DE', {
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	    <meta charset="UTF-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	    <meta name="color-scheme" content="light dark">
+	    <meta name="supported-color-schemes" content="light dark">
     <title>${escapeHtml(subject)}</title>
     <!--[if mso]>
     <noscript>
@@ -361,7 +363,7 @@ ${new Date(event.start_date_time).toLocaleTimeString('de-DE', {
             line-height: 100%;
         }
         
-        /* Prevent Gmail from changing link colors */
+	        /* Prevent Gmail from changing link colors */
         a[x-apple-data-detectors] {
             color: inherit !important;
             text-decoration: none !important;
@@ -370,6 +372,11 @@ ${new Date(event.start_date_time).toLocaleTimeString('de-DE', {
             font-weight: inherit !important;
             line-height: inherit !important;
         }
+
+	        :root {
+	            color-scheme: light dark;
+	            supported-color-schemes: light dark;
+	        }
         
         body { 
             font-family: Arial, Helvetica, sans-serif; 
@@ -601,6 +608,12 @@ ${new Date(event.start_date_time).toLocaleTimeString('de-DE', {
             font-size: 14px; 
             line-height: 1.6;
         }
+        /* Ensure footer text is readable over dark footer background in light mode */
+        .footer p,
+        .footer div,
+        .footer span {
+            color: #e5e7eb !important;
+        }
         .footer-logo {
             text-align: center;
             margin-bottom: 20px;
@@ -705,109 +718,178 @@ ${new Date(event.start_date_time).toLocaleTimeString('de-DE', {
         .footer a:hover { 
             text-decoration: underline; 
         }
-        @media (prefers-color-scheme: dark) {
-            body { 
-                background-color: #000000;
-                color: #e5e5e5;
-            }
-            .container { 
-                background-color: #111111;
-            }
-            .header { 
-                background-color: #215b9c;
-                color: #ffffff;
-            }
-            .content {
-                background-color: #111111;
-            }
-            .intro { 
-                background-color: #1a1a1a;
-                color: #e5e5e5;
-            }
-            .event { 
-                background-color: #1a1a1a;
-                border: 1px solid #333333;
-                color: #e5e5e5;
-            }
-            .event-title { 
-                color: #60a5fa;
-            }
-            .event-description { 
-                color: #d1d5db;
-            }
-            .event-organizer {
-                color: #9ca3af;
-            }
-            .meta-item { 
-                color: #9ca3af;
-            }
-            .meta-text { 
-                color: #d1d5db;
-            }
-            .organizer { 
-                color: #9ca3af;
-            }
-            .organizer:hover { 
-                color: #d1d5db;
-            }
-            .section-title { 
-                color: #60a5fa;
-                border-bottom: 2px solid #333333;
-            }
-            .quick-list { 
-                background-color: #1a1a1a;
-                color: #e5e5e5;
-            }
-            .quick-events-list {
-                background-color: #1a1a1a;
-                color: #e5e5e5;
-            }
-            .quick-event-item {
-                border-bottom: 1px solid #333333;
-            }
-            .quick-event-title {
-                color: #e5e5e5;
-            }
-            .quick-event-meta {
-                color: #9ca3af;
-            }
-            .quick-event-date {
-                color: #60a5fa;
-            }
-            .footer { 
-                background-color: #000000;
-                color: #d1d5db;
-            }
-            .footer-logo span {
-                color: #ffffff;
-            }
-            .organizer-tag {
-                background-color: #333333;
-                color: #d1d5db;
-            }
-            .no-events {
-                color: #9ca3af;
-            }
-            .app-promo {
-                background-color: #1a1a1a;
-                border: 1px solid #333333;
-            }
-            .app-promo-text h2 {
-                color: #60a5fa;
-            }
-            .app-promo-text p {
-                color: #d1d5db;
-            }
-            .app-disclaimer {
-                color: #9ca3af;
-            }
-            .app-promo-button {
-                background-color: #60a5fa;
-            }
-            .app-promo-button:hover {
-                background-color: #3b82f6;
-            }
-        }
+	        @media (prefers-color-scheme: dark) {
+	            body {
+	                background-color: #000000 !important;
+	                color: #e5e5e5 !important;
+	            }
+	            .outer {
+	                background-color: #000000 !important;
+	            }
+	            .container {
+	                background-color: #111111 !important;
+	                border-color: #333333 !important;
+	            }
+	            .header {
+	                background-color: #215b9c !important;
+	                color: #ffffff !important;
+	            }
+	            .content {
+	                background-color: #111111 !important;
+	                color: #e5e5e5 !important;
+	            }
+	            .content p,
+	            .content li,
+	            .content div,
+	            .content span {
+	                color: #e5e5e5 !important;
+	            }
+	            .intro {
+	                background-color: #1a1a1a !important;
+	                color: #e5e5e5 !important;
+	            }
+	            .event {
+	                background-color: #1a1a1a !important;
+	                border: 1px solid #333333 !important;
+	                color: #e5e5e5 !important;
+	            }
+	            .event-title {
+	                color: #60a5fa !important;
+	            }
+	            .event-description {
+	                color: #d1d5db !important;
+	            }
+	            .event-organizer {
+	                color: #9ca3af !important;
+	            }
+	            .meta-item {
+	                color: #9ca3af !important;
+	            }
+	            .meta-text {
+	                color: #d1d5db !important;
+	            }
+	            .organizer {
+	                color: #9ca3af !important;
+	            }
+	            .organizer:hover {
+	                color: #d1d5db !important;
+	            }
+	            .section-title {
+	                color: #60a5fa !important;
+	                border-bottom: 2px solid #333333 !important;
+	            }
+	            .quick-list {
+	                background-color: #1a1a1a !important;
+	                color: #e5e5e5 !important;
+	            }
+	            .quick-events-list {
+	                background-color: #1a1a1a !important;
+	                color: #e5e5e5 !important;
+	            }
+	            .quick-event-item {
+	                border-bottom: 1px solid #333333 !important;
+	            }
+	            .quick-event-title {
+	                color: #e5e5e5 !important;
+	            }
+	            .quick-event-meta {
+	                color: #cbd5e1 !important;
+	            }
+	            .quick-event-date {
+	                color: #60a5fa !important;
+	            }
+	            .footer {
+	                background-color: #000000 !important;
+	                color: #d1d5db !important;
+	            }
+	            .footer p,
+	            .footer div,
+	            .footer span {
+	                color: #cbd5e1 !important;
+	            }
+	            .footer-logo span {
+	                color: #ffffff !important;
+	            }
+	            .organizer-tag {
+	                background-color: #333333 !important;
+	                color: #d1d5db !important;
+	            }
+	            .no-events {
+	                color: #9ca3af !important;
+	            }
+	            .app-promo {
+	                background-color: #1a1a1a !important;
+	                border: 1px solid #333333 !important;
+	            }
+	            .app-promo-text h2 {
+	                color: #60a5fa !important;
+	            }
+	            .app-promo-text p {
+	                color: #d1d5db !important;
+	            }
+	            .app-disclaimer {
+	                color: #9ca3af !important;
+	            }
+	            .app-promo-button {
+	                background-color: #60a5fa !important;
+	                color: #000000 !important;
+	            }
+	            .app-promo-button:hover {
+	                background-color: #3b82f6 !important;
+	            }
+	        }
+
+	        /* Outlook.com dark mode adjustments */
+	        [data-ogsc] body {
+	            background-color: #000000 !important;
+	            color: #e5e5e5 !important;
+	        }
+	        [data-ogsc] .outer {
+	            background-color: #000000 !important;
+	        }
+	        [data-ogsc] .container {
+	            background-color: #111111 !important;
+	            border-color: #333333 !important;
+	        }
+	        [data-ogsc] .content {
+	            background-color: #111111 !important;
+	            color: #e5e5e5 !important;
+	        }
+	        [data-ogsc] .content p,
+	        [data-ogsc] .content li,
+	        [data-ogsc] .content div,
+	        [data-ogsc] .content span {
+	            color: #e5e5e5 !important;
+	        }
+	        [data-ogsc] .intro {
+	            background-color: #1a1a1a !important;
+	            color: #e5e5e5 !important;
+	        }
+	        [data-ogsc] .event {
+	            background-color: #1a1a1a !important;
+	            border: 1px solid #333333 !important;
+	            color: #e5e5e5 !important;
+	        }
+	        [data-ogsc] .section-title {
+	            color: #60a5fa !important;
+	            border-bottom: 2px solid #333333 !important;
+	        }
+	        [data-ogsc] .quick-events-list {
+	            background-color: #1a1a1a !important;
+	            color: #e5e5e5 !important;
+	        }
+	        [data-ogsc] .quick-event-item {
+	            border-bottom: 1px solid #333333 !important;
+	        }
+	        [data-ogsc] .footer {
+	            background-color: #000000 !important;
+	            color: #d1d5db !important;
+	        }
+	        [data-ogsc] .footer p,
+	        [data-ogsc] .footer div,
+	        [data-ogsc] .footer span {
+	            color: #cbd5e1 !important;
+	        }
         
         @media screen and (max-width: 600px) {
             .container { width: 100% !important; }
@@ -826,11 +908,11 @@ ${new Date(event.start_date_time).toLocaleTimeString('de-DE', {
         }
     </style>
 </head>
-<body style="${inlineStyles.body}">
+	<body style="${inlineStyles.body}">
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="${inlineStyles.outerTable}">
         <tr>
             <td align="center">
-                <table width="800" cellpadding="0" cellspacing="0" border="0" class="container" style="${inlineStyles.containerTable}">
+	                <table width="800" cellpadding="0" cellspacing="0" border="0" class="container outer" style="${inlineStyles.containerTable}">
                     <tr>
                         <td class="header" style="${inlineStyles.headerCell}">
                             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="${inlineStyles.headerTable}">
