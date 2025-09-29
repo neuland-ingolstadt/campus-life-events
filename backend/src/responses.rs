@@ -50,6 +50,7 @@ pub struct NewsletterDataResponse {
 pub struct PublicEventResponse {
     pub id: i64,
     pub organizer_id: i64,
+    pub organizer_name: String,
     pub title_de: String,
     pub title_en: String,
     pub description_de: Option<String>,

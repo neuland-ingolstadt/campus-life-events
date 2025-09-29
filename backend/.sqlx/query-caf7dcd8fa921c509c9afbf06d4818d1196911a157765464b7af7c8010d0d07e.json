@@ -1,0 +1,82 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT e.id, e.organizer_id, o.name AS organizer_name, e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location\n        FROM events e\n        INNER JOIN organizers o ON e.organizer_id = o.id\n        WHERE e.id = $1 AND e.publish_web = true\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "organizer_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "organizer_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "title_de",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "title_en",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "description_de",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "description_en",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "start_date_time",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "end_date_time",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 9,
+        "name": "event_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "location",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "caf7dcd8fa921c509c9afbf06d4818d1196911a157765464b7af7c8010d0d07e"
+}

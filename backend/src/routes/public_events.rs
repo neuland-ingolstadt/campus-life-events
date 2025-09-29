@@ -9,11 +9,26 @@ use crate::{
     app_state::AppState,
     dto::ListEventsQuery,
     error::AppError,
-    models::{Event, Organizer},
+    models::Organizer,
     responses::{PublicEventResponse, PublicOrganizerResponse},
 };
-use chrono::Utc;
-use sqlx::{Postgres, QueryBuilder};
+use chrono::{DateTime, Utc};
+use sqlx::{FromRow, Postgres, QueryBuilder};
+
+#[derive(Debug, FromRow)]
+struct PublicEventWithOrganizer {
+    id: i64,
+    organizer_id: i64,
+    organizer_name: String,
+    title_de: String,
+    title_en: String,
+    description_de: Option<String>,
+    description_en: Option<String>,
+    start_date_time: DateTime<Utc>,
+    end_date_time: DateTime<Utc>,
+    event_url: Option<String>,
+    location: Option<String>,
+}
 
 #[utoipa::path(
     get,
@@ -28,23 +43,25 @@ pub(crate) async fn list_public_events(
     Query(query_params): Query<ListEventsQuery>,
 ) -> Result<Json<Vec<PublicEventResponse>>, AppError> {
     let mut builder = QueryBuilder::<Postgres>::new(
-        "SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at FROM events",
+        "SELECT e.id, e.organizer_id, o.name AS organizer_name, e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location FROM events e INNER JOIN organizers o ON e.organizer_id = o.id",
     );
 
     // Only show events that are published in the app
-    builder.push(" WHERE publish_app = true");
+    builder.push(" WHERE e.publish_app = true");
 
     if let Some(organizer_id) = query_params.organizer_id {
-        builder.push(" AND organizer_id = ").push_bind(organizer_id);
+        builder
+            .push(" AND e.organizer_id = ")
+            .push_bind(organizer_id);
     }
 
     if query_params.upcoming_only.unwrap_or(false) {
         builder
-            .push(" AND start_date_time >= ")
+            .push(" AND e.start_date_time >= ")
             .push_bind(Utc::now());
     }
 
-    builder.push(" ORDER BY start_date_time ASC");
+    builder.push(" ORDER BY e.start_date_time ASC");
 
     if let Some(limit) = query_params.limit {
         builder.push(" LIMIT ").push_bind(limit.max(1));
@@ -54,7 +71,7 @@ pub(crate) async fn list_public_events(
     }
 
     let events = builder
-        .build_query_as::<Event>()
+        .build_query_as::<PublicEventWithOrganizer>()
         .fetch_all(&state.db)
         .await?;
 
@@ -63,6 +80,7 @@ pub(crate) async fn list_public_events(
         .map(|event| PublicEventResponse {
             id: event.id,
             organizer_id: event.organizer_id,
+            organizer_name: event.organizer_name,
             title_de: event.title_de,
             title_en: event.title_en,
             description_de: event.description_de,
@@ -130,11 +148,12 @@ pub(crate) async fn get_public_event(
     Path(id): Path<i64>,
 ) -> Result<Json<PublicEventResponse>, AppError> {
     let event = sqlx::query_as!(
-        Event,
+        PublicEventWithOrganizer,
         r#"
-        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
-        FROM events
-        WHERE id = $1 AND publish_web = true
+        SELECT e.id, e.organizer_id, o.name AS organizer_name, e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location
+        FROM events e
+        INNER JOIN organizers o ON e.organizer_id = o.id
+        WHERE e.id = $1 AND e.publish_web = true
         "#,
         id
     )
@@ -146,6 +165,7 @@ pub(crate) async fn get_public_event(
             let public_event = PublicEventResponse {
                 id: event.id,
                 organizer_id: event.organizer_id,
+                organizer_name: event.organizer_name,
                 title_de: event.title_de,
                 title_en: event.title_en,
                 description_de: event.description_de,

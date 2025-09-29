@@ -309,14 +309,21 @@ pub(crate) async fn list_organizer_ical_events(
 ) -> Result<Json<Vec<PublicEventResponse>>, AppError> {
     validate_api_token(&state, &headers).await?;
 
-    let organizer_exists = sqlx::query("SELECT 1 FROM organizers WHERE id = $1")
-        .bind(organizer_id)
-        .fetch_optional(&state.db)
-        .await?;
+    let organizer = sqlx::query!(
+        r#"
+        SELECT name
+        FROM organizers
+        WHERE id = $1
+        "#,
+        organizer_id
+    )
+    .fetch_optional(&state.db)
+    .await?;
 
-    if organizer_exists.is_none() {
-        return Err(AppError::not_found("Organizer not found"));
-    }
+    let organizer = match organizer {
+        Some(organizer) => organizer,
+        None => return Err(AppError::not_found("Organizer not found")),
+    };
 
     let events = sqlx::query_as::<_, Event>(
         "SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at FROM events WHERE organizer_id = $1 AND publish_in_ical = true AND publish_app = true ORDER BY start_date_time ASC",
@@ -325,11 +332,14 @@ pub(crate) async fn list_organizer_ical_events(
     .fetch_all(&state.db)
     .await?;
 
+    let organizer_name = organizer.name;
+
     let response = events
         .into_iter()
         .map(|event| PublicEventResponse {
             id: event.id,
             organizer_id: event.organizer_id,
+            organizer_name: organizer_name.clone(),
             title_de: event.title_de,
             title_en: event.title_en,
             description_de: event.description_de,

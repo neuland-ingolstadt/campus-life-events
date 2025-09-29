@@ -187,6 +187,7 @@ export type PublicEventResponse = {
     id: number;
     location?: string | null;
     organizer_id: number;
+    organizer_name: string;
     start_date_time: string;
     title_de: string;
     title_en: string;
