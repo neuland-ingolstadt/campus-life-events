@@ -1,7 +1,8 @@
+import dynamic from 'next/dynamic'
 import type { ReactNode } from 'react'
-import Beams from '@/components/Beams'
 import { Card } from '@/components/ui/card'
 
+const Beams = dynamic(() => import('@/components/Beams'), { ssr: false })
 interface AuthCardProps {
 	children: ReactNode
 }

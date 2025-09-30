@@ -1,9 +1,10 @@
+import dynamic from 'next/dynamic'
 import router from 'next/router'
 import type { ReactNode } from 'react'
-import Beams from '@/components/Beams'
 import NeulandPalm from '@/components/neuland-palm'
 import { Card, CardContent } from '@/components/ui/card'
 
+const Beams = dynamic(() => import('@/components/Beams'), { ssr: false })
 interface AuthLeftSideProps {
 	children?: ReactNode
 }
