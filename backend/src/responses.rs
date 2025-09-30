@@ -74,5 +74,5 @@ pub struct PublicOrganizerResponse {
     pub registration_number: Option<String>,
     pub non_profit: bool,
     pub active_events_count: i64,
-    pub recent_and_upcoming_events_count: i64,
+    pub activity_score: f64,
 }

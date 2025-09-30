@@ -42,7 +42,7 @@ struct PublicOrganizerWithStats {
     registration_number: Option<String>,
     non_profit: bool,
     active_events_count: i64,
-    recent_and_upcoming_events_count: i64,
+    activity_score: f64,
 }
 
 #[utoipa::path(
@@ -166,7 +166,17 @@ pub(crate) async fn list_public_organizers(
             o.registration_number,
             o.non_profit,
             stats.active_events_count AS "active_events_count!",
-            stats.recent_and_upcoming_events_count AS "recent_and_upcoming_events_count!"
+            (
+                COALESCE(stats.future_events_count, 0) * 2.0
+                + COALESCE(stats.recent_events_count, 0)
+                + CASE WHEN o.description_de IS NOT NULL THEN 0.5 ELSE 0 END
+                + CASE WHEN o.description_en IS NOT NULL THEN 0.5 ELSE 0 END
+                + CASE WHEN o.website_url IS NOT NULL THEN 0.5 ELSE 0 END
+                + CASE WHEN o.instagram_url IS NOT NULL THEN 0.25 ELSE 0 END
+                + CASE WHEN o.linkedin_url IS NOT NULL THEN 0.25 ELSE 0 END
+                + CASE WHEN o.location IS NOT NULL THEN 0.5 ELSE 0 END
+                + CASE WHEN o.registration_number IS NOT NULL THEN 0.25 ELSE 0 END
+            )::double precision AS "activity_score!"
         FROM organizers o
         LEFT JOIN LATERAL (
             SELECT
@@ -176,12 +186,16 @@ pub(crate) async fn list_public_organizers(
                 ) AS active_events_count,
                 COUNT(*) FILTER (
                     WHERE e.publish_app = true
-                        AND e.start_date_time BETWEEN NOW() - INTERVAL '1 months' AND NOW() + INTERVAL '3 months'
-                ) AS recent_and_upcoming_events_count
+                        AND e.start_date_time >= NOW()
+                ) AS future_events_count,
+                COUNT(*) FILTER (
+                    WHERE e.publish_app = true
+                        AND e.start_date_time BETWEEN NOW() - INTERVAL '6 months' AND NOW()
+                ) AS recent_events_count
             FROM events e
             WHERE e.organizer_id = o.id
         ) stats ON TRUE
-        ORDER BY stats.recent_and_upcoming_events_count DESC, o.name ASC
+        ORDER BY "activity_score!" DESC, o.name ASC
         "#
     )
     .fetch_all(&state.db)
@@ -201,7 +215,7 @@ pub(crate) async fn list_public_organizers(
             registration_number: organizer.registration_number,
             non_profit: organizer.non_profit,
             active_events_count: organizer.active_events_count,
-            recent_and_upcoming_events_count: organizer.recent_and_upcoming_events_count,
+            activity_score: organizer.activity_score,
         })
         .collect();
 
@@ -314,7 +328,17 @@ pub(crate) async fn get_public_organizer(
             o.registration_number,
             o.non_profit,
             stats.active_events_count AS "active_events_count!",
-            stats.recent_and_upcoming_events_count AS "recent_and_upcoming_events_count!"
+            (
+                COALESCE(stats.future_events_count, 0) * 2.0
+                + COALESCE(stats.recent_events_count, 0)
+                + CASE WHEN o.description_de IS NOT NULL THEN 0.5 ELSE 0 END
+                + CASE WHEN o.description_en IS NOT NULL THEN 0.5 ELSE 0 END
+                + CASE WHEN o.website_url IS NOT NULL THEN 0.5 ELSE 0 END
+                + CASE WHEN o.instagram_url IS NOT NULL THEN 0.25 ELSE 0 END
+                + CASE WHEN o.linkedin_url IS NOT NULL THEN 0.25 ELSE 0 END
+                + CASE WHEN o.location IS NOT NULL THEN 0.5 ELSE 0 END
+                + CASE WHEN o.registration_number IS NOT NULL THEN 0.25 ELSE 0 END
+            )::double precision AS "activity_score!"
         FROM organizers o
         LEFT JOIN LATERAL (
             SELECT
@@ -324,8 +348,12 @@ pub(crate) async fn get_public_organizer(
                 ) AS active_events_count,
                 COUNT(*) FILTER (
                     WHERE e.publish_app = true
-                        AND e.start_date_time BETWEEN NOW() - INTERVAL '1 months' AND NOW() + INTERVAL '3 months'
-                ) AS recent_and_upcoming_events_count
+                        AND e.start_date_time >= NOW()
+                ) AS future_events_count,
+                COUNT(*) FILTER (
+                    WHERE e.publish_app = true
+                        AND e.start_date_time BETWEEN NOW() - INTERVAL '6 months' AND NOW()
+                ) AS recent_events_count
             FROM events e
             WHERE e.organizer_id = o.id
         ) stats ON TRUE
@@ -350,7 +378,7 @@ pub(crate) async fn get_public_organizer(
                 registration_number: organizer.registration_number,
                 non_profit: organizer.non_profit,
                 active_events_count: organizer.active_events_count,
-                recent_and_upcoming_events_count: organizer.recent_and_upcoming_events_count,
+                activity_score: organizer.activity_score,
             };
             if let Some(cache) = &state.cache {
                 if let Err(err) = cache.set_json(&cache_key, &public_organizer).await {

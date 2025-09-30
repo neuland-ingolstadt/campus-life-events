@@ -195,6 +195,7 @@ export type PublicEventResponse = {
 
 export type PublicOrganizerResponse = {
     active_events_count: number;
+    activity_score: number;
     description_de?: string | null;
     description_en?: string | null;
     id: number;
@@ -203,7 +204,6 @@ export type PublicOrganizerResponse = {
     location?: string | null;
     name: string;
     non_profit: boolean;
-    recent_and_upcoming_events_count: number;
     registration_number?: string | null;
     website_url?: string | null;
 };

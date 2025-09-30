@@ -1,0 +1,88 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            o.id,\n            o.name,\n            o.description_de,\n            o.description_en,\n            o.website_url,\n            o.instagram_url,\n            o.location,\n            o.linkedin_url,\n            o.registration_number,\n            o.non_profit,\n            stats.active_events_count AS \"active_events_count!\",\n            (\n                COALESCE(stats.future_events_count, 0) * 2.0\n                + COALESCE(stats.recent_events_count, 0)\n                + CASE WHEN o.description_de IS NOT NULL THEN 0.5 ELSE 0 END\n                + CASE WHEN o.description_en IS NOT NULL THEN 0.5 ELSE 0 END\n                + CASE WHEN o.website_url IS NOT NULL THEN 0.5 ELSE 0 END\n                + CASE WHEN o.instagram_url IS NOT NULL THEN 0.25 ELSE 0 END\n                + CASE WHEN o.linkedin_url IS NOT NULL THEN 0.25 ELSE 0 END\n                + CASE WHEN o.location IS NOT NULL THEN 0.5 ELSE 0 END\n                + CASE WHEN o.registration_number IS NOT NULL THEN 0.25 ELSE 0 END\n            )::double precision AS \"activity_score!\"\n        FROM organizers o\n        LEFT JOIN LATERAL (\n            SELECT\n                COUNT(*) FILTER (\n                    WHERE e.publish_app = true\n                        AND COALESCE(e.end_date_time, e.start_date_time) >= NOW()\n                ) AS active_events_count,\n                COUNT(*) FILTER (\n                    WHERE e.publish_app = true\n                        AND e.start_date_time >= NOW()\n                ) AS future_events_count,\n                COUNT(*) FILTER (\n                    WHERE e.publish_app = true\n                        AND e.start_date_time BETWEEN NOW() - INTERVAL '6 months' AND NOW()\n                ) AS recent_events_count\n            FROM events e\n            WHERE e.organizer_id = o.id\n        ) stats ON TRUE\n        WHERE o.id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "description_de",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "description_en",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "website_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "instagram_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "location",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "linkedin_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "registration_number",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "non_profit",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 10,
+        "name": "active_events_count!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 11,
+        "name": "activity_score!",
+        "type_info": "Float8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "e6a7757cc0c7dff506b2fded387ea57fda7a97c85506de7decbbffd18575da6d"
+}
