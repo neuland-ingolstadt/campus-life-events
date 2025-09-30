@@ -115,6 +115,8 @@ pub(crate) async fn create_organizer(
 
     tx.commit().await?;
 
+    invalidate_public_organizer_caches(&state).await;
+
     Ok((
         StatusCode::CREATED,
         Json(SetupTokenResponse { setup_token: token }),
@@ -284,6 +286,8 @@ pub(crate) async fn update_organizer(
         .fetch_one(&state.db)
         .await?;
 
+    invalidate_public_organizer_caches(&state).await;
+
     Ok(Json(organizer))
 }
 
@@ -312,6 +316,8 @@ pub(crate) async fn delete_organizer(
     if result.rows_affected() == 0 {
         return Err(AppError::not_found("Organizer not found"));
     }
+
+    invalidate_public_organizer_caches(&state).await;
 
     Ok(StatusCode::NO_CONTENT)
 }
@@ -354,6 +360,20 @@ pub(crate) async fn generate_setup_token(
         return Err(AppError::not_found("Organizer account not found"));
     }
     Ok(Json(SetupTokenResponse { setup_token: token }))
+}
+
+async fn invalidate_public_organizer_caches(state: &AppState) {
+    if let Some(cache) = &state.cache {
+        if let Err(err) = cache.purge_prefix("public:organizers").await {
+            warn!(target: "cache", action = "purge", scope = "public_organizers", %err, "Failed to purge public organizers cache");
+        }
+        if let Err(err) = cache.purge_prefix("public:events").await {
+            warn!(target: "cache", action = "purge", scope = "public_events", %err, "Failed to purge public events cache");
+        }
+        if let Err(err) = cache.purge_prefix("ical").await {
+            warn!(target: "cache", action = "purge", scope = "ical", %err, "Failed to purge iCal cache");
+        }
+    }
 }
 
 pub(crate) fn router() -> Router<AppState> {

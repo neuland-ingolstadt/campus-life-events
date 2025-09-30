@@ -8,7 +8,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use chrono_tz::Europe::Berlin;
 use icalendar::{Calendar, Component, Event as ICalEvent, Property};
-use tracing::instrument;
+use tracing::{instrument, warn};
 
 use crate::{
     app_state::AppState,
@@ -35,7 +35,6 @@ impl EventWithOrganizer {
     fn to_ical_event(&self) -> ICalEvent {
         let mut ical_event = ICalEvent::new();
 
-        // Use English title if available, fallback to German
         let title = if !self.title_en.is_empty() {
             &self.title_en
         } else {
@@ -44,7 +43,6 @@ impl EventWithOrganizer {
 
         ical_event.summary(title);
 
-        // Use English description if available, fallback to German
         let description = if let Some(desc_en) = &self.description_en {
             if !desc_en.is_empty() {
                 Some(desc_en.as_str())
@@ -55,7 +53,6 @@ impl EventWithOrganizer {
             self.description_de.as_deref()
         };
 
-        // Add location if available
         if let Some(location) = &self.location {
             ical_event.location(location);
         } else if let Some(organizer_location) = &self.organizer_location {
@@ -78,12 +75,10 @@ impl EventWithOrganizer {
         end_property.add_parameter("TZID", BERLIN_TZID);
         ical_event.append_property(end_property);
 
-        // Add event URL if available
         if let Some(url) = &self.event_url {
             ical_event.url(url);
         }
 
-        // Set unique ID for the event
         ical_event.uid(&format!("campus-life-event-{}", self.id));
 
         ical_event.done()
@@ -132,8 +127,24 @@ impl From<EventWithOrganizerRow> for EventWithOrganizer {
 #[instrument(skip(state))]
 pub(crate) async fn get_all_events_ical(
     State(state): State<AppState>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Result<impl IntoResponse, AppError> {
+    let cache_key = "ical:all";
+    if let Some(cache) = &state.cache {
+        match cache.get_string(cache_key).await {
+            Ok(Some(cached)) => {
+                return build_ical_response_with_filename(
+                    cached,
+                    "attachment; filename=\"campus-life-events.ics\"".to_string(),
+                );
+            }
+            Ok(None) => {}
+            Err(err) => {
+                warn!(target: "cache", action = "get", scope = "ical_all", %err, "Failed to read iCal feed from cache")
+            }
+        }
+    }
+
     let events_with_organizers = sqlx::query_as!(
         EventWithOrganizerRow,
         r#"
@@ -164,18 +175,16 @@ pub(crate) async fn get_all_events_ical(
 
     let ical_content = calendar.done().to_string();
 
-    let response = Response::builder()
-        .status(StatusCode::OK)
-        .header("Content-Type", "text/calendar; charset=utf-8")
-        .header(
-            "Content-Disposition",
-            "attachment; filename=\"campus-life-events.ics\"",
-        )
-        .header("Cache-Control", "public, max-age=3600") // Cache for 1 hour
-        .body(ical_content)
-        .map_err(|_| AppError::internal("Failed to build response"))?;
+    if let Some(cache) = &state.cache {
+        if let Err(err) = cache.set_string(cache_key, &ical_content).await {
+            warn!(target: "cache", action = "set", scope = "ical_all", %err, "Failed to store iCal feed in cache");
+        }
+    }
 
-    Ok(response)
+    build_ical_response_with_filename(
+        ical_content,
+        "attachment; filename=\"campus-life-events.ics\"".to_string(),
+    )
 }
 
 #[utoipa::path(
@@ -190,7 +199,6 @@ pub(crate) async fn get_organizer_events_ical(
     State(state): State<AppState>,
     Path(organizer_id): Path<i64>,
 ) -> Result<impl IntoResponse, AppError> {
-    // First, verify the organizer exists
     let organizer = sqlx::query_as!(
         Organizer,
         r#"
@@ -206,6 +214,22 @@ pub(crate) async fn get_organizer_events_ical(
     let Some(organizer) = organizer else {
         return Err(AppError::not_found("Organizer not found"));
     };
+
+    let cache_key = format!("ical:organizer:{organizer_id}");
+    let file_name = organizer.name.to_lowercase().replace(' ', "-");
+    let content_disposition = format!("attachment; filename=\"{file_name}-events.ics\"");
+
+    if let Some(cache) = &state.cache {
+        match cache.get_string(&cache_key).await {
+            Ok(Some(cached)) => {
+                return build_ical_response_with_filename(cached, content_disposition.clone());
+            }
+            Ok(None) => {}
+            Err(err) => {
+                warn!(target: "cache", action = "get", scope = "ical_organizer", organizer_id, %err, "Failed to read organizer iCal feed from cache")
+            }
+        }
+    }
 
     let events_with_organizers = sqlx::query_as!(
         EventWithOrganizerRow,
@@ -238,21 +262,26 @@ pub(crate) async fn get_organizer_events_ical(
 
     let ical_content = calendar.done().to_string();
 
-    let response = Response::builder()
+    if let Some(cache) = &state.cache {
+        if let Err(err) = cache.set_string(&cache_key, &ical_content).await {
+            warn!(target: "cache", action = "set", scope = "ical_organizer", organizer_id, %err, "Failed to store organizer iCal feed in cache");
+        }
+    }
+
+    build_ical_response_with_filename(ical_content, content_disposition)
+}
+
+fn build_ical_response_with_filename(
+    body: String,
+    content_disposition: String,
+) -> Result<Response, AppError> {
+    Response::builder()
         .status(StatusCode::OK)
         .header("Content-Type", "text/calendar; charset=utf-8")
-        .header(
-            "Content-Disposition",
-            &format!(
-                "attachment; filename=\"{}-events.ics\"",
-                organizer.name.to_lowercase().replace(' ', "-")
-            ),
-        )
-        .header("Cache-Control", "public, max-age=3600") // Cache for 1 hour
-        .body(ical_content)
-        .map_err(|_| AppError::internal("Failed to build response"))?;
-
-    Ok(response)
+        .header("Content-Disposition", content_disposition)
+        .header("Cache-Control", "public, max-age=3600")
+        .body(axum::body::Body::from(body))
+        .map_err(|_| AppError::internal("Failed to build response"))
 }
 
 fn extract_bearer_token(headers: &HeaderMap) -> Result<String, AppError> {

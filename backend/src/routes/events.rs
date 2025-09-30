@@ -9,7 +9,7 @@ use chrono::{DateTime, Datelike, Duration, NaiveDate, TimeZone, Utc};
 use chrono_tz::Europe::Berlin;
 use serde_json::Value;
 use sqlx::{Postgres, QueryBuilder, Transaction};
-use tracing::instrument;
+use tracing::{instrument, warn};
 
 use crate::{
     app_state::AppState,
@@ -159,6 +159,8 @@ pub(crate) async fn create_event(
     .await?;
 
     transaction.commit().await?;
+
+    invalidate_public_event_caches(&state).await;
 
     Ok((StatusCode::CREATED, Json(event)))
 }
@@ -352,6 +354,8 @@ pub(crate) async fn update_event(
 
     transaction.commit().await?;
 
+    invalidate_public_event_caches(&state).await;
+
     Ok(Json(updated_event))
 }
 
@@ -422,6 +426,8 @@ pub(crate) async fn delete_event(
     .await?;
 
     transaction.commit().await?;
+
+    invalidate_public_event_caches(&state).await;
 
     Ok(StatusCode::NO_CONTENT)
 }
@@ -582,6 +588,17 @@ async fn record_audit(
     .await?;
 
     Ok(())
+}
+
+async fn invalidate_public_event_caches(state: &AppState) {
+    if let Some(cache) = &state.cache {
+        if let Err(err) = cache.purge_prefix("public:events").await {
+            warn!(target: "cache", action = "purge", scope = "public_events", %err, "Failed to purge public events cache");
+        }
+        if let Err(err) = cache.purge_prefix("ical").await {
+            warn!(target: "cache", action = "purge", scope = "ical", %err, "Failed to purge iCal cache");
+        }
+    }
 }
 
 pub(crate) fn router() -> Router<AppState> {

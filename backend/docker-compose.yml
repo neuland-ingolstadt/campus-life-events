@@ -13,6 +13,13 @@ services:
     volumes:
       - pgdatae:/var/lib/postgresql/data
     restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    container_name: cle-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    restart: unless-stopped
 
 volumes:
   pgdatae:

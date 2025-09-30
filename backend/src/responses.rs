@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::models::{AccountType, EventWithOrganizer, Organizer};
@@ -46,7 +46,7 @@ pub struct NewsletterDataResponse {
     pub week_after_start: DateTime<Utc>,
 }
 
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct PublicEventResponse {
     pub id: i64,
     pub organizer_id: i64,
@@ -61,7 +61,7 @@ pub struct PublicEventResponse {
     pub location: Option<String>,
 }
 
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct PublicOrganizerResponse {
     pub id: i64,
     pub name: String,

@@ -18,14 +18,14 @@ This service exposes the REST and OpenAPI interface that powers the Campus Life 
 - PostgreSQL 16 locally or via Docker
 - (Optional) `sqlx-cli` for managing migrations from the command line
 
-A compose file is provided to run PostgreSQL only:
+A compose file is provided to run PostgreSQL and Redis:
 
 ```bash
 cd backend
 docker compose up -d
 ```
 
-It exposes the database on `postgres://cle:cle_password@localhost:5422/cle_db`.
+It exposes the database on `postgres://cle:cle_password@localhost:5422/cle_db` and a Redis instance on `redis://localhost:6379/0`.
 
 ### Environment variables
 
@@ -34,6 +34,8 @@ Create an `.env.local` file to mirror the values expected by `dotenvy` when the 
 ```bash
 DATABASE_URL=postgres://cle:cle_password@localhost:5422/cle_db
 ALLOWED_ORIGINS=http://localhost:3000
+REDIS_URL=redis://localhost:6380/0
+CACHE_TTL_SECONDS=60
 # Optional SMTP configuration
 SMTP_HOST=smtp.example.com
 SMTP_USERNAME=apikey
@@ -43,7 +45,7 @@ SMTP_FROM_NAME=Campus Life Events
 BASE_URL=http://localhost:3000
 ```
 
-Any missing SMTP variables will disable email sending and log invite/reset URLs to the console.
+Any missing SMTP variables will disable email sending and log invite/reset URLs to the console. If `REDIS_URL` is omitted the API will continue running without caching.
 
 ### Running the API
 

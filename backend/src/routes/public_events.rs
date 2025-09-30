@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, Query, State},
     routing::get,
 };
-use tracing::instrument;
+use tracing::{instrument, warn};
 
 use crate::{
     app_state::AppState,
@@ -42,6 +42,17 @@ pub(crate) async fn list_public_events(
     State(state): State<AppState>,
     Query(query_params): Query<ListEventsQuery>,
 ) -> Result<Json<Vec<PublicEventResponse>>, AppError> {
+    let cache_key = format!("public:events:list:{query_params:?}");
+    if let Some(cache) = &state.cache {
+        match cache.get_json::<Vec<PublicEventResponse>>(&cache_key).await {
+            Ok(Some(cached)) => return Ok(Json(cached)),
+            Ok(None) => {}
+            Err(err) => {
+                warn!(target: "cache", action = "get", scope = "public_events_list", %err, "Failed to read public events list from cache")
+            }
+        }
+    }
+
     let mut builder = QueryBuilder::<Postgres>::new(
         "SELECT e.id, e.organizer_id, o.name AS organizer_name, e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location FROM events e INNER JOIN organizers o ON e.organizer_id = o.id",
     );
@@ -92,6 +103,12 @@ pub(crate) async fn list_public_events(
         })
         .collect();
 
+    if let Some(cache) = &state.cache {
+        if let Err(err) = cache.set_json(&cache_key, &public_events).await {
+            warn!(target: "cache", action = "set", scope = "public_events_list", %err, "Failed to store public events list in cache");
+        }
+    }
+
     Ok(Json(public_events))
 }
 
@@ -105,6 +122,20 @@ pub(crate) async fn list_public_events(
 pub(crate) async fn list_public_organizers(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<PublicOrganizerResponse>>, AppError> {
+    let cache_key = "public:organizers:list";
+    if let Some(cache) = &state.cache {
+        match cache
+            .get_json::<Vec<PublicOrganizerResponse>>(cache_key)
+            .await
+        {
+            Ok(Some(cached)) => return Ok(Json(cached)),
+            Ok(None) => {}
+            Err(err) => {
+                warn!(target: "cache", action = "get", scope = "public_organizers_list", %err, "Failed to read public organizers list from cache")
+            }
+        }
+    }
+
     let organizers = sqlx::query_as!(
         Organizer,
         r#"
@@ -132,6 +163,12 @@ pub(crate) async fn list_public_organizers(
         })
         .collect();
 
+    if let Some(cache) = &state.cache {
+        if let Err(err) = cache.set_json(cache_key, &public_organizers).await {
+            warn!(target: "cache", action = "set", scope = "public_organizers_list", %err, "Failed to store public organizers list in cache");
+        }
+    }
+
     Ok(Json(public_organizers))
 }
 
@@ -147,6 +184,17 @@ pub(crate) async fn get_public_event(
     State(state): State<AppState>,
     Path(id): Path<i64>,
 ) -> Result<Json<PublicEventResponse>, AppError> {
+    let cache_key = format!("public:events:item:{id}");
+    if let Some(cache) = &state.cache {
+        match cache.get_json::<PublicEventResponse>(&cache_key).await {
+            Ok(Some(cached)) => return Ok(Json(cached)),
+            Ok(None) => {}
+            Err(err) => {
+                warn!(target: "cache", action = "get", scope = "public_event", event_id = id, %err, "Failed to read public event from cache")
+            }
+        }
+    }
+
     let event = sqlx::query_as!(
         PublicEventWithOrganizer,
         r#"
@@ -175,6 +223,11 @@ pub(crate) async fn get_public_event(
                 event_url: event.event_url,
                 location: event.location,
             };
+            if let Some(cache) = &state.cache {
+                if let Err(err) = cache.set_json(&cache_key, &public_event).await {
+                    warn!(target: "cache", action = "set", scope = "public_event", event_id = id, %err, "Failed to store public event in cache");
+                }
+            }
             Ok(Json(public_event))
         }
         None => Err(AppError::not_found("Event not found or not published")),
@@ -193,6 +246,17 @@ pub(crate) async fn get_public_organizer(
     State(state): State<AppState>,
     Path(id): Path<i64>,
 ) -> Result<Json<PublicOrganizerResponse>, AppError> {
+    let cache_key = format!("public:organizers:item:{id}");
+    if let Some(cache) = &state.cache {
+        match cache.get_json::<PublicOrganizerResponse>(&cache_key).await {
+            Ok(Some(cached)) => return Ok(Json(cached)),
+            Ok(None) => {}
+            Err(err) => {
+                warn!(target: "cache", action = "get", scope = "public_organizer", organizer_id = id, %err, "Failed to read public organizer from cache")
+            }
+        }
+    }
+
     let organizer = sqlx::query_as!(
         Organizer,
         r#"
@@ -219,6 +283,11 @@ pub(crate) async fn get_public_organizer(
                 registration_number: organizer.registration_number,
                 non_profit: organizer.non_profit,
             };
+            if let Some(cache) = &state.cache {
+                if let Err(err) = cache.set_json(&cache_key, &public_organizer).await {
+                    warn!(target: "cache", action = "set", scope = "public_organizer", organizer_id = id, %err, "Failed to store public organizer in cache");
+                }
+            }
             Ok(Json(public_organizer))
         }
         None => Err(AppError::not_found("Organizer not found")),

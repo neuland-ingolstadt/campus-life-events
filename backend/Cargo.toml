@@ -17,6 +17,7 @@ tokio = { version = "1.47.1", features = ["full"] }
 tower-http = { version = "0.6.6", features = ["cors", "set-header"] }
 uuid = { version = "1.18.1", features = ["serde", "v4"] }
 thiserror = "1.0.66"
+redis = { version = "0.25", features = ["tokio-comp"] }
 utoipa = { version = "5.3", features = ["chrono", "uuid"] }
 utoipa-axum = "0.2.0"
 utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "vendored"] }

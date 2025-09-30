@@ -1,4 +1,5 @@
 mod app_state;
+mod cache;
 mod dto;
 mod email;
 mod error;
@@ -22,6 +23,7 @@ use utoipa_swagger_ui::{Config, SwaggerUi, SyntaxHighlight};
 
 use crate::{
     app_state::AppState,
+    cache::CacheService,
     email::{EmailClient, EmailClientError},
     openapi::ApiDoc,
     routes::api_router,
@@ -96,9 +98,12 @@ async fn main() {
         }
     };
 
+    let cache = build_cache().await;
+
     let state = AppState {
         db: pool.clone(),
         email: email_client,
+        cache,
     };
 
     // Configure CORS to be more restrictive
@@ -227,4 +232,30 @@ fn init_tracing() {
         .with_timer(UtcTime::rfc_3339())
         .compact()
         .init();
+}
+
+async fn build_cache() -> Option<CacheService> {
+    let redis_url = match std::env::var("REDIS_URL") {
+        Ok(url) => url,
+        Err(_) => {
+            info!(target: "startup", component = "cache", action = "init", mode = "disabled", "Cache disabled; REDIS_URL not set");
+            return None;
+        }
+    };
+
+    let ttl = std::env::var("CACHE_TTL_SECONDS")
+        .ok()
+        .and_then(|value| value.parse::<u64>().ok())
+        .unwrap_or(60);
+
+    match CacheService::connect(&redis_url, ttl, "cle").await {
+        Ok(cache) => {
+            info!(target: "startup", component = "cache", action = "init", mode = "enabled", ttl_seconds = ttl, "Connected to Redis cache");
+            Some(cache)
+        }
+        Err(err) => {
+            warn!(target: "startup", component = "cache", action = "init", mode = "disabled", %err, "Cache disabled due to initialization failure");
+            None
+        }
+    }
 }
