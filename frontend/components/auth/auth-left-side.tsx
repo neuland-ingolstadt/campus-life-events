@@ -13,7 +13,7 @@ export function AuthLeftSide({ children }: AuthLeftSideProps) {
 	return (
 		<div className="hidden lg:block relative">
 			{/* Full screen Beams background */}
-			<div className="absolute inset-0">
+			<div className="absolute inset-0 bg-black">
 				<Beams
 					beamWidth={2}
 					beamHeight={15}
