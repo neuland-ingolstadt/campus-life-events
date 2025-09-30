@@ -9,7 +9,6 @@ use crate::{
     app_state::AppState,
     dto::ListEventsQuery,
     error::AppError,
-    models::Organizer,
     responses::{PublicEventResponse, PublicOrganizerResponse},
 };
 use chrono::{DateTime, Utc};
@@ -28,6 +27,22 @@ struct PublicEventWithOrganizer {
     end_date_time: DateTime<Utc>,
     event_url: Option<String>,
     location: Option<String>,
+}
+
+#[derive(Debug, FromRow)]
+struct PublicOrganizerWithStats {
+    id: i64,
+    name: String,
+    description_de: Option<String>,
+    description_en: Option<String>,
+    website_url: Option<String>,
+    instagram_url: Option<String>,
+    location: Option<String>,
+    linkedin_url: Option<String>,
+    registration_number: Option<String>,
+    non_profit: bool,
+    active_events_count: i64,
+    recent_and_upcoming_events_count: i64,
 }
 
 #[utoipa::path(
@@ -137,11 +152,36 @@ pub(crate) async fn list_public_organizers(
     }
 
     let organizers = sqlx::query_as!(
-        Organizer,
+        PublicOrganizerWithStats,
         r#"
-        SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at
-        FROM organizers
-        ORDER BY name ASC
+        SELECT
+            o.id,
+            o.name,
+            o.description_de,
+            o.description_en,
+            o.website_url,
+            o.instagram_url,
+            o.location,
+            o.linkedin_url,
+            o.registration_number,
+            o.non_profit,
+            stats.active_events_count AS "active_events_count!",
+            stats.recent_and_upcoming_events_count AS "recent_and_upcoming_events_count!"
+        FROM organizers o
+        LEFT JOIN LATERAL (
+            SELECT
+                COUNT(*) FILTER (
+                    WHERE e.publish_app = true
+                        AND COALESCE(e.end_date_time, e.start_date_time) >= NOW()
+                ) AS active_events_count,
+                COUNT(*) FILTER (
+                    WHERE e.publish_app = true
+                        AND e.start_date_time BETWEEN NOW() - INTERVAL '2 months' AND NOW() + INTERVAL '2 months'
+                ) AS recent_and_upcoming_events_count
+            FROM events e
+            WHERE e.organizer_id = o.id
+        ) stats ON TRUE
+        ORDER BY stats.recent_and_upcoming_events_count DESC, o.name ASC
         "#
     )
     .fetch_all(&state.db)
@@ -160,6 +200,8 @@ pub(crate) async fn list_public_organizers(
             linkedin_url: organizer.linkedin_url,
             registration_number: organizer.registration_number,
             non_profit: organizer.non_profit,
+            active_events_count: organizer.active_events_count,
+            recent_and_upcoming_events_count: organizer.recent_and_upcoming_events_count,
         })
         .collect();
 
@@ -258,11 +300,36 @@ pub(crate) async fn get_public_organizer(
     }
 
     let organizer = sqlx::query_as!(
-        Organizer,
+        PublicOrganizerWithStats,
         r#"
-        SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at
-        FROM organizers
-        WHERE id = $1
+        SELECT
+            o.id,
+            o.name,
+            o.description_de,
+            o.description_en,
+            o.website_url,
+            o.instagram_url,
+            o.location,
+            o.linkedin_url,
+            o.registration_number,
+            o.non_profit,
+            stats.active_events_count AS "active_events_count!",
+            stats.recent_and_upcoming_events_count AS "recent_and_upcoming_events_count!"
+        FROM organizers o
+        LEFT JOIN LATERAL (
+            SELECT
+                COUNT(*) FILTER (
+                    WHERE e.publish_app = true
+                        AND COALESCE(e.end_date_time, e.start_date_time) >= NOW()
+                ) AS active_events_count,
+                COUNT(*) FILTER (
+                    WHERE e.publish_app = true
+                        AND e.start_date_time BETWEEN NOW() - INTERVAL '2 months' AND NOW() + INTERVAL '2 months'
+                ) AS recent_and_upcoming_events_count
+            FROM events e
+            WHERE e.organizer_id = o.id
+        ) stats ON TRUE
+        WHERE o.id = $1
         "#,
         id
     )
@@ -282,6 +349,8 @@ pub(crate) async fn get_public_organizer(
                 linkedin_url: organizer.linkedin_url,
                 registration_number: organizer.registration_number,
                 non_profit: organizer.non_profit,
+                active_events_count: organizer.active_events_count,
+                recent_and_upcoming_events_count: organizer.recent_and_upcoming_events_count,
             };
             if let Some(cache) = &state.cache {
                 if let Err(err) = cache.set_json(&cache_key, &public_organizer).await {
