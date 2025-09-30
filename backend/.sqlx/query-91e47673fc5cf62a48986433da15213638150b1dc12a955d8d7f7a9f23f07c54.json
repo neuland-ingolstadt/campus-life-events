@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT\n            o.id,\n            o.name,\n            o.description_de,\n            o.description_en,\n            o.website_url,\n            o.instagram_url,\n            o.location,\n            o.linkedin_url,\n            o.registration_number,\n            o.non_profit,\n            stats.active_events_count AS \"active_events_count!\",\n            stats.recent_and_upcoming_events_count AS \"recent_and_upcoming_events_count!\"\n        FROM organizers o\n        LEFT JOIN LATERAL (\n            SELECT\n                COUNT(*) FILTER (\n                    WHERE e.publish_app = true\n                        AND COALESCE(e.end_date_time, e.start_date_time) >= NOW()\n                ) AS active_events_count,\n                COUNT(*) FILTER (\n                    WHERE e.publish_app = true\n                        AND e.start_date_time BETWEEN NOW() - INTERVAL '2 months' AND NOW() + INTERVAL '2 months'\n                ) AS recent_and_upcoming_events_count\n            FROM events e\n            WHERE e.organizer_id = o.id\n        ) stats ON TRUE\n        WHERE o.id = $1\n        ",
+  "query": "\n        SELECT\n            o.id,\n            o.name,\n            o.description_de,\n            o.description_en,\n            o.website_url,\n            o.instagram_url,\n            o.location,\n            o.linkedin_url,\n            o.registration_number,\n            o.non_profit,\n            stats.active_events_count AS \"active_events_count!\",\n            stats.recent_and_upcoming_events_count AS \"recent_and_upcoming_events_count!\"\n        FROM organizers o\n        LEFT JOIN LATERAL (\n            SELECT\n                COUNT(*) FILTER (\n                    WHERE e.publish_app = true\n                        AND COALESCE(e.end_date_time, e.start_date_time) >= NOW()\n                ) AS active_events_count,\n                COUNT(*) FILTER (\n                    WHERE e.publish_app = true\n                        AND e.start_date_time BETWEEN NOW() - INTERVAL '1 months' AND NOW() + INTERVAL '3 months'\n                ) AS recent_and_upcoming_events_count\n            FROM events e\n            WHERE e.organizer_id = o.id\n        ) stats ON TRUE\n        WHERE o.id = $1\n        ",
   "describe": {
     "columns": [
       {
@@ -84,5 +84,5 @@
       null
     ]
   },
-  "hash": "54df0f56cd895ec2f4b92d28fb1a40d265e2a126c309873aab97a10d90403c5d"
+  "hash": "91e47673fc5cf62a48986433da15213638150b1dc12a955d8d7f7a9f23f07c54"
 }

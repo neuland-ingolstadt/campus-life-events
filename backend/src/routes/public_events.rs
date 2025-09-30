@@ -176,7 +176,7 @@ pub(crate) async fn list_public_organizers(
                 ) AS active_events_count,
                 COUNT(*) FILTER (
                     WHERE e.publish_app = true
-                        AND e.start_date_time BETWEEN NOW() - INTERVAL '2 months' AND NOW() + INTERVAL '2 months'
+                        AND e.start_date_time BETWEEN NOW() - INTERVAL '1 months' AND NOW() + INTERVAL '3 months'
                 ) AS recent_and_upcoming_events_count
             FROM events e
             WHERE e.organizer_id = o.id
@@ -324,7 +324,7 @@ pub(crate) async fn get_public_organizer(
                 ) AS active_events_count,
                 COUNT(*) FILTER (
                     WHERE e.publish_app = true
-                        AND e.start_date_time BETWEEN NOW() - INTERVAL '2 months' AND NOW() + INTERVAL '2 months'
+                        AND e.start_date_time BETWEEN NOW() - INTERVAL '1 months' AND NOW() + INTERVAL '3 months'
                 ) AS recent_and_upcoming_events_count
             FROM events e
             WHERE e.organizer_id = o.id
