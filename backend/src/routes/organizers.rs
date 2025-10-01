@@ -13,34 +13,71 @@ use crate::{
     dto::{CreateOrganizerRequest, UpdateOrganizerRequest},
     error::AppError,
     models::{AccountType, Organizer, OrganizerInviteRow, OrganizerWithInvite},
-    responses::{ErrorResponse, SetupTokenResponse},
+    responses::{ErrorResponse, OrganizerWithStatsResponse, SetupTokenResponse},
 };
 
-use super::shared::{current_user_from_headers, generate_setup_token_value};
+use super::shared::{
+    current_user_from_headers, generate_setup_token_value, refresh_organizer_activity_stats,
+};
 
 #[utoipa::path(
     get,
     path = "/api/v1/organizers",
     tag = "Organizers",
-    responses((status = 200, description = "List organizers", body = [Organizer]), (status = 401, description = "Unauthorized", body = ErrorResponse))
+    responses((status = 200, description = "List organizers", body = [OrganizerWithStatsResponse]), (status = 401, description = "Unauthorized", body = ErrorResponse))
 )]
 #[instrument(skip(state, headers))]
 pub(crate) async fn list_organizers(
     State(state): State<AppState>,
     headers: HeaderMap,
-) -> Result<Json<Vec<Organizer>>, AppError> {
-    // Require authentication for this endpoint
+) -> Result<Json<Vec<OrganizerWithStatsResponse>>, AppError> {
     let _user = current_user_from_headers(&headers, &state).await?;
-    let organizers = sqlx::query_as!(
-        Organizer,
+    let rows = sqlx::query!(
         r#"
-        SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at
-        FROM organizers
-        ORDER BY name
+        SELECT
+            o.id,
+            o.name,
+            o.description_de,
+            o.description_en,
+            o.website_url,
+            o.instagram_url,
+            o.location,
+            o.linkedin_url,
+            o.registration_number,
+            o.non_profit,
+            o.newsletter,
+            o.created_at,
+            o.updated_at,
+            COALESCE(stats.active_events_count, 0) AS "active_events_count!",
+            COALESCE(stats.activity_score, 0)::double precision AS "activity_score!"
+        FROM organizers o
+        LEFT JOIN organizer_activity_stats stats ON stats.organizer_id = o.id
+        ORDER BY o.name
         "#
     )
     .fetch_all(&state.db)
     .await?;
+
+    let organizers = rows
+        .into_iter()
+        .map(|row| OrganizerWithStatsResponse {
+            id: row.id,
+            name: row.name,
+            description_de: row.description_de,
+            description_en: row.description_en,
+            website_url: row.website_url,
+            instagram_url: row.instagram_url,
+            location: row.location,
+            linkedin_url: row.linkedin_url,
+            registration_number: row.registration_number,
+            non_profit: row.non_profit,
+            newsletter: row.newsletter,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+            active_events_count: row.active_events_count,
+            activity_score: row.activity_score,
+        })
+        .collect();
 
     Ok(Json(organizers))
 }
@@ -178,29 +215,63 @@ pub(crate) async fn list_organizers_admin(
     path = "/api/v1/organizers/{id}",
     tag = "Organizers",
     params(("id" = i64, Path, description = "Organizer identifier")),
-    responses((status = 200, description = "Organizer details", body = Organizer), (status = 401, description = "Unauthorized", body = ErrorResponse))
+    responses((status = 200, description = "Organizer details", body = OrganizerWithStatsResponse), (status = 401, description = "Unauthorized", body = ErrorResponse))
 )]
 #[instrument(skip(state, headers))]
 pub(crate) async fn get_organizer(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path(id): Path<i64>,
-) -> Result<Json<Organizer>, AppError> {
-    // Require authentication for this endpoint
+) -> Result<Json<OrganizerWithStatsResponse>, AppError> {
     let _user = current_user_from_headers(&headers, &state).await?;
-    let organizer = sqlx::query_as!(
-        Organizer,
+    let organizer = sqlx::query!(
         r#"
-        SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at
-        FROM organizers
-        WHERE id = $1
+        SELECT
+            o.id,
+            o.name,
+            o.description_de,
+            o.description_en,
+            o.website_url,
+            o.instagram_url,
+            o.location,
+            o.linkedin_url,
+            o.registration_number,
+            o.non_profit,
+            o.newsletter,
+            o.created_at,
+            o.updated_at,
+            COALESCE(stats.active_events_count, 0) AS "active_events_count!",
+            COALESCE(stats.activity_score, 0)::double precision AS "activity_score!"
+        FROM organizers o
+        LEFT JOIN organizer_activity_stats stats ON stats.organizer_id = o.id
+        WHERE o.id = $1
         "#,
         id
     )
-    .fetch_one(&state.db)
+    .fetch_optional(&state.db)
     .await?;
 
-    Ok(Json(organizer))
+    let Some(row) = organizer else {
+        return Err(AppError::not_found("Organizer not found"));
+    };
+
+    Ok(Json(OrganizerWithStatsResponse {
+        id: row.id,
+        name: row.name,
+        description_de: row.description_de,
+        description_en: row.description_en,
+        website_url: row.website_url,
+        instagram_url: row.instagram_url,
+        location: row.location,
+        linkedin_url: row.linkedin_url,
+        registration_number: row.registration_number,
+        non_profit: row.non_profit,
+        newsletter: row.newsletter,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        active_events_count: row.active_events_count,
+        activity_score: row.activity_score,
+    }))
 }
 
 #[utoipa::path(
@@ -374,6 +445,7 @@ async fn invalidate_public_organizer_caches(state: &AppState) {
             warn!(target: "cache", action = "purge", scope = "ical", %err, "Failed to purge iCal cache");
         }
     }
+    refresh_organizer_activity_stats(state).await;
 }
 
 pub(crate) fn router() -> Router<AppState> {

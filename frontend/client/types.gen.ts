@@ -179,6 +179,24 @@ export type OrganizerWithInvite = {
     updated_at: string;
 };
 
+export type OrganizerWithStatsResponse = {
+    active_events_count: number;
+    activity_score: number;
+    created_at: string;
+    description_de?: string | null;
+    description_en?: string | null;
+    id: number;
+    instagram_url?: string | null;
+    linkedin_url?: string | null;
+    location?: string | null;
+    name: string;
+    newsletter: boolean;
+    non_profit: boolean;
+    registration_number?: string | null;
+    updated_at: string;
+    website_url?: string | null;
+};
+
 export type PublicEventResponse = {
     description_de?: string | null;
     description_en?: string | null;
@@ -715,7 +733,7 @@ export type ListOrganizersResponses = {
     /**
      * List organizers
      */
-    200: Array<Organizer>;
+    200: Array<OrganizerWithStatsResponse>;
 };
 
 export type ListOrganizersResponse = ListOrganizersResponses[keyof ListOrganizersResponses];
@@ -798,7 +816,7 @@ export type GetOrganizerResponses = {
     /**
      * Organizer details
      */
-    200: Organizer;
+    200: OrganizerWithStatsResponse;
 };
 
 export type GetOrganizerResponse = GetOrganizerResponses[keyof GetOrganizerResponses];

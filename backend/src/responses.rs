@@ -76,3 +76,22 @@ pub struct PublicOrganizerResponse {
     pub active_events_count: i64,
     pub activity_score: f64,
 }
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct OrganizerWithStatsResponse {
+    pub id: i64,
+    pub name: String,
+    pub description_de: Option<String>,
+    pub description_en: Option<String>,
+    pub website_url: Option<String>,
+    pub instagram_url: Option<String>,
+    pub location: Option<String>,
+    pub linkedin_url: Option<String>,
+    pub registration_number: Option<String>,
+    pub non_profit: bool,
+    pub newsletter: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub active_events_count: i64,
+    pub activity_score: f64,
+}

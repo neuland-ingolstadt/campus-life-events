@@ -19,7 +19,7 @@ use crate::{
     responses::{ErrorResponse, NewsletterDataResponse},
 };
 
-use super::shared::{AuthedUser, current_user_from_headers};
+use super::shared::{AuthedUser, current_user_from_headers, refresh_organizer_activity_stats};
 
 #[utoipa::path(
     get,
@@ -599,6 +599,7 @@ async fn invalidate_public_event_caches(state: &AppState) {
             warn!(target: "cache", action = "purge", scope = "ical", %err, "Failed to purge iCal cache");
         }
     }
+    refresh_organizer_activity_stats(state).await;
 }
 
 pub(crate) fn router() -> Router<AppState> {

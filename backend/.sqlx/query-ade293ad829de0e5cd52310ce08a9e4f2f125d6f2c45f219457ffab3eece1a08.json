@@ -1,0 +1,88 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT\n            o.id,\n            o.name,\n            o.description_de,\n            o.description_en,\n            o.website_url,\n            o.instagram_url,\n            o.location,\n            o.linkedin_url,\n            o.registration_number,\n            o.non_profit,\n            COALESCE(stats.active_events_count, 0) AS \"active_events_count!\",\n            COALESCE(stats.activity_score, 0)::double precision AS \"activity_score!\"\n        FROM organizers o\n        LEFT JOIN organizer_activity_stats stats ON stats.organizer_id = o.id\n        WHERE o.id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "description_de",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "description_en",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "website_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "instagram_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "location",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "linkedin_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "registration_number",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "non_profit",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 10,
+        "name": "active_events_count!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 11,
+        "name": "activity_score!",
+        "type_info": "Float8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "ade293ad829de0e5cd52310ce08a9e4f2f125d6f2c45f219457ffab3eece1a08"
+}

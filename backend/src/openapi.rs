@@ -10,7 +10,8 @@ use crate::{
     models::{AdminWithInvite, AuditLogEntry, Event, InviteStatus, Organizer, OrganizerWithInvite},
     responses::{
         AuthUserResponse, ErrorResponse, HealthResponse, NewsletterDataResponse,
-        PublicEventResponse, PublicOrganizerResponse, SetupTokenInfoResponse, SetupTokenResponse,
+        OrganizerWithStatsResponse, PublicEventResponse, PublicOrganizerResponse,
+        SetupTokenInfoResponse, SetupTokenResponse,
     },
     routes,
 };
@@ -70,6 +71,7 @@ use crate::{
         AdminWithInvite,
         Organizer,
         OrganizerWithInvite,
+        OrganizerWithStatsResponse,
         Event,
         CreateOrganizerRequest,
         UpdateOrganizerRequest,

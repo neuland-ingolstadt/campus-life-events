@@ -1,5 +1,6 @@
 use axum::http::HeaderMap;
 use cookie::Cookie;
+use tracing::warn;
 use uuid::Uuid;
 
 use crate::{app_state::AppState, error::AppError, models::AccountType};
@@ -64,6 +65,21 @@ pub(crate) fn get_cookie(headers: &HeaderMap, name: &str) -> Option<String> {
         }
     }
     None
+}
+
+pub(crate) async fn refresh_organizer_activity_stats(state: &AppState) {
+    if let Err(err) = sqlx::query("REFRESH MATERIALIZED VIEW organizer_activity_stats")
+        .execute(&state.db)
+        .await
+    {
+        warn!(
+            target: "database",
+            action = "refresh",
+            object = "organizer_activity_stats",
+            %err,
+            "Failed to refresh organizer activity stats view"
+        );
+    }
 }
 
 pub(crate) fn session_cookie_attributes() -> String {
