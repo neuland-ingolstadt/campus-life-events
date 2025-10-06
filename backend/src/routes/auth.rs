@@ -24,7 +24,7 @@ use crate::{
     },
     error::AppError,
     models::AccountType,
-    responses::{AuthUserResponse, SetupTokenInfoResponse},
+    responses::{AuthUserResponse, PasswordResetRequestResponse, SetupTokenInfoResponse},
 };
 
 use super::shared::{current_user_from_headers, get_cookie, session_cookie_attributes};
@@ -555,18 +555,18 @@ fn ensure_password_requirements(password: &str) -> Result<(), AppError> {
     tag = "Auth",
     request_body = RequestPasswordResetRequest,
     responses(
-        (status = 204, description = "Password reset email sent if account exists"),
-        (status = 400, description = "Invalid email format"),
+        (
+            status = 200,
+            description = "Password reset email sent if account exists",
+            body = PasswordResetRequestResponse
+        ),
     )
 )]
 #[instrument(skip(state, payload))]
 pub(crate) async fn request_password_reset(
     State(state): State<AppState>,
     Json(payload): Json<RequestPasswordResetRequest>,
-) -> Result<StatusCode, AppError> {
-    // Always return 204 to prevent email enumeration attacks
-    // Even if the email doesn't exist, we don't reveal that information
-
+) -> Result<Json<PasswordResetRequestResponse>, AppError> {
     let rec = sqlx::query!(
         r#"
         SELECT id, display_name, email
@@ -628,8 +628,9 @@ pub(crate) async fn request_password_reset(
         }
     }
 
-    // Always return success to prevent email enumeration
-    Ok(StatusCode::NO_CONTENT)
+    Ok(Json(PasswordResetRequestResponse {
+        message: "If an account with this email exists, a reset link has been sent.".to_string(),
+    }))
 }
 
 #[utoipa::path(

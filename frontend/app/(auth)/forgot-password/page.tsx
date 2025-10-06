@@ -112,8 +112,9 @@ export default function ForgotPasswordPage() {
 						</Alert>
 					)}
 					<p className="text-sm text-muted-foreground mb-4">
-						Gib deine E-Mail-Adresse ein und wir senden dir einen Link zum
-						Zurücksetzen deines Passworts.
+						Gib deine E-Mail-Adresse ein. Falls ein Konto mit dieser Adresse
+						existiert, senden wir dir einen Link zum Zurücksetzen deines
+						Passworts.
 					</p>
 					<form className="space-y-4" onSubmit={onSubmit}>
 						<div className="space-y-2">

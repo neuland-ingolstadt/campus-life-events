@@ -197,6 +197,10 @@ export type OrganizerWithStatsResponse = {
     website_url?: string | null;
 };
 
+export type PasswordResetRequestResponse = {
+    message: string;
+};
+
 export type PublicEventResponse = {
     description_de?: string | null;
     description_en?: string | null;
@@ -511,18 +515,11 @@ export type RequestPasswordResetData = {
     url: '/api/v1/auth/request-password-reset';
 };
 
-export type RequestPasswordResetErrors = {
-    /**
-     * Invalid email format
-     */
-    400: unknown;
-};
-
 export type RequestPasswordResetResponses = {
     /**
      * Password reset email sent if account exists
      */
-    204: void;
+    200: PasswordResetRequestResponse;
 };
 
 export type RequestPasswordResetResponse = RequestPasswordResetResponses[keyof RequestPasswordResetResponses];

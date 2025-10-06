@@ -111,6 +111,10 @@ export default function LoginPage() {
 								Passwort vergessen?
 							</Link>
 						</p>
+						<p className="text-center text-xs text-muted-foreground">
+							Falls ein Konto mit deiner E-Mail existiert, erhältst du nach der
+							Anfrage eine Reset-E-Mail.
+						</p>
 					</div>
 				</CardContent>
 			</AuthCard>

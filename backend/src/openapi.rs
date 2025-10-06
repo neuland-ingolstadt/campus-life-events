@@ -10,8 +10,8 @@ use crate::{
     models::{AdminWithInvite, AuditLogEntry, Event, InviteStatus, Organizer, OrganizerWithInvite},
     responses::{
         AuthUserResponse, ErrorResponse, HealthResponse, NewsletterDataResponse,
-        OrganizerWithStatsResponse, PublicEventResponse, PublicOrganizerResponse,
-        SetupTokenInfoResponse, SetupTokenResponse,
+        OrganizerWithStatsResponse, PasswordResetRequestResponse, PublicEventResponse,
+        PublicOrganizerResponse, SetupTokenInfoResponse, SetupTokenResponse,
     },
     routes,
 };
@@ -81,6 +81,7 @@ use crate::{
         SetupTokenLookupRequest,
         ChangePasswordRequest,
         RequestPasswordResetRequest,
+        PasswordResetRequestResponse,
         ResetPasswordRequest,
         InviteAdminRequest,
         CreateEventRequest,

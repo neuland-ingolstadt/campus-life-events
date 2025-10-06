@@ -35,6 +35,11 @@ pub struct SetupTokenInfoResponse {
     pub account_type: AccountType,
 }
 
+#[derive(Debug, Serialize, ToSchema)]
+pub struct PasswordResetRequestResponse {
+    pub message: String,
+}
+
 #[allow(dead_code)]
 #[derive(Debug, Serialize, ToSchema)]
 pub struct NewsletterDataResponse {
