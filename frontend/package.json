@@ -12,7 +12,7 @@
 		"fmt:unsafe": "biome check --fix --unsafe"
 	},
 	"dependencies": {
-		"@hey-api/openapi-ts": "^0.84.4",
+		"@hey-api/openapi-ts": "0.85.0",
 		"@hookform/resolvers": "^5.2.2",
 		"@radix-ui/react-accordion": "^1.2.12",
 		"@radix-ui/react-alert-dialog": "^1.1.15",
@@ -71,7 +71,7 @@
 		"zod": "^4.1.12"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.2.4",
+		"@biomejs/biome": "2.2.5",
 		"@tailwindcss/postcss": "^4.1.14",
 		"@types/node": "^24.7.0",
 		"@types/react": "^19.2.0",
