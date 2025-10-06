@@ -8,6 +8,7 @@ on:
       - "backend/tests/**"
       - "backend/Cargo.toml"
       - "backend/Cargo.lock"
+      - "backend/migrations/**"
 
 jobs:
   test:
