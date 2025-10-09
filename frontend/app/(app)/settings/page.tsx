@@ -173,10 +173,10 @@ export default function SettingsPage() {
 								<div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
 									<MailIcon className="h-4 w-4" />
 									<a
-										href="mailto:support@neuland-ingolstadt.de"
+										href="mailto:campuslife@neuland-ingolstadt.de"
 										className="font-medium transition-colors"
 									>
-										support@neuland-ingolstadt.de
+										campuslife@neuland-ingolstadt.de
 									</a>
 								</div>
 							</div>
