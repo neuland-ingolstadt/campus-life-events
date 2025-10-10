@@ -1,6 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
@@ -392,7 +393,9 @@ export function EventForm({
 										<Input placeholder="https://example.com" {...field} />
 									</FormControl>
 									<FormDescription>
-										Optionaler Link zu einer externen Seite
+										Link zur Event- oder Ticketseite. Nicht deine
+										Vereinswebsite, diese kannst du auf{' '}
+										<Link href={'/organizers'}>Profil</Link> hinterlegen.
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
