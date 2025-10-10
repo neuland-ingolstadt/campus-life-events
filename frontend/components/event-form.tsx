@@ -394,8 +394,11 @@ export function EventForm({
 									</FormControl>
 									<FormDescription>
 										Link zur Event- oder Ticketseite. Nicht deine
-										Vereinswebsite, diese kannst du auf{' '}
-										<Link href={'/organizers'}>Profil</Link> hinterlegen.
+										Vereinswebsite, diese kannst du in deinem{' '}
+										<Link href={'/organizers'} className="font-bold">
+											Profil
+										</Link>{' '}
+										hinterlegen.
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
