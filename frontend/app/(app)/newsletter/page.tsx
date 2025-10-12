@@ -65,10 +65,10 @@ export default function NewsletterPage() {
 		if (newsletterData) {
 			try {
 				const fullHtml = generateNewsletterHTML(newsletterData, customText)
-				const blob = new Blob([fullHtml], { type: "text/html" });
-				const clipboardItem = new ClipboardItem({ "text/html": blob });
+				const blob = new Blob([fullHtml], { type: 'text/html' })
+				const clipboardItem = new ClipboardItem({ 'text/html': blob })
 
-				await navigator.clipboard.write([clipboardItem]);
+				await navigator.clipboard.write([clipboardItem])
 				alert('HTML copied to clipboard!')
 			} catch (err) {
 				console.error('Failed to copy: ', err)
