@@ -1,8 +1,10 @@
 'use client'
 
+import { toPlainText } from '@react-email/render'
 import { useQuery } from '@tanstack/react-query'
 import { Copy, Download, Mail } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { EventsPageShell } from '@/components/events/events-page-shell'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -16,7 +18,6 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { me } from '@/lib/auth'
 import { fetchNewsletterData, generateNewsletterHTML } from '@/lib/newsletter'
-import { toPlainText } from '@react-email/render'
 
 export default function NewsletterPage() {
 	const {
@@ -71,17 +72,17 @@ export default function NewsletterPage() {
 				const htmlBlob = new Blob([generatedHtml], { type: 'text/html' })
 				const plainText = toPlainText(generatedHtml)
 				const textBlob = new Blob([plainText], { type: 'text/plain' })
-				
-				const clipboardItem = new ClipboardItem({ 
+
+				const clipboardItem = new ClipboardItem({
 					'text/html': htmlBlob,
 					'text/plain': textBlob
 				})
 
 				await navigator.clipboard.write([clipboardItem])
-				alert('HTML copied to clipboard!')
+				toast.success('HTML copied to clipboard!')
 			} catch (err) {
 				console.error('Failed to copy: ', err)
-				alert('Failed to copy to clipboard')
+				toast.error('Failed to copy to clipboard')
 			}
 		}
 	}

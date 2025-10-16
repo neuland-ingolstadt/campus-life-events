@@ -1,6 +1,7 @@
 import {
 	Body,
 	Button,
+	Column,
 	Container,
 	Head,
 	Heading,
@@ -8,12 +9,15 @@ import {
 	Img,
 	Link,
 	Preview,
+	Row,
 	Section,
 	Tailwind,
 	Text
 } from '@react-email/components'
 import { useCallback } from 'react'
 import type { NewsletterDataResponse } from '@/client'
+
+// TODO: FIX SHITTY OUTLOOK PASTE BUG
 
 interface NewsletterMailProps {
 	data: NewsletterDataResponse
@@ -86,7 +90,7 @@ const NewsletterMail = ({ data, customText }: NewsletterMailProps) => {
 		: []
 
 	return (
-		<Html lang='de'>
+		<Html lang="de">
 			<Head />
 			<Preview>{subject}</Preview>
 
@@ -123,55 +127,67 @@ const NewsletterMail = ({ data, customText }: NewsletterMailProps) => {
 						{/* Content */}
 						<Section className="px-8 py-8">
 							{/* Intro */}
-							<div
+							<Section
 								style={{
 									backgroundColor: '#f8fafc',
-									padding: '15px',
 									borderRadius: '16px',
-									marginBottom: '30px'
+									marginBottom: '30px',
+									padding: '15px'
 								}}
 							>
-								<Text className="m-0 mb-2 leading-relaxed text-gray-700">
-									Hallo zusammen!
-								</Text>
-								<Text className="m-0 leading-relaxed text-gray-700">
-									Hier sind die kommenden Veranstaltungen für euch
-									zusammengestellt. Viel Spaß bei den Events!
-								</Text>
-							</div>
+								<Row>
+									<Column>
+										<Text className="m-0 mb-2 leading-relaxed text-gray-700">
+											Hallo zusammen!
+										</Text>
+										<Text className="m-0 leading-relaxed text-gray-700">
+											Hier sind die kommenden Veranstaltungen für euch
+											zusammengestellt. Viel Spaß bei den Events!
+										</Text>
+									</Column>
+								</Row>
+							</Section>
 
 							{/* Custom Text */}
 							{customTextParagraphs.length > 0 && (
-								<div className="mb-8">
-									<Heading
-										as="h2"
-										className="text-2xl text-brand my-8 pb-2 border-b-2 border-gray-200"
-									>
-										Ankündigungen
-									</Heading>
-									<div
-										style={{
-											backgroundColor: '#ffffff',
-											border: '1px solid #e5e7eb',
-											borderRadius: '8px',
-											padding: '20px',
-											marginTop: '15px'
-										}}
-									>
-										{customTextParagraphs.map((paragraph, index) => (
-											<Text
-												key={paragraph}
-												className={
-													index === customTextParagraphs.length - 1
-														? 'm-0 leading-relaxed text-gray-700'
-														: 'm-0 mb-2 leading-relaxed text-gray-700'
-												}
+								<Section style={{ marginBottom: '32px' }}>
+									<Row>
+										<Column>
+											<Heading
+												as="h2"
+												className="text-2xl text-brand my-8 pb-2 border-b-2 border-gray-200"
 											>
-												{paragraph}
-											</Text>
-										))}
-									</div>
-								</div>
+												Ankündigungen
+											</Heading>
+											<Section
+												style={{
+													backgroundColor: '#ffffff',
+													border: '1px solid #e5e7eb',
+													borderRadius: '8px',
+													marginTop: '15px',
+													padding: '20px'
+												}}
+											>
+												<Row>
+													<Column>
+														{customTextParagraphs.map((paragraph, index) => (
+															<Text
+																key={paragraph}
+																className={
+																	index === customTextParagraphs.length - 1
+																		? 'm-0 leading-relaxed text-gray-700'
+																		: 'm-0 mb-2 leading-relaxed text-gray-700'
+																}
+															>
+																{paragraph}
+															</Text>
+														))}
+													</Column>
+												</Row>
+											</Section>
+										</Column>
+									</Row>
+								</Section>
 							)}
 
 							{/* Next Week Events */}
@@ -194,85 +210,91 @@ const NewsletterMail = ({ data, customText }: NewsletterMailProps) => {
 										endDate.getMinutes() === 0
 
 									return (
-										<div
+										<Section
 											key={event.id}
 											style={{
 												backgroundColor: '#ffffff',
 												border: '1px solid #e5e7eb',
 												borderRadius: '12px',
-												padding: '25px',
-												marginBottom: '20px'
+												marginBottom: '20px',
+												padding: '25px'
 											}}
 										>
-											<Heading
-												as="h3"
-												className="text-xl font-bold text-brand mb-2 leading-tight"
-											>
-												{event.title_de}
-											</Heading>
+											<Row>
+												<Column>
+													<Heading
+														as="h3"
+														className="text-xl font-bold text-brand mb-2 leading-tight"
+													>
+														{event.title_de}
+													</Heading>
 
-											{event.organizer_website ? (
-												<Link
-													href={event.organizer_website}
-													className="text-sm text-gray-500 no-underline mb-4 block"
-												>
-													{event.organizer_name}
-												</Link>
-											) : (
-												<Text className="text-sm text-gray-500 mb-4">
-													{event.organizer_name}
-												</Text>
-											)}
+													{event.organizer_website ? (
+														<Link
+															href={event.organizer_website}
+															className="text-sm text-gray-500 no-underline mb-4 block"
+														>
+															{event.organizer_name}
+														</Link>
+													) : (
+														<Text className="text-sm text-gray-500 mb-4">
+															{event.organizer_name}
+														</Text>
+													)}
 
-											<div className="mb-4">
-												<Text className="inline-block text-gray-500 text-sm mr-4 mb-2">
-													<span className="inline-block align-middle mr-2">
-														📅
-													</span>
-													<span className="font-medium align-middle">
-														{formatDate(event.start_date_time)}
-													</span>
-												</Text>
+													<Row style={{ marginBottom: '16px' }}>
+														<Column>
+															<Text className="inline-block text-gray-500 text-sm mr-4 mb-2">
+																<span className="inline-block align-middle mr-2">
+																	📅
+																</span>
+																<span className="font-medium align-middle">
+																	{formatDate(event.start_date_time)}
+																</span>
+															</Text>
 
-												{!isAllDay && (
-													<Text className="inline-block text-gray-500 text-sm mr-4 mb-2">
-														<span className="inline-block align-middle mr-2">
-															🕐
-														</span>
-														<span className="font-medium align-middle">
-															{formatTime(event.start_date_time)} -{' '}
-															{formatTime(event.end_date_time)}
-														</span>
-													</Text>
-												)}
+															{!isAllDay && (
+																<Text className="inline-block text-gray-500 text-sm mr-4 mb-2">
+																	<span className="inline-block align-middle mr-2">
+																		🕐
+																	</span>
+																	<span className="font-medium align-middle">
+																		{formatTime(event.start_date_time)} -{' '}
+																		{formatTime(event.end_date_time)}
+																	</span>
+																</Text>
+															)}
 
-												{event.location && (
-													<Text className="inline-block text-gray-500 text-sm mr-4 mb-2">
-														<span className="inline-block align-middle mr-2">
-															📍
-														</span>
-														<span className="font-medium align-middle">
-															{event.location}
-														</span>
-													</Text>
-												)}
-											</div>
+															{event.location && (
+																<Text className="inline-block text-gray-500 text-sm mr-4 mb-2">
+																	<span className="inline-block align-middle mr-2">
+																		📍
+																	</span>
+																	<span className="font-medium align-middle">
+																		{event.location}
+																	</span>
+																</Text>
+															)}
+														</Column>
+													</Row>
 
-											{event.description_de && (
-												<Text className="text-gray-700 leading-relaxed mt-4">
-													{event.description_de}
-												</Text>
-											)}
+													{event.description_de && (
+														<Text className="text-gray-700 leading-relaxed mt-4">
+															{event.description_de}
+														</Text>
+													)}
 
-											{event.event_url && (
-												<Button
-													href={event.event_url}
-													className="inline-block bg-brand text-white py-2 px-4 rounded-md text-sm mt-4"
-												>
-													Mehr erfahren
-												</Button>
-											)}
-										</div>
+													{event.event_url && (
+														<Button
+															href={event.event_url}
+															className="inline-block bg-brand text-white py-2 px-4 rounded-md text-sm mt-4"
+														>
+															Mehr erfahren
+														</Button>
+													)}
+												</Column>
+											</Row>
+										</Section>
 									)
 								})
 							) : (
@@ -290,35 +312,35 @@ const NewsletterMail = ({ data, customText }: NewsletterMailProps) => {
 							</Heading>
 
 							{following_week_events.length > 0 ? (
-								<div
+								<Section
 									style={{
 										backgroundColor: '#f8fafc',
 										borderRadius: '16px',
-										padding: '20px',
-										marginBottom: '20px'
+										marginBottom: '20px',
+										padding: '20px'
 									}}
 								>
 									{following_week_events.map((event, index) => (
-										<div
+										<Row
 											key={event.id}
 											style={{
-												paddingTop: '12px',
-												paddingBottom: '12px',
 												borderBottom:
 													index === following_week_events.length - 1
 														? 'none'
-														: '1px solid #e5e7eb'
+														: '1px solid #e5e7eb',
+												paddingTop: '12px',
+												paddingBottom: '12px'
 											}}
 										>
-											<Text className="inline-block align-top font-bold text-brand text-sm w-[120px] m-0">
-												{formatDate(event.start_date_time)}
-											</Text>
-											<div
+											<Column style={{ width: '120px', verticalAlign: 'top' }}>
+												<Text className="inline-block align-top font-bold text-brand text-sm w-[120px] m-0">
+													{formatDate(event.start_date_time)}
+												</Text>
+											</Column>
+											<Column
 												style={{
-													display: 'inline-block',
-													width: 'calc(100% - 140px)',
-													verticalAlign: 'top',
-													marginLeft: '20px'
+													paddingLeft: '20px',
+													verticalAlign: 'top'
 												}}
 											>
 												<Text className="font-semibold text-gray-700 mb-1 text-[15px] m-0">
@@ -329,10 +351,10 @@ const NewsletterMail = ({ data, customText }: NewsletterMailProps) => {
 													{event.location && ` • ${event.location}`}
 													{` • ${event.organizer_name}`}
 												</Text>
-											</div>
-										</div>
+											</Column>
+										</Row>
 									))}
-								</div>
+								</Section>
 							) : (
 								<Text className="text-gray-700">
 									Keine Veranstaltungen geplant.
@@ -403,53 +425,57 @@ const NewsletterMail = ({ data, customText }: NewsletterMailProps) => {
 								</Link>
 							</Text>
 
-							<div
+							<Section
 								style={{
 									marginTop: '20px',
 									fontSize: '12px',
 									color: '#9ca3af'
 								}}
 							>
-								<Text className="mb-3 text-gray-400 text-xs">
-									<strong>
-										Den Campus Life Newsletter nicht mehr empfangen?
-									</strong>
-									<br />
-									Melden Sie sich unter{' '}
-									<Link
-										href="https://sympa.thi.de/"
-										className="text-blue-400 no-underline"
-									>
-										https://sympa.thi.de/
-									</Link>{' '}
-									an (THI-Login rechts oben).
-									<br />
-									Dann auf <strong>Meine Listen</strong> (links) →{' '}
-									<strong>students-campuslife</strong> →{' '}
-									<strong>Abbestellen</strong> (links) →{' '}
-									<strong>Bestätigen</strong>.
-								</Text>
+								<Row>
+									<Column>
+										<Text className="mb-3 text-gray-400 text-xs">
+											<strong>
+												Den Campus Life Newsletter nicht mehr empfangen?
+											</strong>
+											<br />
+											Melden Sie sich unter{' '}
+											<Link
+												href="https://sympa.thi.de/"
+												className="text-blue-400 no-underline"
+											>
+												https://sympa.thi.de/
+											</Link>{' '}
+											an (THI-Login rechts oben).
+											<br />
+											Dann auf <strong>Meine Listen</strong> (links) →{' '}
+											<strong>students-campuslife</strong> →{' '}
+											<strong>Abbestellen</strong> (links) →{' '}
+											<strong>Bestätigen</strong>.
+										</Text>
 
-								<Text className="m-0 text-gray-400 text-xs">
-									<strong>
-										No longer receiving the Campus Life Newsletter?
-									</strong>
-									<br />
-									Log in at{' '}
-									<Link
-										href="https://sympa.thi.de/"
-										className="text-blue-400 no-underline"
-									>
-										https://sympa.thi.de/
-									</Link>{' '}
-									(THI login at the top right).
-									<br />
-									Then go to <strong>My lists</strong> (left) →{' '}
-									<strong>students-campuslife</strong> →{' '}
-									<strong>Unsubscribe</strong> (left) → <strong>Confirm</strong>
-									.
-								</Text>
-							</div>
+										<Text className="m-0 text-gray-400 text-xs">
+											<strong>
+												No longer receiving the Campus Life Newsletter?
+											</strong>
+											<br />
+											Log in at{' '}
+											<Link
+												href="https://sympa.thi.de/"
+												className="text-blue-400 no-underline"
+											>
+												https://sympa.thi.de/
+											</Link>{' '}
+											(THI login at the top right).
+											<br />
+											Then go to <strong>My lists</strong> (left) →{' '}
+											<strong>students-campuslife</strong> →{' '}
+											<strong>Unsubscribe</strong> (left) →{' '}
+											<strong>Confirm</strong>.
+										</Text>
+									</Column>
+								</Row>
+							</Section>
 						</Section>
 					</Container>
 				</Body>
