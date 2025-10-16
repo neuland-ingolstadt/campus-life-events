@@ -1,5 +1,6 @@
 'use client'
 
+import { toPlainText } from '@react-email/render'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Copy, Download, Mail, Send } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -67,16 +68,19 @@ export default function NewsletterPage() {
 	})
 
 	useEffect(() => {
-		if (newsletterData) {
-			const html = generateNewsletterHTML(newsletterData, customText)
-			setGeneratedHtml(html)
-		}
+		const timeoutId = setTimeout(async () => {
+			if (newsletterData) {
+				const html = await generateNewsletterHTML(newsletterData, customText)
+				setGeneratedHtml(html)
+			}
+		}, 50) // Debounce to avoid excessive renders
+
+		return () => clearTimeout(timeoutId)
 	}, [newsletterData, customText])
 
 	const handleDownload = () => {
 		if (newsletterData) {
-			const fullHtml = generateNewsletterHTML(newsletterData, customText)
-			const blob = new Blob([fullHtml], { type: 'text/html' })
+			const blob = new Blob([generatedHtml], { type: 'text/html' })
 			const url = URL.createObjectURL(blob)
 			const a = document.createElement('a')
 			a.href = url
@@ -91,15 +95,20 @@ export default function NewsletterPage() {
 	const handleCopy = async () => {
 		if (newsletterData) {
 			try {
-				const fullHtml = generateNewsletterHTML(newsletterData, customText)
-				const blob = new Blob([fullHtml], { type: 'text/html' })
-				const clipboardItem = new ClipboardItem({ 'text/html': blob })
+				const htmlBlob = new Blob([generatedHtml], { type: 'text/html' })
+				const plainText = toPlainText(generatedHtml)
+				const textBlob = new Blob([plainText], { type: 'text/plain' })
+
+				const clipboardItem = new ClipboardItem({
+					'text/html': htmlBlob,
+					'text/plain': textBlob
+				})
 
 				await navigator.clipboard.write([clipboardItem])
-				alert('HTML copied to clipboard!')
+				toast.success('HTML copied to clipboard!')
 			} catch (err) {
 				console.error('Failed to copy: ', err)
-				alert('Failed to copy to clipboard')
+				toast.error('Failed to copy to clipboard')
 			}
 		}
 	}
