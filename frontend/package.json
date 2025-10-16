@@ -7,7 +7,7 @@
 		"build": "next build",
 		"start": "next start",
 		"openapi-ts": "openapi-ts",
-		"lint": "biome lint",
+		"lint": "tsc --noEmit && biome lint",
 		"fmt": "biome check --fix",
 		"fmt:unsafe": "biome check --fix --unsafe",
 		"dev:email": "email dev --dir components/mail --port 3001"
