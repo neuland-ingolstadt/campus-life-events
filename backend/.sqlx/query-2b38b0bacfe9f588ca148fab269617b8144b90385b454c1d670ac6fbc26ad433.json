@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT\n            e.id, e.title_de, e.title_en, e.description_de, e.description_en,\n            e.start_date_time, e.end_date_time, e.event_url, e.location,\n            o.location as organizer_location\n        FROM events e\n        JOIN organizers o ON e.organizer_id = o.id\n        WHERE e.publish_in_ical = true\n        ORDER BY e.start_date_time ASC\n        ",
+  "query": "\n        SELECT\n            e.id, e.title_de, e.title_en, e.description_de, e.description_en,\n            e.start_date_time, e.end_date_time, e.event_url, e.location,\n            o.location as organizer_location\n        FROM events e\n        JOIN organizers o ON e.organizer_id = o.id\n        WHERE e.publish_in_ical = true AND e.publish_app = true\n        ORDER BY e.start_date_time ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -70,5 +70,5 @@
       true
     ]
   },
-  "hash": "6af6d12682b545e93accf5b12e5dd8c795ff8df46b13a75a62001aa4784b4e94"
+  "hash": "2b38b0bacfe9f588ca148fab269617b8144b90385b454c1d670ac6fbc26ad433"
 }

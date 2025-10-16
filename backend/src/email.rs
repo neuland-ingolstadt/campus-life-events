@@ -2,7 +2,7 @@ use std::{env, str::FromStr};
 
 use lettre::{
     AsyncSmtpTransport, AsyncTransport, Tokio1Executor,
-    message::{Mailbox, Message},
+    message::{Mailbox, Message, header::ContentType},
     transport::smtp::authentication::Credentials,
     transport::smtp::client::{Tls, TlsParameters},
 };
@@ -193,6 +193,29 @@ impl EmailClient {
             .to(recipient)
             .subject(PASSWORD_RESET_SUBJECT)
             .body(body)?;
+
+        self.mailer
+            .send(message)
+            .await
+            .map(|_| ())
+            .map_err(EmailClientError::Transport)
+    }
+
+    pub async fn send_newsletter_preview_email(
+        &self,
+        recipient_email: &str,
+        subject: &str,
+        html_body: &str,
+    ) -> Result<(), EmailClientError> {
+        let recipient = Mailbox::from_str(recipient_email)
+            .map_err(|_| EmailClientError::InvalidRecipient(recipient_email.to_string()))?;
+
+        let message = Message::builder()
+            .from(self.from.clone())
+            .to(recipient)
+            .subject(subject)
+            .header(ContentType::TEXT_HTML)
+            .body(html_body.to_string())?;
 
         self.mailer
             .send(message)

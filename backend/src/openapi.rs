@@ -4,8 +4,9 @@ use crate::{
     dto::{
         ChangePasswordRequest, CreateEventRequest, CreateOrganizerRequest, InitAccountRequest,
         InviteAdminRequest, ListAuditLogsQuery, ListEventsQuery, LoginRequest,
-        RequestPasswordResetRequest, ResetPasswordRequest, SetupTokenLookupRequest,
-        UpdateEventRequest, UpdateOrganizerPermissionsRequest, UpdateOrganizerRequest,
+        RequestPasswordResetRequest, ResetPasswordRequest, SendNewsletterPreviewRequest,
+        SetupTokenLookupRequest, UpdateEventRequest, UpdateOrganizerPermissionsRequest,
+        UpdateOrganizerRequest,
     },
     models::{AdminWithInvite, AuditLogEntry, Event, InviteStatus, Organizer, OrganizerWithInvite},
     responses::{
@@ -52,6 +53,7 @@ use crate::{
         routes::events::update_event,
         routes::events::delete_event,
         routes::events::get_newsletter_data,
+        routes::events::send_newsletter_preview,
         routes::public_events::list_public_events,
         routes::public_events::get_public_event,
         routes::public_events::list_public_organizers,
@@ -88,6 +90,7 @@ use crate::{
         UpdateEventRequest,
         ListEventsQuery,
         ListAuditLogsQuery,
+        SendNewsletterPreviewRequest,
         AuditLogEntry,
         ErrorResponse,
         HealthResponse,

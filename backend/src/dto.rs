@@ -51,6 +51,13 @@ pub struct UpdateOrganizerPermissionsRequest {
 
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(deny_unknown_fields)]
+pub struct SendNewsletterPreviewRequest {
+    pub subject: String,
+    pub html: String,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+#[serde(deny_unknown_fields)]
 pub struct CreateEventRequest {
     pub title_de: String,
     pub title_en: String,

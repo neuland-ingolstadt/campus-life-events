@@ -239,6 +239,11 @@ export type ResetPasswordRequest = {
     token: string;
 };
 
+export type SendNewsletterPreviewRequest = {
+    html: string;
+    subject: string;
+};
+
 export type SetupTokenInfoResponse = {
     account_name: string;
     account_type: AccountType;
@@ -621,6 +626,39 @@ export type GetNewsletterDataResponses = {
 };
 
 export type GetNewsletterDataResponse = GetNewsletterDataResponses[keyof GetNewsletterDataResponses];
+
+export type SendNewsletterPreviewData = {
+    body: SendNewsletterPreviewRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/events/newsletter-preview';
+};
+
+export type SendNewsletterPreviewErrors = {
+    /**
+     * Invalid request
+     */
+    400: ErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * Internal server error
+     */
+    500: ErrorResponse;
+};
+
+export type SendNewsletterPreviewError = SendNewsletterPreviewErrors[keyof SendNewsletterPreviewErrors];
+
+export type SendNewsletterPreviewResponses = {
+    /**
+     * Newsletter preview email sent
+     */
+    204: void;
+};
+
+export type SendNewsletterPreviewResponse = SendNewsletterPreviewResponses[keyof SendNewsletterPreviewResponses];
 
 export type DeleteEventData = {
     body?: never;

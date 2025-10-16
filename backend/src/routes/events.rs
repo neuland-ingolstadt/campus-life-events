@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, Query, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
-    routing::get,
+    routing::{get, post},
 };
 use chrono::{DateTime, Datelike, Duration, NaiveDate, TimeZone, Utc};
 use chrono_tz::Europe::Berlin;
@@ -13,7 +13,7 @@ use tracing::{instrument, warn};
 
 use crate::{
     app_state::AppState,
-    dto::{CreateEventRequest, ListEventsQuery, UpdateEventRequest},
+    dto::{CreateEventRequest, ListEventsQuery, SendNewsletterPreviewRequest, UpdateEventRequest},
     error::AppError,
     models::{AuditType, Event, EventWithOrganizer, Organizer},
     responses::{ErrorResponse, NewsletterDataResponse},
@@ -497,6 +497,68 @@ pub(crate) async fn get_newsletter_data(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/v1/events/newsletter-preview",
+    tag = "Events",
+    request_body = SendNewsletterPreviewRequest,
+    responses(
+        (status = 204, description = "Newsletter preview email sent"),
+        (status = 400, description = "Invalid request", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 500, description = "Internal server error", body = ErrorResponse)
+    )
+)]
+#[instrument(skip(state, headers, payload))]
+pub(crate) async fn send_newsletter_preview(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(payload): Json<SendNewsletterPreviewRequest>,
+) -> Result<StatusCode, AppError> {
+    let user = current_user_from_headers(&headers, &state).await?;
+    ensure_newsletter_access(&user, &state).await?;
+
+    let subject = payload.subject.trim();
+    if subject.is_empty() {
+        return Err(AppError::validation("subject is required"));
+    }
+
+    let html = payload.html.trim();
+    if html.is_empty() {
+        return Err(AppError::validation("html content is required"));
+    }
+
+    let Some(email_client) = &state.email else {
+        return Err(AppError::internal("email delivery not configured"));
+    };
+
+    let account = sqlx::query!(
+        r#"
+        SELECT email
+        FROM accounts
+        WHERE id = $1
+        "#,
+        user.account_id
+    )
+    .fetch_optional(&state.db)
+    .await?;
+
+    let Some(account) = account else {
+        return Err(AppError::unauthorized("account not found"));
+    };
+
+    let Some(email) = account.email else {
+        return Err(AppError::validation("account is missing an email address"));
+    };
+
+    let preview_subject = format!("[Vorschau] {subject}");
+    email_client
+        .send_newsletter_preview_email(&email, &preview_subject, html)
+        .await?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
 async fn ensure_newsletter_access(user: &AuthedUser, state: &AppState) -> Result<(), AppError> {
     if user.is_admin() {
         return Ok(());
@@ -606,6 +668,7 @@ pub(crate) fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(list_events).post(create_event))
         .route("/newsletter-data", get(get_newsletter_data))
+        .route("/newsletter-preview", post(send_newsletter_preview))
         .route(
             "/{id}",
             get(get_event).put(update_event).delete(delete_event),

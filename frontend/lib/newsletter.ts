@@ -1,5 +1,5 @@
 import type { ErrorResponse, NewsletterDataResponse } from '@/client'
-import { getNewsletterData } from '@/client'
+import { getNewsletterData, sendNewsletterPreview } from '@/client'
 import type { EventWithOrganizer as ApiEventWithOrganizer } from '@/client/types.gen'
 
 // Use the generated API type to stay in sync with backend
@@ -40,6 +40,24 @@ export async function fetchNewsletterData(): Promise<NewsletterDataResponse> {
 	}
 
 	return response.data
+}
+
+export async function sendNewsletterPreviewEmail(
+	subject: string,
+	html: string
+): Promise<void> {
+	const response = await sendNewsletterPreview({
+		body: {
+			subject,
+			html
+		}
+	})
+
+	if (response.error) {
+		const err = response.error as ErrorResponse | undefined
+		const message = err?.message || 'Failed to send newsletter preview'
+		throw new Error(message)
+	}
 }
 
 function logo(): string {
