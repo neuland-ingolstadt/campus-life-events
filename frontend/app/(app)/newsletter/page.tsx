@@ -1,8 +1,8 @@
 'use client'
 
 import { toPlainText } from '@react-email/render'
-import { useQuery } from '@tanstack/react-query'
-import { Copy, Download, Mail } from 'lucide-react'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { Copy, Download, Mail, Send } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { EventsPageShell } from '@/components/events/events-page-shell'
@@ -17,7 +17,11 @@ import {
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { me } from '@/lib/auth'
-import { fetchNewsletterData, generateNewsletterHTML } from '@/lib/newsletter'
+import {
+	fetchNewsletterData,
+	generateNewsletterHTML,
+	sendNewsletterPreviewEmail
+} from '@/lib/newsletter'
 
 export default function NewsletterPage() {
 	const {
@@ -40,6 +44,28 @@ export default function NewsletterPage() {
 
 	const [generatedHtml, setGeneratedHtml] = useState<string>('')
 	const [customText, setCustomText] = useState<string>('')
+
+	const previewMutation = useMutation({
+		mutationFn: async ({
+			subject,
+			html
+		}: {
+			subject: string
+			html: string
+		}) => {
+			await sendNewsletterPreviewEmail(subject, html)
+		},
+		onSuccess: () => {
+			toast.success('Vorschau-E-Mail wurde gesendet.')
+		},
+		onError: (err: unknown) => {
+			const message =
+				err instanceof Error
+					? err.message
+					: 'Senden der Vorschau-E-Mail ist fehlgeschlagen.'
+			toast.error(message)
+		}
+	})
 
 	useEffect(() => {
 		const timeoutId = setTimeout(async () => {
@@ -84,6 +110,16 @@ export default function NewsletterPage() {
 				console.error('Failed to copy: ', err)
 				toast.error('Failed to copy to clipboard')
 			}
+		}
+	}
+
+	const handleSendPreview = () => {
+		if (newsletterData) {
+			const fullHtml = generateNewsletterHTML(newsletterData, customText)
+			previewMutation.mutate({
+				subject: newsletterData.subject,
+				html: fullHtml
+			})
 		}
 	}
 
@@ -219,6 +255,16 @@ export default function NewsletterPage() {
 						>
 							<Copy className="h-4 w-4 mr-2" />
 							In Zwischenablage kopieren
+						</Button>
+						<Button
+							className="w-full"
+							onClick={handleSendPreview}
+							disabled={!generatedHtml || previewMutation.isPending}
+						>
+							<Send className="h-4 w-4 mr-2" />
+							{previewMutation.isPending
+								? 'Versende Vorschau...'
+								: 'Vorschau per E-Mail senden'}
 						</Button>
 					</CardContent>
 				</Card>

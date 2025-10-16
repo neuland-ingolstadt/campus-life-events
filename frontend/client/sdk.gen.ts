@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ChangePasswordData, ChangePasswordResponses, CreateEventData, CreateEventResponses, CreateOrganizerData, CreateOrganizerResponses, DeleteEventData, DeleteEventResponses, DeleteOrganizerData, DeleteOrganizerResponses, GenerateSetupTokenData, GenerateSetupTokenResponses, GetEventData, GetEventErrors, GetEventResponses, GetNewsletterDataData, GetNewsletterDataErrors, GetNewsletterDataResponses, GetOrganizerData, GetOrganizerErrors, GetOrganizerResponses, GetPublicEventData, GetPublicEventErrors, GetPublicEventResponses, GetPublicOrganizerData, GetPublicOrganizerErrors, GetPublicOrganizerResponses, HealthCheckData, HealthCheckResponses, InitAccountData, InitAccountErrors, InitAccountResponses, InviteAdminData, InviteAdminResponses, ListAdminsData, ListAdminsResponses, ListAuditLogsData, ListAuditLogsResponses, ListEventsData, ListEventsErrors, ListEventsResponses, ListOrganizerIcalEventsData, ListOrganizerIcalEventsResponses, ListOrganizersAdminData, ListOrganizersAdminResponses, ListOrganizersData, ListOrganizersErrors, ListOrganizersResponses, ListPublicEventsData, ListPublicEventsResponses, ListPublicOrganizersData, ListPublicOrganizersResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutResponses, LookupSetupTokenData, LookupSetupTokenErrors, LookupSetupTokenResponses, MeData, MeErrors, MeResponses, RequestPasswordResetData, RequestPasswordResetResponses, ResetPasswordData, ResetPasswordErrors, ResetPasswordResponses, UpdateEventData, UpdateEventResponses, UpdateOrganizerData, UpdateOrganizerPermissionsData, UpdateOrganizerPermissionsResponses, UpdateOrganizerResponses } from './types.gen';
+import type { ChangePasswordData, ChangePasswordResponses, CreateEventData, CreateEventResponses, CreateOrganizerData, CreateOrganizerResponses, DeleteEventData, DeleteEventResponses, DeleteOrganizerData, DeleteOrganizerResponses, GenerateSetupTokenData, GenerateSetupTokenResponses, GetEventData, GetEventErrors, GetEventResponses, GetNewsletterDataData, GetNewsletterDataErrors, GetNewsletterDataResponses, GetOrganizerData, GetOrganizerErrors, GetOrganizerResponses, GetPublicEventData, GetPublicEventErrors, GetPublicEventResponses, GetPublicOrganizerData, GetPublicOrganizerErrors, GetPublicOrganizerResponses, HealthCheckData, HealthCheckResponses, InitAccountData, InitAccountErrors, InitAccountResponses, InviteAdminData, InviteAdminResponses, ListAdminsData, ListAdminsResponses, ListAuditLogsData, ListAuditLogsResponses, ListEventsData, ListEventsErrors, ListEventsResponses, ListOrganizerIcalEventsData, ListOrganizerIcalEventsResponses, ListOrganizersAdminData, ListOrganizersAdminResponses, ListOrganizersData, ListOrganizersErrors, ListOrganizersResponses, ListPublicEventsData, ListPublicEventsResponses, ListPublicOrganizersData, ListPublicOrganizersResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutResponses, LookupSetupTokenData, LookupSetupTokenErrors, LookupSetupTokenResponses, MeData, MeErrors, MeResponses, RequestPasswordResetData, RequestPasswordResetResponses, ResetPasswordData, ResetPasswordErrors, ResetPasswordResponses, SendNewsletterPreviewData, SendNewsletterPreviewErrors, SendNewsletterPreviewResponses, UpdateEventData, UpdateEventResponses, UpdateOrganizerData, UpdateOrganizerPermissionsData, UpdateOrganizerPermissionsResponses, UpdateOrganizerResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -163,6 +163,17 @@ export const getNewsletterData = <ThrowOnError extends boolean = false>(options?
     return (options?.client ?? client).get<GetNewsletterDataResponses, GetNewsletterDataErrors, ThrowOnError>({
         url: '/api/v1/events/newsletter-data',
         ...options
+    });
+};
+
+export const sendNewsletterPreview = <ThrowOnError extends boolean = false>(options: Options<SendNewsletterPreviewData, ThrowOnError>) => {
+    return (options.client ?? client).post<SendNewsletterPreviewResponses, SendNewsletterPreviewErrors, ThrowOnError>({
+        url: '/api/v1/events/newsletter-preview',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
     });
 };
 
