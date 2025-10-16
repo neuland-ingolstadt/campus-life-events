@@ -40,16 +40,19 @@ export default function NewsletterPage() {
 	const [customText, setCustomText] = useState<string>('')
 
 	useEffect(() => {
-		if (newsletterData) {
-			const html = generateNewsletterHTML(newsletterData, customText)
-			setGeneratedHtml(html)
-		}
+		const timeoutId = setTimeout(async () => {
+			if (newsletterData) {
+				const html = await generateNewsletterHTML(newsletterData, customText)
+				setGeneratedHtml(html)
+			}
+		}, 50) // Debounce to avoid excessive renders
+
+		return () => clearTimeout(timeoutId)
 	}, [newsletterData, customText])
 
 	const handleDownload = () => {
 		if (newsletterData) {
-			const fullHtml = generateNewsletterHTML(newsletterData, customText)
-			const blob = new Blob([fullHtml], { type: 'text/html' })
+			const blob = new Blob([generatedHtml], { type: 'text/html' })
 			const url = URL.createObjectURL(blob)
 			const a = document.createElement('a')
 			a.href = url
@@ -64,8 +67,7 @@ export default function NewsletterPage() {
 	const handleCopy = async () => {
 		if (newsletterData) {
 			try {
-				const fullHtml = generateNewsletterHTML(newsletterData, customText)
-				const blob = new Blob([fullHtml], { type: 'text/html' })
+				const blob = new Blob([generatedHtml], { type: 'text/html' })
 				const clipboardItem = new ClipboardItem({ 'text/html': blob })
 
 				await navigator.clipboard.write([clipboardItem])

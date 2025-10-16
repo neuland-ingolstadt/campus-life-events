@@ -3,6 +3,8 @@
 import { type ClientOptions, type Config, createClient, createConfig } from './client';
 import type { ClientOptions as ClientOptions2 } from './types.gen';
 
+const IS_DEV = process.env.NODE_ENV === 'development'
+
 /**
  * The `createClientConfig()` function will be called on client initialization
  * and the returned object will become the client's initial configuration.
@@ -14,5 +16,6 @@ import type { ClientOptions as ClientOptions2 } from './types.gen';
 export type CreateClientConfig<T extends ClientOptions = ClientOptions2> = (override?: Config<ClientOptions & T>) => Config<Required<ClientOptions> & T>;
 
 export const client = createClient(createConfig<ClientOptions2>({
-    baseUrl: 'http://localhost:8080'
+    baseUrl: !IS_DEV ? undefined : (typeof window !== 'undefined' ? '' : 'http://localhost:8080'),
+    credentials: 'include'
 }));
