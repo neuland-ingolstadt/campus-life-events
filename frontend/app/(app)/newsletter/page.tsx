@@ -16,6 +16,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { me } from '@/lib/auth'
 import { fetchNewsletterData, generateNewsletterHTML } from '@/lib/newsletter'
+import { toPlainText } from '@react-email/render'
 
 export default function NewsletterPage() {
 	const {
@@ -67,8 +68,14 @@ export default function NewsletterPage() {
 	const handleCopy = async () => {
 		if (newsletterData) {
 			try {
-				const blob = new Blob([generatedHtml], { type: 'text/html' })
-				const clipboardItem = new ClipboardItem({ 'text/html': blob })
+				const htmlBlob = new Blob([generatedHtml], { type: 'text/html' })
+				const plainText = toPlainText(generatedHtml)
+				const textBlob = new Blob([plainText], { type: 'text/plain' })
+				
+				const clipboardItem = new ClipboardItem({ 
+					'text/html': htmlBlob,
+					'text/plain': textBlob
+				})
 
 				await navigator.clipboard.write([clipboardItem])
 				alert('HTML copied to clipboard!')

@@ -86,7 +86,7 @@ const NewsletterMail = ({ data, customText }: NewsletterMailProps) => {
 		: []
 
 	return (
-		<Html>
+		<Html lang='de'>
 			<Head />
 			<Preview>{subject}</Preview>
 
