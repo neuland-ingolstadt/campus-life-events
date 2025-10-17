@@ -9,7 +9,7 @@ use chrono::{DateTime, Datelike, Duration, NaiveDate, TimeZone, Utc};
 use chrono_tz::Europe::Berlin;
 use serde_json::Value;
 use sqlx::{Postgres, QueryBuilder, Transaction};
-use tracing::{instrument, warn};
+use tracing::{error, info, instrument, warn};
 
 use crate::{
     app_state::AppState,
@@ -529,6 +529,10 @@ pub(crate) async fn send_newsletter_preview(
     }
 
     let Some(email_client) = &state.email else {
+        warn!(
+            account_id = %user.account_id,
+            "email client not configured; skipping newsletter preview delivery"
+        );
         return Err(AppError::internal("email delivery not configured"));
     };
 
@@ -548,13 +552,40 @@ pub(crate) async fn send_newsletter_preview(
     };
 
     let Some(email) = account.email else {
+        warn!(
+            account_id = %user.account_id,
+            "account is missing an email address; cannot send preview"
+        );
         return Err(AppError::validation("account is missing an email address"));
     };
 
     let preview_subject = format!("[Vorschau] {subject}");
-    email_client
+    info!(
+        account_id = %user.account_id,
+        recipient = %email,
+        subject = %preview_subject,
+        "sending newsletter preview email"
+    );
+
+    match email_client
         .send_newsletter_preview_email(&email, &preview_subject, html)
-        .await?;
+        .await
+    {
+        Ok(_) => info!(
+            account_id = %user.account_id,
+            recipient = %email,
+            "newsletter preview email sent successfully"
+        ),
+        Err(err) => {
+            error!(
+                error = %err,
+                account_id = %user.account_id,
+                recipient = %email,
+                "failed to send newsletter preview email"
+            );
+            return Err(err.into());
+        }
+    }
 
     Ok(StatusCode::NO_CONTENT)
 }

@@ -114,11 +114,10 @@ export default function NewsletterPage() {
 	}
 
 	const handleSendPreview = () => {
-		if (newsletterData) {
-			const fullHtml = generateNewsletterHTML(newsletterData, customText)
+		if (newsletterData && generatedHtml) {
 			previewMutation.mutate({
 				subject: newsletterData.subject,
-				html: fullHtml
+				html: generatedHtml
 			})
 		}
 	}
