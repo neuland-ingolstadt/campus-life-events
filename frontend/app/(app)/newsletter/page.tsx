@@ -22,6 +22,14 @@ import {
 	generateNewsletterHTML,
 	sendNewsletterPreviewEmail
 } from '@/lib/newsletter'
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue
+} from '@/components/ui/select'
+import { getISOWeek, getISOWeeksInYear } from 'date-fns'
 
 export default function NewsletterPage() {
 	const {
@@ -32,13 +40,16 @@ export default function NewsletterPage() {
 
 	const canAccessNewsletter = meData?.can_access_newsletter ?? false
 
+	const [newsletterStartWeek, setnewsletterStartWeek] = useState<number>(getISOWeek(new Date()) + 1)
+	const [newsletterYear, setnewsletterYear] = useState<number>(new Date().getFullYear())
+
 	const {
 		data: newsletterData,
 		isLoading,
 		error
 	} = useQuery({
-		queryKey: ['newsletter-data'],
-		queryFn: fetchNewsletterData,
+		queryKey: ['newsletter-data', newsletterYear, newsletterStartWeek],
+		queryFn: () => fetchNewsletterData(newsletterYear, newsletterStartWeek),
 		enabled: canAccessNewsletter
 	})
 
@@ -182,7 +193,7 @@ export default function NewsletterPage() {
 							key={`skeleton-card-${
 								// biome-ignore lint/suspicious/noArrayIndexKey: it's just a skeleton
 								i
-							}`}
+								}`}
 						>
 							<CardHeader>
 								<Skeleton className="h-6 w-3/4" />
@@ -230,6 +241,50 @@ export default function NewsletterPage() {
 				</p>
 			</div>
 			<div className="grid gap-6 max-w-6xl">
+				<Card>
+					<CardHeader>
+						<CardTitle>Newsletter Woche auswählen</CardTitle>
+						<CardDescription>
+							Wähle das Jahr und die Kalenderwoche für den Newsletter aus.
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="flex flex-row gap-4">
+						<Select
+							value={`${newsletterYear}`}
+							onValueChange={(value: unknown) => {
+								setnewsletterYear(Number(value))
+							}}
+						>
+							<SelectTrigger className="h-8">
+								<SelectValue placeholder={newsletterYear} />
+							</SelectTrigger>
+							<SelectContent side="top">
+								{[new Date().getFullYear() - 1, new Date().getFullYear(), new Date().getFullYear() + 1].map((jahr) => (
+									<SelectItem key={jahr} value={jahr.toString()}>
+										{jahr}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+						<Select
+							value={`${newsletterStartWeek}`}
+							onValueChange={(value: unknown) => {
+								setnewsletterStartWeek(Number(value))
+							}}
+						>
+							<SelectTrigger className="h-8">
+								<SelectValue placeholder={newsletterStartWeek} />
+							</SelectTrigger>
+							<SelectContent side="top">
+								{Array.from({ length: getISOWeeksInYear(new Date().setFullYear(newsletterYear)) }, (_, i) => i + 1).map((woche) => (
+									<SelectItem key={woche} value={woche.toString()}>
+										KW {woche}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+					</CardContent>
+				</Card>
 				<Card>
 					<CardHeader>
 						<CardTitle>Aktionen</CardTitle>
