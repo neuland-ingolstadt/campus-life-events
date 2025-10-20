@@ -618,7 +618,6 @@ async fn compute_newsletter_ranges(
                 .expect("midnight should exist")
         }
         _ => {
-            // Default behavior: next week
             let weekday_offset = berlin_now.weekday().num_days_from_monday() as i64;
             let current_week_monday = berlin_now.date_naive() - Duration::days(weekday_offset);
             let next_week_monday = current_week_monday + Duration::days(7);
