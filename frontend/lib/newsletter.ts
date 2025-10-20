@@ -26,7 +26,10 @@ export interface NewsletterData {
 	week_after_start: string
 }
 
-export async function fetchNewsletterData(year?: number, week?: number): Promise<NewsletterDataResponse> {
+export async function fetchNewsletterData(
+	year?: number,
+	week?: number
+): Promise<NewsletterDataResponse> {
 	const options: any = {
 		query: {
 			year,

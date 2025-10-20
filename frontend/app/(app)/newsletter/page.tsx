@@ -2,6 +2,7 @@
 
 import { toPlainText } from '@react-email/render'
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { getISOWeek, getISOWeeksInYear } from 'date-fns'
 import { Copy, Download, Mail, Send } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -15,13 +16,6 @@ import {
 	CardHeader,
 	CardTitle
 } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import { me } from '@/lib/auth'
-import {
-	fetchNewsletterData,
-	generateNewsletterHTML,
-	sendNewsletterPreviewEmail
-} from '@/lib/newsletter'
 import {
 	Select,
 	SelectContent,
@@ -29,7 +23,13 @@ import {
 	SelectTrigger,
 	SelectValue
 } from '@/components/ui/select'
-import { getISOWeek, getISOWeeksInYear } from 'date-fns'
+import { Skeleton } from '@/components/ui/skeleton'
+import { me } from '@/lib/auth'
+import {
+	fetchNewsletterData,
+	generateNewsletterHTML,
+	sendNewsletterPreviewEmail
+} from '@/lib/newsletter'
 
 export default function NewsletterPage() {
 	const {
@@ -40,8 +40,12 @@ export default function NewsletterPage() {
 
 	const canAccessNewsletter = meData?.can_access_newsletter ?? false
 
-	const [newsletterStartWeek, setnewsletterStartWeek] = useState<number>(getISOWeek(new Date()) + 1)
-	const [newsletterYear, setnewsletterYear] = useState<number>(new Date().getFullYear())
+	const [newsletterStartWeek, setnewsletterStartWeek] = useState<number>(
+		getISOWeek(new Date()) + 1
+	)
+	const [newsletterYear, setnewsletterYear] = useState<number>(
+		new Date().getFullYear()
+	)
 
 	const {
 		data: newsletterData,
@@ -193,7 +197,7 @@ export default function NewsletterPage() {
 							key={`skeleton-card-${
 								// biome-ignore lint/suspicious/noArrayIndexKey: it's just a skeleton
 								i
-								}`}
+							}`}
 						>
 							<CardHeader>
 								<Skeleton className="h-6 w-3/4" />
@@ -259,7 +263,11 @@ export default function NewsletterPage() {
 								<SelectValue placeholder={newsletterYear} />
 							</SelectTrigger>
 							<SelectContent side="top">
-								{[new Date().getFullYear() - 1, new Date().getFullYear(), new Date().getFullYear() + 1].map((jahr) => (
+								{[
+									new Date().getFullYear() - 1,
+									new Date().getFullYear(),
+									new Date().getFullYear() + 1
+								].map((jahr) => (
 									<SelectItem key={jahr} value={jahr.toString()}>
 										{jahr}
 									</SelectItem>
@@ -276,7 +284,14 @@ export default function NewsletterPage() {
 								<SelectValue placeholder={newsletterStartWeek} />
 							</SelectTrigger>
 							<SelectContent side="top">
-								{Array.from({ length: getISOWeeksInYear(new Date().setFullYear(newsletterYear)) }, (_, i) => i + 1).map((woche) => (
+								{Array.from(
+									{
+										length: getISOWeeksInYear(
+											new Date().setFullYear(newsletterYear)
+										)
+									},
+									(_, i) => i + 1
+								).map((woche) => (
 									<SelectItem key={woche} value={woche.toString()}>
 										KW {woche}
 									</SelectItem>
