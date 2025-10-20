@@ -13,7 +13,10 @@ use tracing::{instrument, warn};
 
 use crate::{
     app_state::AppState,
-    dto::{CreateEventRequest, ListEventsQuery, NewsletterQuery, SendNewsletterPreviewRequest, UpdateEventRequest},
+    dto::{
+        CreateEventRequest, ListEventsQuery, NewsletterQuery, SendNewsletterPreviewRequest,
+        UpdateEventRequest,
+    },
     error::AppError,
     models::{AuditType, Event, EventWithOrganizer, Organizer},
     responses::{ErrorResponse, NewsletterDataResponse},
@@ -457,7 +460,8 @@ pub(crate) async fn get_newsletter_data(
     ensure_newsletter_access(&user, &state).await?;
 
     let now = Utc::now();
-    let (next_week_start, week_after_start, week_after_end) = compute_newsletter_ranges(now, query_params.year, query_params.week).await?;
+    let (next_week_start, week_after_start, week_after_end) =
+        compute_newsletter_ranges(now, query_params.year, query_params.week).await?;
 
     let events = sqlx::query_as!(
         EventWithOrganizer,
@@ -611,7 +615,9 @@ async fn compute_newsletter_ranges(
         (None, Some(w)) => {
             let current_year = berlin_now.year();
             let date = NaiveDate::from_isoywd_opt(current_year, w, chrono::Weekday::Mon)
-                .ok_or_else(|| AppError::validation(format!("Invalid week {} for year {}", w, current_year)))?;
+                .ok_or_else(|| {
+                    AppError::validation(format!("Invalid week {} for year {}", w, current_year))
+                })?;
             Berlin
                 .from_local_datetime(&date.and_hms_opt(0, 0, 0).expect("valid midnight"))
                 .earliest()
@@ -622,7 +628,11 @@ async fn compute_newsletter_ranges(
             let current_week_monday = berlin_now.date_naive() - Duration::days(weekday_offset);
             let next_week_monday = current_week_monday + Duration::days(7);
             Berlin
-                .from_local_datetime(&next_week_monday.and_hms_opt(0, 0, 0).expect("valid midnight"))
+                .from_local_datetime(
+                    &next_week_monday
+                        .and_hms_opt(0, 0, 0)
+                        .expect("valid midnight"),
+                )
                 .earliest()
                 .expect("midnight should exist")
         }
@@ -633,14 +643,6 @@ async fn compute_newsletter_ranges(
     let week_after_end = (target_date + Duration::weeks(2)).with_timezone(&Utc);
 
     Ok((next_week_start, week_after_start, week_after_end))
-}
-
-fn start_of_day_utc(date: NaiveDate) -> DateTime<Utc> {
-    Berlin
-        .from_local_datetime(&date.and_hms_opt(0, 0, 0).expect("valid midnight"))
-        .earliest()
-        .expect("midnight should exist")
-        .with_timezone(&Utc)
 }
 
 fn build_newsletter_subject(next_week_start: DateTime<Utc>) -> String {

@@ -118,10 +118,10 @@ pub(crate) async fn list_public_events(
         })
         .collect();
 
-    if let Some(cache) = &state.cache {
-        if let Err(err) = cache.set_json(&cache_key, &public_events).await {
-            warn!(target: "cache", action = "set", scope = "public_events_list", %err, "Failed to store public events list in cache");
-        }
+    if let Some(cache) = &state.cache
+        && let Err(err) = cache.set_json(&cache_key, &public_events).await
+    {
+        warn!(target: "cache", action = "set", scope = "public_events_list", %err, "Failed to store public events list in cache");
     }
 
     Ok(Json(public_events))
@@ -193,10 +193,10 @@ pub(crate) async fn list_public_organizers(
         })
         .collect();
 
-    if let Some(cache) = &state.cache {
-        if let Err(err) = cache.set_json(cache_key, &public_organizers).await {
-            warn!(target: "cache", action = "set", scope = "public_organizers_list", %err, "Failed to store public organizers list in cache");
-        }
+    if let Some(cache) = &state.cache
+        && let Err(err) = cache.set_json(cache_key, &public_organizers).await
+    {
+        warn!(target: "cache", action = "set", scope = "public_organizers_list", %err, "Failed to store public organizers list in cache");
     }
 
     Ok(Json(public_organizers))
@@ -253,10 +253,10 @@ pub(crate) async fn get_public_event(
                 event_url: event.event_url,
                 location: event.location,
             };
-            if let Some(cache) = &state.cache {
-                if let Err(err) = cache.set_json(&cache_key, &public_event).await {
-                    warn!(target: "cache", action = "set", scope = "public_event", event_id = id, %err, "Failed to store public event in cache");
-                }
+            if let Some(cache) = &state.cache
+                && let Err(err) = cache.set_json(&cache_key, &public_event).await
+            {
+                warn!(target: "cache", action = "set", scope = "public_event", event_id = id, %err, "Failed to store public event in cache");
             }
             Ok(Json(public_event))
         }
@@ -328,10 +328,10 @@ pub(crate) async fn get_public_organizer(
                 active_events_count: organizer.active_events_count,
                 activity_score: organizer.activity_score,
             };
-            if let Some(cache) = &state.cache {
-                if let Err(err) = cache.set_json(&cache_key, &public_organizer).await {
-                    warn!(target: "cache", action = "set", scope = "public_organizer", organizer_id = id, %err, "Failed to store public organizer in cache");
-                }
+            if let Some(cache) = &state.cache
+                && let Err(err) = cache.set_json(&cache_key, &public_organizer).await
+            {
+                warn!(target: "cache", action = "set", scope = "public_organizer", organizer_id = id, %err, "Failed to store public organizer in cache");
             }
             Ok(Json(public_organizer))
         }
