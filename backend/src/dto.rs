@@ -133,6 +133,13 @@ const fn default_true() -> bool {
     true
 }
 
+#[derive(Debug, Deserialize, ToSchema, IntoParams)]
+#[into_params(parameter_in = Query)]
+pub struct NewsletterQuery {
+    pub year: Option<i32>,
+    pub week: Option<u32>,
+}
+
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct LoginRequest {
     pub email: String,

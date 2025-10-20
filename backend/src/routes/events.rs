@@ -13,7 +13,7 @@ use tracing::{instrument, warn};
 
 use crate::{
     app_state::AppState,
-    dto::{CreateEventRequest, ListEventsQuery, SendNewsletterPreviewRequest, UpdateEventRequest},
+    dto::{CreateEventRequest, ListEventsQuery, NewsletterQuery, SendNewsletterPreviewRequest, UpdateEventRequest},
     error::AppError,
     models::{AuditType, Event, EventWithOrganizer, Organizer},
     responses::{ErrorResponse, NewsletterDataResponse},
@@ -436,22 +436,28 @@ pub(crate) async fn delete_event(
     get,
     path = "/api/v1/events/newsletter-data",
     tag = "Events",
+    params(
+        ("year" = Option<i32>, Query, description = "Optional year for the newsletter week"),
+        ("week" = Option<u32>, Query, description = "Optional week number for the newsletter"),
+    ),
     responses(
         (status = 200, description = "Get newsletter data", body = NewsletterDataResponse),
+        (status = 400, description = "Invalid week or year provided", body = ErrorResponse),
         (status = 401, description = "Unauthorized", body = ErrorResponse),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     )
 )]
-#[instrument(skip(state, headers))]
+#[instrument(skip(state, headers, query_params))]
 pub(crate) async fn get_newsletter_data(
     State(state): State<AppState>,
     headers: HeaderMap,
+    Query(query_params): Query<NewsletterQuery>,
 ) -> Result<Json<NewsletterDataResponse>, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
     ensure_newsletter_access(&user, &state).await?;
 
     let now = Utc::now();
-    let (next_week_start, week_after_start, week_after_end) = compute_newsletter_ranges(now);
+    let (next_week_start, week_after_start, week_after_end) = compute_newsletter_ranges(now, query_params.year, query_params.week).await?;
 
     let events = sqlx::query_as!(
         EventWithOrganizer,
@@ -586,16 +592,48 @@ async fn ensure_newsletter_access(user: &AuthedUser, state: &AppState) -> Result
     Ok(())
 }
 
-fn compute_newsletter_ranges(now: DateTime<Utc>) -> (DateTime<Utc>, DateTime<Utc>, DateTime<Utc>) {
+async fn compute_newsletter_ranges(
+    now: DateTime<Utc>,
+    year: Option<i32>,
+    week: Option<u32>,
+) -> Result<(DateTime<Utc>, DateTime<Utc>, DateTime<Utc>), AppError> {
     let berlin_now = now.with_timezone(&Berlin);
-    let weekday_offset = berlin_now.weekday().num_days_from_monday() as i64;
-    let current_week_monday = berlin_now.date_naive() - Duration::days(weekday_offset);
-    let next_week_monday = current_week_monday + Duration::days(7);
-    let following_week_monday = next_week_monday + Duration::days(7);
-    let next_week_start = start_of_day_utc(next_week_monday);
-    let week_after_start = start_of_day_utc(following_week_monday);
-    let week_after_end = week_after_start + Duration::days(7);
-    (next_week_start, week_after_start, week_after_end)
+
+    let target_date = match (year, week) {
+        (Some(y), Some(w)) => {
+            let date = NaiveDate::from_isoywd_opt(y, w, chrono::Weekday::Mon)
+                .ok_or_else(|| AppError::validation(format!("Invalid year {} or week {}", y, w)))?;
+            Berlin
+                .from_local_datetime(&date.and_hms_opt(0, 0, 0).expect("valid midnight"))
+                .earliest()
+                .expect("midnight should exist")
+        }
+        (None, Some(w)) => {
+            let current_year = berlin_now.year();
+            let date = NaiveDate::from_isoywd_opt(current_year, w, chrono::Weekday::Mon)
+                .ok_or_else(|| AppError::validation(format!("Invalid week {} for year {}", w, current_year)))?;
+            Berlin
+                .from_local_datetime(&date.and_hms_opt(0, 0, 0).expect("valid midnight"))
+                .earliest()
+                .expect("midnight should exist")
+        }
+        _ => {
+            // Default behavior: next week
+            let weekday_offset = berlin_now.weekday().num_days_from_monday() as i64;
+            let current_week_monday = berlin_now.date_naive() - Duration::days(weekday_offset);
+            let next_week_monday = current_week_monday + Duration::days(7);
+            Berlin
+                .from_local_datetime(&next_week_monday.and_hms_opt(0, 0, 0).expect("valid midnight"))
+                .earliest()
+                .expect("midnight should exist")
+        }
+    };
+
+    let next_week_start = target_date.with_timezone(&Utc);
+    let week_after_start = (target_date + Duration::weeks(1)).with_timezone(&Utc);
+    let week_after_end = (target_date + Duration::weeks(2)).with_timezone(&Utc);
+
+    Ok((next_week_start, week_after_start, week_after_end))
 }
 
 fn start_of_day_utc(date: NaiveDate) -> DateTime<Utc> {
