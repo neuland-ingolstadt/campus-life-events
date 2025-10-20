@@ -40,11 +40,13 @@ export default function NewsletterPage() {
 
 	const canAccessNewsletter = meData?.can_access_newsletter ?? false
 
-	const [newsletterStartWeek, setnewsletterStartWeek] = useState<number>(
-		getISOWeek(new Date()) + 1
+	const [newsletterStartWeek, setnewsletterStartWeek] = useState(() =>
+		(getISOWeek(new Date()) % getISOWeeksInYear(new Date())) + 1
 	)
-	const [newsletterYear, setnewsletterYear] = useState<number>(
-		new Date().getFullYear()
+	const [newsletterYear, setnewsletterYear] = useState(() =>
+		getISOWeek(new Date()) === getISOWeeksInYear(new Date())
+			? new Date().getFullYear() + 1
+			: new Date().getFullYear()
 	)
 
 	const {
@@ -256,7 +258,14 @@ export default function NewsletterPage() {
 						<Select
 							value={`${newsletterYear}`}
 							onValueChange={(value: unknown) => {
-								setnewsletterYear(Number(value))
+								const newYear = Number(value)
+								const maxWeek = getISOWeeksInYear(
+									new Date().setFullYear(newYear)
+								)
+								if (newsletterStartWeek > maxWeek) {
+									setnewsletterStartWeek(maxWeek)
+								}
+								setnewsletterYear(newYear)
 							}}
 						>
 							<SelectTrigger className="h-8">
