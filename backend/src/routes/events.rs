@@ -13,7 +13,10 @@ use tracing::{instrument, warn};
 
 use crate::{
     app_state::AppState,
-    dto::{CreateEventRequest, ListEventsQuery, SendNewsletterPreviewRequest, UpdateEventRequest},
+    dto::{
+        CreateEventRequest, ListEventsQuery, NewsletterDataQuery, SendNewsletterPreviewRequest,
+        UpdateEventRequest,
+    },
     error::AppError,
     models::{AuditType, Event, EventWithOrganizer, Organizer},
     responses::{ErrorResponse, NewsletterDataResponse},
@@ -436,27 +439,41 @@ pub(crate) async fn delete_event(
     get,
     path = "/api/v1/events/newsletter-data",
     tag = "Events",
+    params(NewsletterDataQuery),
     responses(
         (status = 200, description = "Get newsletter data", body = NewsletterDataResponse),
         (status = 401, description = "Unauthorized", body = ErrorResponse),
         (status = 500, description = "Internal server error", body = ErrorResponse)
     )
 )]
-#[instrument(skip(state, headers))]
+#[instrument(skip(state, query_params, headers))]
 pub(crate) async fn get_newsletter_data(
     State(state): State<AppState>,
+    Query(query_params): Query<NewsletterDataQuery>,
     headers: HeaderMap,
 ) -> Result<Json<NewsletterDataResponse>, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
     ensure_newsletter_access(&user, &state).await?;
 
     let now = Utc::now();
-    let (next_week_start, week_after_start, week_after_end) = compute_newsletter_ranges(now);
+    let default_next_week = next_week_monday(now);
+    let (next_week_start, week_after_start, week_after_end) =
+        match query_params.week_start.as_deref().map(str::trim) {
+            Some("") => return Err(AppError::validation("week_start cannot be empty")),
+            Some(value) => {
+                let parsed_date = NaiveDate::parse_from_str(value, "%Y-%m-%d")
+                    .map_err(|_| AppError::validation("invalid week_start, expected YYYY-MM-DD"))?;
+                let monday = parsed_date
+                    - Duration::days(parsed_date.weekday().num_days_from_monday() as i64);
+                compute_week_boundaries(monday)
+            }
+            None => compute_week_boundaries(default_next_week),
+        };
 
     let events = sqlx::query_as!(
         EventWithOrganizer,
         r#"
-        SELECT e.id, e.organizer_id, e.title_de, e.title_en, e.description_de, e.description_en, 
+        SELECT e.id, e.organizer_id, e.title_de, e.title_en, e.description_de, e.description_en,
                e.start_date_time, e.end_date_time, e.event_url, e.location, e.publish_app, 
                e.publish_newsletter, e.publish_in_ical, e.publish_web, e.created_at, e.updated_at,
                o.name as organizer_name, o.website_url as organizer_website
@@ -586,16 +603,18 @@ async fn ensure_newsletter_access(user: &AuthedUser, state: &AppState) -> Result
     Ok(())
 }
 
-fn compute_newsletter_ranges(now: DateTime<Utc>) -> (DateTime<Utc>, DateTime<Utc>, DateTime<Utc>) {
+fn compute_week_boundaries(week_start: NaiveDate) -> (DateTime<Utc>, DateTime<Utc>, DateTime<Utc>) {
+    let next_week_start = start_of_day_utc(week_start);
+    let week_after_start = next_week_start + Duration::days(7);
+    let week_after_end = week_after_start + Duration::days(7);
+    (next_week_start, week_after_start, week_after_end)
+}
+
+fn next_week_monday(now: DateTime<Utc>) -> NaiveDate {
     let berlin_now = now.with_timezone(&Berlin);
     let weekday_offset = berlin_now.weekday().num_days_from_monday() as i64;
     let current_week_monday = berlin_now.date_naive() - Duration::days(weekday_offset);
-    let next_week_monday = current_week_monday + Duration::days(7);
-    let following_week_monday = next_week_monday + Duration::days(7);
-    let next_week_start = start_of_day_utc(next_week_monday);
-    let week_after_start = start_of_day_utc(following_week_monday);
-    let week_after_end = week_after_start + Duration::days(7);
-    (next_week_start, week_after_start, week_after_end)
+    current_week_monday + Duration::days(7)
 }
 
 fn start_of_day_utc(date: NaiveDate) -> DateTime<Utc> {

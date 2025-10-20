@@ -56,6 +56,13 @@ pub struct SendNewsletterPreviewRequest {
     pub html: String,
 }
 
+#[derive(Debug, Deserialize, ToSchema, IntoParams)]
+#[serde(deny_unknown_fields)]
+#[into_params(parameter_in = Query)]
+pub struct NewsletterDataQuery {
+    pub week_start: Option<String>,
+}
+
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(deny_unknown_fields)]
 pub struct CreateEventRequest {

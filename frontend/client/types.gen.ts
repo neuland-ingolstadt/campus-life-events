@@ -601,7 +601,9 @@ export type CreateEventResponse = CreateEventResponses[keyof CreateEventResponse
 export type GetNewsletterDataData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        week_start?: string;
+    };
     url: '/api/v1/events/newsletter-data';
 };
 

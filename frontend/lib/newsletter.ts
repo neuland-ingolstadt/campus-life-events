@@ -1,3 +1,4 @@
+import { format } from 'date-fns'
 import type { ErrorResponse, NewsletterDataResponse } from '@/client'
 import { getNewsletterData, sendNewsletterPreview } from '@/client'
 import type { EventWithOrganizer as ApiEventWithOrganizer } from '@/client/types.gen'
@@ -26,8 +27,12 @@ export interface NewsletterData {
 	week_after_start: string
 }
 
-export async function fetchNewsletterData(): Promise<NewsletterDataResponse> {
-	const response = await getNewsletterData()
+export async function fetchNewsletterData(
+	weekStart?: string
+): Promise<NewsletterDataResponse> {
+	const response = await getNewsletterData({
+		query: weekStart ? { week_start: weekStart } : undefined
+	})
 
 	if (response.error) {
 		const err = response.error as ErrorResponse | undefined
@@ -103,15 +108,8 @@ export function generateNewsletterHTML(
 	const getDateRange = (startDateStr: string, endDateStr: string) => {
 		const startDate = new Date(startDateStr)
 		const endDate = new Date(endDateStr)
-		const startFormatted = startDate.toLocaleDateString('de-DE', {
-			day: 'numeric',
-			month: 'numeric'
-		})
-		const endFormatted = endDate.toLocaleDateString('de-DE', {
-			day: 'numeric',
-			month: 'numeric'
-		})
-		return `${startFormatted} - ${endFormatted}`
+		endDate.setDate(endDate.getDate() - 1)
+		return `${format(startDate, 'dd.MM')} - ${format(endDate, 'dd.MM')}`
 	}
 
 	const escapeHtml = (text: string) => {

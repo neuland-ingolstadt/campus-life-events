@@ -14,6 +14,7 @@ import {
 	Tailwind,
 	Text
 } from '@react-email/components'
+import { addDays, format } from 'date-fns'
 import { useCallback } from 'react'
 import type { NewsletterDataResponse } from '@/client'
 
@@ -61,23 +62,6 @@ const NewsletterMail = ({ data, customText }: NewsletterMailProps) => {
 		return Math.ceil((days + start.getDay() + 1) / 7)
 	}, [])
 
-	const getDateRange = useCallback(
-		(startDateStr: string, endDateStr: string) => {
-			const startDate = new Date(startDateStr)
-			const endDate = new Date(endDateStr)
-			const startFormatted = startDate.toLocaleDateString('de-DE', {
-				day: 'numeric',
-				month: 'numeric'
-			})
-			const endFormatted = endDate.toLocaleDateString('de-DE', {
-				day: 'numeric',
-				month: 'numeric'
-			})
-			return `${startFormatted} - ${endFormatted}`
-		},
-		[]
-	)
-
 	const weekNumber = getWeekNumber(next_week_start)
 	const weekAfterNumber = getWeekNumber(week_after_start)
 
@@ -88,6 +72,11 @@ const NewsletterMail = ({ data, customText }: NewsletterMailProps) => {
 				.map((line) => line.trim())
 				.filter((line) => line.length > 0)
 		: []
+
+	const activeWeekRangeLabel =
+		next_week_start && week_after_start
+			? `${format(next_week_start, 'dd.MM.yyyy')} – ${format(addDays(week_after_start, -1), 'dd.MM.yyyy')}`
+			: undefined
 
 	return (
 		<Html lang="de">
@@ -195,8 +184,7 @@ const NewsletterMail = ({ data, customText }: NewsletterMailProps) => {
 								as="h2"
 								className="text-2xl text-brand my-8 pb-2 border-b-2 border-gray-200"
 							>
-								Events der Vereine (
-								{getDateRange(next_week_start, week_after_start)})
+								Events der Vereine ({activeWeekRangeLabel})
 							</Heading>
 
 							{next_week_events.length > 0 ? (
