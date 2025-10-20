@@ -30,7 +30,7 @@ export async function fetchNewsletterData(
 	year?: number,
 	week?: number
 ): Promise<NewsletterDataResponse> {
-	const options: any = {
+	const options = {
 		query: {
 			year,
 			week
