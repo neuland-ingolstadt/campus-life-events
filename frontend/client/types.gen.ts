@@ -601,11 +601,24 @@ export type CreateEventResponse = CreateEventResponses[keyof CreateEventResponse
 export type GetNewsletterDataData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Optional year for the newsletter week
+         */
+        year?: number;
+        /**
+         * Optional week number for the newsletter
+         */
+        week?: number;
+    };
     url: '/api/v1/events/newsletter-data';
 };
 
 export type GetNewsletterDataErrors = {
+    /**
+     * Invalid week or year provided
+     */
+    400: ErrorResponse;
     /**
      * Unauthorized
      */
