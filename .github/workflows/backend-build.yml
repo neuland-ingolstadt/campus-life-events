@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/backend-build.yml"
       - "backend/src/**"
+      - "backend/.sqlx/**"
       - "backend/Cargo.toml"
       - "backend/Cargo.lock"
       - "backend/flake.nix"

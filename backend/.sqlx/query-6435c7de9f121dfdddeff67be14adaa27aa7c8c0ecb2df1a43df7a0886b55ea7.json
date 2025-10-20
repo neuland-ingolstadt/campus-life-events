@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT e.id, e.organizer_id, e.title_de, e.title_en, e.description_de, e.description_en, \n               e.start_date_time, e.end_date_time, e.event_url, e.location, e.publish_app, \n               e.publish_newsletter, e.publish_in_ical, e.publish_web, e.created_at, e.updated_at,\n               o.name as organizer_name, o.website_url as organizer_website\n        FROM events e\n        JOIN organizers o ON e.organizer_id = o.id\n        WHERE e.publish_newsletter = true\n        AND e.start_date_time >= $1\n        AND e.start_date_time < $2\n        ORDER BY e.start_date_time ASC\n        ",
+  "query": "\n        SELECT e.id, e.organizer_id, e.title_de, e.title_en, e.description_de, e.description_en,\n               e.start_date_time, e.end_date_time, e.event_url, e.location, e.publish_app, \n               e.publish_newsletter, e.publish_in_ical, e.publish_web, e.created_at, e.updated_at,\n               o.name as organizer_name, o.website_url as organizer_website\n        FROM events e\n        JOIN organizers o ON e.organizer_id = o.id\n        WHERE e.publish_newsletter = true\n        AND e.start_date_time >= $1\n        AND e.start_date_time < $2\n        ORDER BY e.start_date_time ASC\n        ",
   "describe": {
     "columns": [
       {
@@ -121,5 +121,5 @@
       true
     ]
   },
-  "hash": "f20dfac2b2b98403979c61c296165b2e80cf78dd0131290360f622df7be16e01"
+  "hash": "6435c7de9f121dfdddeff67be14adaa27aa7c8c0ecb2df1a43df7a0886b55ea7"
 }
