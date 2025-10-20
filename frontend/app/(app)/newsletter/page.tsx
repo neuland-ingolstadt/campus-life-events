@@ -40,8 +40,8 @@ export default function NewsletterPage() {
 
 	const canAccessNewsletter = meData?.can_access_newsletter ?? false
 
-	const [newsletterStartWeek, setnewsletterStartWeek] = useState(() =>
-		(getISOWeek(new Date()) % getISOWeeksInYear(new Date())) + 1
+	const [newsletterStartWeek, setnewsletterStartWeek] = useState(
+		() => (getISOWeek(new Date()) % getISOWeeksInYear(new Date())) + 1
 	)
 	const [newsletterYear, setnewsletterYear] = useState(() =>
 		getISOWeek(new Date()) === getISOWeeksInYear(new Date())
