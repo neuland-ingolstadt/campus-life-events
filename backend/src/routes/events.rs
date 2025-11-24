@@ -59,12 +59,10 @@ pub(crate) async fn list_events(
 
     if query_params.upcoming_only.unwrap_or(false) {
         if has_where {
-            builder
-                .push(" AND start_date_time >= ")
-                .push_bind(Utc::now());
+            builder.push(" AND end_date_time >= ").push_bind(Utc::now());
         } else {
             builder
-                .push(" WHERE start_date_time >= ")
+                .push(" WHERE end_date_time >= ")
                 .push_bind(Utc::now());
         }
     }

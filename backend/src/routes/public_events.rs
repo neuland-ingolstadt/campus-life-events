@@ -83,7 +83,7 @@ pub(crate) async fn list_public_events(
 
     if query_params.upcoming_only.unwrap_or(false) {
         builder
-            .push(" AND e.start_date_time >= ")
+            .push(" AND e.end_date_time >= ")
             .push_bind(Utc::now());
     }
 
