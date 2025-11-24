@@ -176,9 +176,10 @@ pub(crate) async fn get_all_events_ical(
     let ical_content = calendar.done().to_string();
 
     if let Some(cache) = &state.cache
-        && let Err(err) = cache.set_string(cache_key, &ical_content).await {
-            warn!(target: "cache", action = "set", scope = "ical_all", %err, "Failed to store iCal feed in cache");
-        }
+        && let Err(err) = cache.set_string(cache_key, &ical_content).await
+    {
+        warn!(target: "cache", action = "set", scope = "ical_all", %err, "Failed to store iCal feed in cache");
+    }
 
     build_ical_response_with_filename(
         ical_content,
@@ -262,9 +263,10 @@ pub(crate) async fn get_organizer_events_ical(
     let ical_content = calendar.done().to_string();
 
     if let Some(cache) = &state.cache
-        && let Err(err) = cache.set_string(&cache_key, &ical_content).await {
-            warn!(target: "cache", action = "set", scope = "ical_organizer", organizer_id, %err, "Failed to store organizer iCal feed in cache");
-        }
+        && let Err(err) = cache.set_string(&cache_key, &ical_content).await
+    {
+        warn!(target: "cache", action = "set", scope = "ical_organizer", organizer_id, %err, "Failed to store organizer iCal feed in cache");
+    }
 
     build_ical_response_with_filename(ical_content, content_disposition)
 }
