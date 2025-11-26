@@ -19,14 +19,8 @@ const nextConfig: NextConfig = {
 	output: "standalone",
 	experimental: {
 		webpackMemoryOptimizations: true,
-		reactCompiler: true,
 	},
-	eslint: {
-		ignoreDuringBuilds: true,
-	},
-	typescript: {
-		ignoreBuildErrors: true,
-	},
+	reactCompiler: true,
 	poweredByHeader: false,
 
 };
