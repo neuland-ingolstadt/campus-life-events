@@ -90,37 +90,6 @@ function normalizeColumnFilters(
 	}, [])
 }
 
-function loadInitialColumnFilters(
-	defaultFilter: ColumnFiltersState[number]
-): ColumnFiltersState {
-	if (typeof window === 'undefined') {
-		return normalizeColumnFilters([defaultFilter])
-	}
-
-	try {
-		const stored = localStorage.getItem('tableState-events')
-
-		if (!stored) {
-			return normalizeColumnFilters([defaultFilter])
-		}
-
-		const parsed = JSON.parse(stored) as {
-			columnFilters?: ColumnFiltersState
-		}
-
-		const normalized = normalizeColumnFilters(parsed.columnFilters)
-
-		if (normalized.some((filter) => filter.id === defaultFilter.id)) {
-			return normalized
-		}
-
-		return normalizeColumnFilters([...normalized, defaultFilter])
-	} catch (error) {
-		console.error('Failed to parse stored table filters', error)
-		return normalizeColumnFilters([defaultFilter])
-	}
-}
-
 export default function EventsPage() {
 	'use no memo'
 	const qc = useQueryClient()
@@ -128,7 +97,7 @@ export default function EventsPage() {
 	const defaultDateFilter = useMemo(() => createUpcomingEventsFilter(), [])
 	const [columnFiltersState, setColumnFiltersState] =
 		useState<ColumnFiltersState>(() =>
-			loadInitialColumnFilters(defaultDateFilter)
+			normalizeColumnFilters([defaultDateFilter])
 		)
 	const setColumnFilters = useCallback(
 		(

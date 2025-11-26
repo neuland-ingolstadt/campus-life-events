@@ -106,11 +106,14 @@ export function DataTable<TData, TValue>({
 	useEffect(() => {
 		if (typeof window === 'undefined') return
 
-		localStorage.setItem(
-			tableStateKey,
-			JSON.stringify({ sorting, columnFilters })
-		)
-	}, [sorting, columnFilters, tableStateKey])
+		const stateToSave: Partial<TableState> = { sorting }
+
+		if (!isControlled) {
+			stateToSave.columnFilters = columnFilters
+		}
+
+		localStorage.setItem(tableStateKey, JSON.stringify(stateToSave))
+	}, [sorting, columnFilters, tableStateKey, isControlled])
 
 	const table = useReactTable({
 		data,

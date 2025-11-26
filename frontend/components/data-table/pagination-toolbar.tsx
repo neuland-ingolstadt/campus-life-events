@@ -21,6 +21,7 @@ interface DataTablePaginationProps<TData> {
 export function DataTablePagination<TData>({
 	table
 }: DataTablePaginationProps<TData>) {
+	'use no memo'
 	const pageSizes = Array.from(
 		new Set(
 			[5, 10, 20, 30, 40, 50, table.getState().pagination.pageSize].values()
