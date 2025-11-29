@@ -10,7 +10,7 @@ use crate::{
     },
     models::{AdminWithInvite, AuditLogEntry, Event, InviteStatus, Organizer, OrganizerWithInvite},
     responses::{
-        AuthUserResponse, ErrorResponse, HealthResponse, NewsletterDataResponse,
+        AuthUserResponse, ErrorResponse, HealthResponse, IcalEventResponse, NewsletterDataResponse,
         OrganizerWithStatsResponse, PasswordResetRequestResponse, PublicEventResponse,
         PublicOrganizerResponse, SetupTokenInfoResponse, SetupTokenResponse,
     },
@@ -98,7 +98,7 @@ use crate::{
         SetupTokenResponse,
         SetupTokenInfoResponse,
         NewsletterDataResponse,
-        PublicEventResponse, PublicOrganizerResponse,
+        PublicEventResponse, PublicOrganizerResponse, IcalEventResponse,
         InviteStatus
     )),
     tags(

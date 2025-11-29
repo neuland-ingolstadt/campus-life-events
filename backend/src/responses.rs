@@ -67,6 +67,22 @@ pub struct PublicEventResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct IcalEventResponse {
+    pub id: i64,
+    pub organizer_id: i64,
+    pub organizer_name: String,
+    pub title_de: String,
+    pub title_en: String,
+    pub description_de: Option<String>,
+    pub description_en: Option<String>,
+    pub start_date_time: DateTime<Utc>,
+    pub end_date_time: DateTime<Utc>,
+    pub event_url: Option<String>,
+    pub location: Option<String>,
+    pub is_internal: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct PublicOrganizerResponse {
     pub id: i64,
     pub name: String,

@@ -14,7 +14,7 @@ use crate::{
     app_state::AppState,
     error::AppError,
     models::{Event, Organizer},
-    responses::PublicEventResponse,
+    responses::IcalEventResponse,
 };
 
 #[derive(Debug, Clone)]
@@ -328,14 +328,14 @@ async fn validate_api_token(state: &AppState, headers: &HeaderMap) -> Result<(),
         ("organizer_id" = i64, Path, description = "Organizer identifier"),
         ("Authorization" = String, Header, description = "Bearer API token"),
     ),
-    responses((status = 200, description = "Events for organizer that are iCal eligible", body = [PublicEventResponse])),
+    responses((status = 200, description = "Events for organizer that are iCal eligible", body = [IcalEventResponse])),
 )]
 #[instrument(skip(state, headers))]
 pub(crate) async fn list_organizer_ical_events(
     State(state): State<AppState>,
     Path(organizer_id): Path<i64>,
     headers: HeaderMap,
-) -> Result<Json<Vec<PublicEventResponse>>, AppError> {
+) -> Result<Json<Vec<IcalEventResponse>>, AppError> {
     validate_api_token(&state, &headers).await?;
 
     let organizer = sqlx::query!(
@@ -365,18 +365,23 @@ pub(crate) async fn list_organizer_ical_events(
 
     let response = events
         .into_iter()
-        .map(|event| PublicEventResponse {
-            id: event.id,
-            organizer_id: event.organizer_id,
-            organizer_name: organizer_name.clone(),
-            title_de: event.title_de,
-            title_en: event.title_en,
-            description_de: event.description_de,
-            description_en: event.description_en,
-            start_date_time: event.start_date_time,
-            end_date_time: event.end_date_time,
-            event_url: event.event_url,
-            location: event.location,
+        .map(|event| {
+            let is_internal = !(event.publish_app || event.publish_newsletter);
+
+            IcalEventResponse {
+                id: event.id,
+                organizer_id: event.organizer_id,
+                organizer_name: organizer_name.clone(),
+                title_de: event.title_de,
+                title_en: event.title_en,
+                description_de: event.description_de,
+                description_en: event.description_en,
+                start_date_time: event.start_date_time,
+                end_date_time: event.end_date_time,
+                event_url: event.event_url,
+                location: event.location,
+                is_internal,
+            }
         })
         .collect();
 
