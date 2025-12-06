@@ -31,7 +31,7 @@ export function useEventColumns({
 				),
 				cell: ({ row }) => (
 					<div className="max-w-[380px] space-y-1">
-						<div className="font-medium text-sm leading-tight">
+						<div className="font-medium text-sm leading-tight truncate">
 							{row.original.title_de}
 						</div>
 						{row.original.description_de && (
