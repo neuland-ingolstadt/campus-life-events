@@ -1,5 +1,3 @@
-'use client'
-
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/theme-toggle'
 
@@ -14,7 +12,7 @@ export function UnifiedFooter({
 	variant = 'auth',
 	showThemeToggle = false
 }: UnifiedFooterProps) {
-	const currentYear = new Date().getFullYear()
+	const currentYear = 2025
 
 	const links = {
 		impressum: 'https://neuland-ingolstadt.de/legal/impressum',
