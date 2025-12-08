@@ -10,6 +10,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 			defaultTheme="system"
 			enableSystem
 			disableTransitionOnChange
+			storageKey="campus-life-theme"
+			enableColorScheme={false}
 		>
 			{children}
 		</NextThemesProvider>

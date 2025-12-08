@@ -16,7 +16,6 @@ const nextConfig: NextConfig = {
 		return [];
 	},
 	output: "standalone",
-	cacheComponents: true,
 	experimental: {
 		webpackMemoryOptimizations: true,
 		staleTimes: {

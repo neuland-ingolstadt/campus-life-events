@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { DashboardSidebar } from '@/components/dashboard-sidebar'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { Toaster } from '@/components/ui/sonner'
