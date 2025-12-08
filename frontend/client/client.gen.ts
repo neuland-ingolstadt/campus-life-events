@@ -15,5 +15,4 @@ export type CreateClientConfig<T extends ClientOptions = ClientOptions2> = (over
 
 export const client = createClient(createConfig<ClientOptions2>({
     baseUrl: 'http://localhost:8080',
-    credentials: 'include',
 }));
