@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { QueryProvider } from '@/components/query-provider'
 
 export const metadata: Metadata = {
 	title: 'Campus Life Events',
@@ -11,11 +10,5 @@ export default function PublicLayout({
 }: {
 	children: React.ReactNode
 }) {
-	return (
-		<html lang="de">
-			<body className="antialiased">
-				<QueryProvider>{children}</QueryProvider>
-			</body>
-		</html>
-	)
+	return <>{children}</>
 }

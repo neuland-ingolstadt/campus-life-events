@@ -13,16 +13,19 @@ const nextConfig: NextConfig = {
 				},
 			];
 		}
-		// In production, let ingress handle the API routing
 		return [];
 	},
 	output: "standalone",
+	cacheComponents: true,
 	experimental: {
 		webpackMemoryOptimizations: true,
+		staleTimes: {
+			dynamic: 30,
+			static: 180,
+		},
 	},
-	reactCompiler: true,
+	reactCompiler: false,
 	poweredByHeader: false,
-
 };
 
 export default nextConfig;
