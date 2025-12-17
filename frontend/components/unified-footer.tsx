@@ -18,7 +18,7 @@ export function UnifiedFooter({
 		impressum: 'https://neuland-ingolstadt.de/legal/impressum',
 		privacy: 'https://neuland-ingolstadt.de/legal/datenschutz',
 		studver: 'https://studverthi.de',
-		status: 'http://status.neuland.app/status/app'
+		status: 'http://status.neuland.ing'
 	}
 
 	const getFooterClasses = () => {
