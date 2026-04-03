@@ -7,7 +7,8 @@ edition = "2024"
 opt-level = 3
 
 [dependencies]
-axum = "0.8.4"
+aws-lc-rs = "1.16"
+axum = "0.8.8"
 chrono = { version = "0.4.42", features = ["serde"] }
 dotenvy = "0.15.7"
 serde = { version = "1.0.225", features = ["derive"] }
@@ -27,10 +28,10 @@ dotenv = "0.15.0"
 argon2 = { version = "0.5", features = ["std"] }
 password-hash = "0.5"
 rand_core = { version = "0.6", features = ["std"] }
-time = "0.3"
+time = "0.3.47"
 cookie = "0.18"
 password_policy = "0.1"
-lettre = { version = "0.11", default-features = false, features = ["builder", "smtp-transport", "tokio1", "tokio1-rustls", "rustls-native-certs", "aws-lc-rs"] }
+lettre = { version = "0.11.20", default-features = false, features = ["builder", "smtp-transport", "tokio1", "tokio1-rustls", "rustls-native-certs", "aws-lc-rs"] }
 base64 = "0.22"
 rand = "0.8"
 icalendar = "0.12"
