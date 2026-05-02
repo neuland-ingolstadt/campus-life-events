@@ -6,18 +6,21 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
-use tracing::instrument;
+use tracing::{instrument, warn};
 use uuid::Uuid;
 
 use crate::{
     api_token,
     app_state::AppState,
     dto::{
-        CreateEventRequest, NewsletterDataQuery, SendNewsletterPreviewRequest, UpdateEventRequest,
-        UpdateOrganizerRequest,
+        CreateEventRequest, CreateOrganizerRequest, NewsletterDataQuery,
+        SendNewsletterPreviewRequest, UpdateEventRequest, UpdateOrganizerRequest,
     },
     error::AppError,
-    models::{AccountType, Event, Organizer},
+    models::{
+        AccountType, AdminInviteRow, AdminWithInvite, Event, Organizer, OrganizerInviteRow,
+        OrganizerWithInvite,
+    },
 };
 
 use super::events::{
@@ -25,7 +28,7 @@ use super::events::{
     newsletter_data_with_user, send_newsletter_preview_with_user, update_event_with_user,
 };
 use super::organizers::update_organizer_with_user;
-use super::shared::AuthedUser;
+use super::shared::{AuthedUser, generate_setup_token_value, refresh_organizer_activity_stats};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -83,6 +86,11 @@ struct EventIdArgs {
 }
 
 #[derive(Debug, Deserialize)]
+struct OrganizerIdArgs {
+    id: i64,
+}
+
+#[derive(Debug, Deserialize)]
 struct UpdateEventToolArgs {
     id: i64,
     #[serde(flatten)]
@@ -95,6 +103,21 @@ struct ListMyEventsFilteredArgs {
     upcoming_only: Option<bool>,
     limit: Option<i64>,
     offset: Option<i64>,
+}
+
+async fn invalidate_public_organizer_caches(state: &AppState) {
+    if let Some(cache) = &state.cache {
+        if let Err(err) = cache.purge_prefix("public:organizers").await {
+            warn!(target: "cache", action = "purge", scope = "public_organizers", %err, "Failed to purge public organizers cache");
+        }
+        if let Err(err) = cache.purge_prefix("public:events").await {
+            warn!(target: "cache", action = "purge", scope = "public_events", %err, "Failed to purge public events cache");
+        }
+        if let Err(err) = cache.purge_prefix("ical").await {
+            warn!(target: "cache", action = "purge", scope = "ical", %err, "Failed to purge iCal cache");
+        }
+    }
+    refresh_organizer_activity_stats(state).await;
 }
 
 fn json_rpc_ok(id: Value, result: Value) -> Json<JsonRpcResponse> {
@@ -182,19 +205,19 @@ fn bearer_token(headers: &HeaderMap) -> Result<&str, AppError> {
     Ok(t)
 }
 
-async fn organizer_authed_from_bearer(
+async fn organizer_or_admin_authed_from_bearer(
     headers: &HeaderMap,
     state: &AppState,
 ) -> Result<AuthedUser, AppError> {
     let raw = bearer_token(headers)?;
     let user = api_token::authed_user_from_bearer(raw, state).await?;
-    if !matches!(user.account_type, AccountType::Organizer) {
-        return Err(AppError::unauthorized("organizer account required"));
+    match user.account_type {
+        AccountType::Admin => Ok(user),
+        AccountType::Organizer if user.organizer_id.is_some() => Ok(user),
+        _ => Err(AppError::unauthorized(
+            "organizer or admin account required",
+        )),
     }
-    if user.organizer_id.is_none() {
-        return Err(AppError::unauthorized("organizer account required"));
-    }
-    Ok(user)
 }
 
 async fn fetch_my_club_info(state: &AppState, organizer_id: i64) -> Result<Organizer, AppError> {
@@ -225,6 +248,57 @@ async fn fetch_all_clubs_basic(state: &AppState) -> Result<Vec<BasicOrganizerInf
     Ok(rows)
 }
 
+async fn fetch_admins_with_invites(state: &AppState) -> Result<Vec<AdminWithInvite>, AppError> {
+    let rows = sqlx::query_as::<_, AdminInviteRow>(
+        r#"
+        SELECT
+            id AS account_id,
+            display_name,
+            email AS account_email,
+            created_at,
+            updated_at,
+            password_hash,
+            setup_token,
+            setup_token_expires_at
+        FROM accounts
+        WHERE account_type = 'ADMIN'
+        ORDER BY created_at DESC
+        "#,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(rows.into_iter().map(AdminWithInvite::from_row).collect())
+}
+
+async fn fetch_clubs_with_invites(state: &AppState) -> Result<Vec<OrganizerWithInvite>, AppError> {
+    let rows = sqlx::query_as::<_, OrganizerInviteRow>(
+        r#"
+        SELECT
+            o.id AS organizer_id,
+            o.name AS organizer_name,
+            a.email AS account_email,
+            o.newsletter AS newsletter,
+            o.created_at,
+            o.updated_at,
+            a.password_hash,
+            a.setup_token,
+            a.setup_token_expires_at
+        FROM organizers o
+        LEFT JOIN accounts a
+            ON a.organizer_id = o.id AND a.account_type = 'ORGANIZER'
+        ORDER BY o.created_at DESC
+        "#,
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(OrganizerWithInvite::from_row)
+        .collect())
+}
+
 async fn fetch_my_events(state: &AppState, organizer_id: i64) -> Result<Vec<Event>, AppError> {
     let rows = sqlx::query_as::<_, Event>(
 		"SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at FROM events WHERE organizer_id = $1 ORDER BY start_date_time ASC",
@@ -248,6 +322,51 @@ fn tool_schema_list_clubs_basic() -> Value {
         "name": "list_clubs_basic",
         "description": "List all clubs (organizers) with basic info (name + descriptions).",
         "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false }
+    })
+}
+
+fn tool_schema_invite_club() -> Value {
+    json!({
+        "name": "invite_club",
+        "description": "Invite a new club (organizer): creates organizer + setup token and sends invite email if SMTP is configured (admin only).",
+        "inputSchema": {
+            "type": "object",
+            "required": ["name", "email"],
+            "properties": {
+                "name": { "type": "string" },
+                "email": { "type": "string" }
+            },
+            "additionalProperties": false
+        }
+    })
+}
+
+fn tool_schema_list_admins_with_invites() -> Value {
+    json!({
+        "name": "list_admins_with_invites",
+        "description": "List all admin accounts including invite status and setup-token expiry (admin only).",
+        "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false }
+    })
+}
+
+fn tool_schema_list_clubs_with_invites() -> Value {
+    json!({
+        "name": "list_clubs_with_invites",
+        "description": "List all clubs (organizers) including invite status and setup-token expiry (admin only).",
+        "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false }
+    })
+}
+
+fn tool_schema_delete_club() -> Value {
+    json!({
+        "name": "delete_club",
+        "description": "Delete a club (organizer) by id, including its events (admin only).",
+        "inputSchema": {
+            "type": "object",
+            "required": ["id"],
+            "properties": { "id": { "type": "integer" } },
+            "additionalProperties": false
+        }
     })
 }
 
@@ -437,6 +556,20 @@ fn mcp_tools_list_result() -> Value {
     })
 }
 
+fn mcp_tools_list_result_admin() -> Value {
+    json!({
+        "tools": [
+            tool_schema_list_clubs_basic(),
+            tool_schema_list_admins_with_invites(),
+            tool_schema_list_clubs_with_invites(),
+            tool_schema_invite_club(),
+            tool_schema_delete_club(),
+            tool_schema_newsletter_upcoming_summary(),
+            tool_schema_send_newsletter_preview(),
+        ]
+    })
+}
+
 fn tool_text_result(value: Value) -> Result<Value, String> {
     let text =
         serde_json::to_string_pretty(&value).map_err(|_| "failed to serialize tool result")?;
@@ -472,16 +605,23 @@ async fn handle_post(
         return Err(invalid_request(id, "jsonrpc must be '2.0'"));
     }
 
-    let user = organizer_authed_from_bearer(&headers, &state)
+    let user = organizer_or_admin_authed_from_bearer(&headers, &state)
         .await
         .map_err(|err| mcp_from_app_error(id.clone(), err))?;
 
     match req.method.as_str() {
         "initialize" => Ok((StatusCode::OK, json_rpc_ok(id, mcp_initialize_result()))),
         "notifications/initialized" => Ok((StatusCode::ACCEPTED, json_rpc_ok(id, json!({})))),
-        "tools/list" => Ok((StatusCode::OK, json_rpc_ok(id, mcp_tools_list_result()))),
+        "tools/list" => {
+            let result = if user.is_admin() {
+                mcp_tools_list_result_admin()
+            } else {
+                mcp_tools_list_result()
+            };
+            Ok((StatusCode::OK, json_rpc_ok(id, result)))
+        }
         "tools/call" => {
-            let organizer_id = user.organizer_id().expect("checked");
+            let organizer_id = user.organizer_id();
 
             let Some(params) = req.params else {
                 return Err(invalid_request(id, "missing params"));
@@ -490,125 +630,284 @@ async fn handle_post(
             let params: ToolsCallParams = serde_json::from_value(params)
                 .map_err(|_| invalid_request(id.clone(), "invalid tools/call params"))?;
 
-            let result: Result<Value, (StatusCode, Json<JsonRpcResponse>)> =
-                match params.name.as_str() {
-                    "my_club_info" => {
-                        let organizer = fetch_my_club_info(&state, organizer_id)
-                            .await
-                            .map_err(|e| mcp_from_app_error(id.clone(), e))?;
-                        let v = serde_json::to_value(organizer)
-                            .map_err(|_| internal_error(id.clone(), "serialize"))?;
-                        tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
-                    }
-                    "list_clubs_basic" => {
-                        let clubs = fetch_all_clubs_basic(&state)
-                            .await
-                            .map_err(|e| mcp_from_app_error(id.clone(), e))?;
-                        let v = serde_json::to_value(clubs)
-                            .map_err(|_| internal_error(id.clone(), "serialize"))?;
-                        tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
-                    }
-                    "my_events" => {
-                        let events = fetch_my_events(&state, organizer_id)
-                            .await
-                            .map_err(|e| mcp_from_app_error(id.clone(), e))?;
-                        let v = serde_json::to_value(events)
-                            .map_err(|_| internal_error(id.clone(), "serialize"))?;
-                        tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
-                    }
-                    "create_my_event" => {
-                        let payload: CreateEventRequest = serde_json::from_value(params.arguments)
-                            .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
-                        let event = create_event_with_user(&state, &user, payload)
-                            .await
-                            .map_err(|e| mcp_from_app_error(id.clone(), e))?;
-                        let v = serde_json::to_value(event)
-                            .map_err(|_| internal_error(id.clone(), "serialize"))?;
-                        tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
-                    }
-                    "get_my_event" => {
-                        let args: EventIdArgs = serde_json::from_value(params.arguments)
-                            .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
-                        let event = get_event_with_user(&state, &user, args.id)
-                            .await
-                            .map_err(|e| mcp_from_app_error(id.clone(), e))?;
-                        let v = serde_json::to_value(event)
-                            .map_err(|_| internal_error(id.clone(), "serialize"))?;
-                        tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
-                    }
-                    "update_my_event" => {
-                        let args: UpdateEventToolArgs = serde_json::from_value(params.arguments)
-                            .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
-                        let event = update_event_with_user(&state, &user, args.id, args.patch)
-                            .await
-                            .map_err(|e| mcp_from_app_error(id.clone(), e))?;
-                        let v = serde_json::to_value(event)
-                            .map_err(|_| internal_error(id.clone(), "serialize"))?;
-                        tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
-                    }
-                    "delete_my_event" => {
-                        let args: EventIdArgs = serde_json::from_value(params.arguments)
-                            .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
-                        delete_event_with_user(&state, &user, args.id)
-                            .await
-                            .map_err(|e| mcp_from_app_error(id.clone(), e))?;
-                        let v = serde_json::to_value(json!({ "deleted": true }))
-                            .map_err(|_| internal_error(id.clone(), "serialize"))?;
-                        tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
-                    }
-                    "list_my_events_filtered" => {
-                        let args: ListMyEventsFilteredArgs =
-                            serde_json::from_value(params.arguments)
-                                .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
-                        let events = list_events_for_organizer(
-                            &state,
-                            organizer_id,
-                            args.upcoming_only,
-                            args.limit,
-                            args.offset,
-                        )
+            if user.is_admin()
+                && !matches!(
+                    params.name.as_str(),
+                    "list_clubs_basic"
+                        | "list_admins_with_invites"
+                        | "list_clubs_with_invites"
+                        | "invite_club"
+                        | "delete_club"
+                        | "newsletter_upcoming_summary"
+                        | "send_newsletter_preview"
+                )
+            {
+                return Err(method_not_found(id, params.name.as_str()));
+            }
+
+            let result: Result<Value, (StatusCode, Json<JsonRpcResponse>)> = match params
+                .name
+                .as_str()
+            {
+                "my_club_info" => {
+                    let Some(organizer_id) = organizer_id else {
+                        return Err(mcp_from_app_error(
+                            id,
+                            AppError::unauthorized("organizer account required"),
+                        ));
+                    };
+                    let organizer = fetch_my_club_info(&state, organizer_id)
                         .await
                         .map_err(|e| mcp_from_app_error(id.clone(), e))?;
-                        let v = serde_json::to_value(events)
-                            .map_err(|_| internal_error(id.clone(), "serialize"))?;
-                        tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
+                    let v = serde_json::to_value(organizer)
+                        .map_err(|_| internal_error(id.clone(), "serialize"))?;
+                    tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
+                }
+                "list_clubs_basic" => {
+                    let clubs = fetch_all_clubs_basic(&state)
+                        .await
+                        .map_err(|e| mcp_from_app_error(id.clone(), e))?;
+                    let v = serde_json::to_value(clubs)
+                        .map_err(|_| internal_error(id.clone(), "serialize"))?;
+                    tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
+                }
+                "list_admins_with_invites" => {
+                    let admins = fetch_admins_with_invites(&state)
+                        .await
+                        .map_err(|e| mcp_from_app_error(id.clone(), e))?;
+                    let v = serde_json::to_value(admins)
+                        .map_err(|_| internal_error(id.clone(), "serialize"))?;
+                    tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
+                }
+                "list_clubs_with_invites" => {
+                    let clubs = fetch_clubs_with_invites(&state)
+                        .await
+                        .map_err(|e| mcp_from_app_error(id.clone(), e))?;
+                    let v = serde_json::to_value(clubs)
+                        .map_err(|_| internal_error(id.clone(), "serialize"))?;
+                    tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
+                }
+                "invite_club" => {
+                    let payload: CreateOrganizerRequest = serde_json::from_value(params.arguments)
+                        .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
+
+                    let token = generate_setup_token_value();
+                    let mut tx = state
+                        .db
+                        .begin()
+                        .await
+                        .map_err(|e| mcp_from_app_error(id.clone(), AppError::from(e)))?;
+
+                    let organizer = sqlx::query_as::<_, Organizer>(
+                        r#"
+                        INSERT INTO organizers (name)
+                        VALUES ($1)
+                        RETURNING id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at
+                        "#,
+                    )
+                    .bind(&payload.name)
+                    .fetch_one(&mut *tx)
+                    .await
+                    .map_err(|e| mcp_from_app_error(id.clone(), AppError::from(e)))?;
+
+                    sqlx::query(
+                        r#"
+                        INSERT INTO accounts (
+                            account_type,
+                            organizer_id,
+                            display_name,
+                            email,
+                            setup_token,
+                            setup_token_expires_at
+                        )
+                        VALUES ($1::account_type, $2, $3, $4, $5, NOW() + INTERVAL '7 days')
+                        "#,
+                    )
+                    .bind(AccountType::Organizer as AccountType)
+                    .bind(organizer.id)
+                    .bind(&organizer.name)
+                    .bind(&payload.email)
+                    .bind(&token)
+                    .execute(&mut *tx)
+                    .await
+                    .map_err(|e| mcp_from_app_error(id.clone(), AppError::from(e)))?;
+
+                    if let Some(email_client) = &state.email {
+                        let _ = email_client
+                            .send_new_organizer_invite(&payload.email, &payload.name, &token)
+                            .await;
                     }
-                    "newsletter_upcoming_summary" => {
-                        let q: NewsletterDataQuery = serde_json::from_value(params.arguments)
+
+                    tx.commit()
+                        .await
+                        .map_err(|e| mcp_from_app_error(id.clone(), AppError::from(e)))?;
+
+                    invalidate_public_organizer_caches(&state).await;
+
+                    let v = serde_json::to_value(
+                        json!({ "setup_token": token, "organizer_id": organizer.id }),
+                    )
+                    .map_err(|_| internal_error(id.clone(), "serialize"))?;
+                    tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
+                }
+                "delete_club" => {
+                    let args: OrganizerIdArgs = serde_json::from_value(params.arguments)
+                        .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
+
+                    let mut tx = state
+                        .db
+                        .begin()
+                        .await
+                        .map_err(|e| mcp_from_app_error(id.clone(), AppError::from(e)))?;
+
+                    sqlx::query("DELETE FROM events WHERE organizer_id = $1")
+                        .bind(args.id)
+                        .execute(&mut *tx)
+                        .await
+                        .map_err(|e| mcp_from_app_error(id.clone(), AppError::from(e)))?;
+
+                    let result = sqlx::query("DELETE FROM organizers WHERE id = $1")
+                        .bind(args.id)
+                        .execute(&mut *tx)
+                        .await
+                        .map_err(|e| mcp_from_app_error(id.clone(), AppError::from(e)))?;
+
+                    if result.rows_affected() == 0 {
+                        return Err(mcp_from_app_error(
+                            id,
+                            AppError::not_found("Organizer not found"),
+                        ));
+                    }
+
+                    tx.commit()
+                        .await
+                        .map_err(|e| mcp_from_app_error(id.clone(), AppError::from(e)))?;
+
+                    invalidate_public_organizer_caches(&state).await;
+
+                    let v =
+                        serde_json::to_value(json!({ "deleted": true, "organizer_id": args.id }))
+                            .map_err(|_| internal_error(id.clone(), "serialize"))?;
+                    tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
+                }
+                "my_events" => {
+                    let Some(organizer_id) = organizer_id else {
+                        return Err(mcp_from_app_error(
+                            id,
+                            AppError::unauthorized("organizer account required"),
+                        ));
+                    };
+                    let events = fetch_my_events(&state, organizer_id)
+                        .await
+                        .map_err(|e| mcp_from_app_error(id.clone(), e))?;
+                    let v = serde_json::to_value(events)
+                        .map_err(|_| internal_error(id.clone(), "serialize"))?;
+                    tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
+                }
+                "create_my_event" => {
+                    let payload: CreateEventRequest = serde_json::from_value(params.arguments)
+                        .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
+                    let event = create_event_with_user(&state, &user, payload)
+                        .await
+                        .map_err(|e| mcp_from_app_error(id.clone(), e))?;
+                    let v = serde_json::to_value(event)
+                        .map_err(|_| internal_error(id.clone(), "serialize"))?;
+                    tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
+                }
+                "get_my_event" => {
+                    let args: EventIdArgs = serde_json::from_value(params.arguments)
+                        .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
+                    let event = get_event_with_user(&state, &user, args.id)
+                        .await
+                        .map_err(|e| mcp_from_app_error(id.clone(), e))?;
+                    let v = serde_json::to_value(event)
+                        .map_err(|_| internal_error(id.clone(), "serialize"))?;
+                    tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
+                }
+                "update_my_event" => {
+                    let args: UpdateEventToolArgs = serde_json::from_value(params.arguments)
+                        .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
+                    let event = update_event_with_user(&state, &user, args.id, args.patch)
+                        .await
+                        .map_err(|e| mcp_from_app_error(id.clone(), e))?;
+                    let v = serde_json::to_value(event)
+                        .map_err(|_| internal_error(id.clone(), "serialize"))?;
+                    tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
+                }
+                "delete_my_event" => {
+                    let args: EventIdArgs = serde_json::from_value(params.arguments)
+                        .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
+                    delete_event_with_user(&state, &user, args.id)
+                        .await
+                        .map_err(|e| mcp_from_app_error(id.clone(), e))?;
+                    let v = serde_json::to_value(json!({ "deleted": true }))
+                        .map_err(|_| internal_error(id.clone(), "serialize"))?;
+                    tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
+                }
+                "list_my_events_filtered" => {
+                    let Some(organizer_id) = organizer_id else {
+                        return Err(mcp_from_app_error(
+                            id,
+                            AppError::unauthorized("organizer account required"),
+                        ));
+                    };
+                    let args: ListMyEventsFilteredArgs =
+                        serde_json::from_value(params.arguments)
                             .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
-                        let data = newsletter_data_with_user(&state, &user, q)
-                            .await
-                            .map_err(|e| mcp_from_app_error(id.clone(), e))?;
-                        let v = serde_json::to_value(data)
-                            .map_err(|_| internal_error(id.clone(), "serialize"))?;
-                        tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
-                    }
-                    "send_newsletter_preview" => {
-                        let payload: SendNewsletterPreviewRequest =
-                            serde_json::from_value(params.arguments)
-                                .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
-                        send_newsletter_preview_with_user(&state, &user, payload)
-                            .await
-                            .map_err(|e| mcp_from_app_error(id.clone(), e))?;
-                        let v = serde_json::to_value(json!({ "sent": true }))
-                            .map_err(|_| internal_error(id.clone(), "serialize"))?;
-                        tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
-                    }
-                    "update_my_club_profile" => {
-                        let payload: UpdateOrganizerRequest =
-                            serde_json::from_value(params.arguments)
-                                .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
-                        let org = update_organizer_with_user(&state, &user, organizer_id, payload)
-                            .await
-                            .map_err(|e| mcp_from_app_error(id.clone(), e))?;
-                        let v = serde_json::to_value(org)
-                            .map_err(|_| internal_error(id.clone(), "serialize"))?;
-                        tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
-                    }
-                    other => {
-                        return Err(method_not_found(id, other));
-                    }
-                };
+                    let events = list_events_for_organizer(
+                        &state,
+                        organizer_id,
+                        args.upcoming_only,
+                        args.limit,
+                        args.offset,
+                    )
+                    .await
+                    .map_err(|e| mcp_from_app_error(id.clone(), e))?;
+                    let v = serde_json::to_value(events)
+                        .map_err(|_| internal_error(id.clone(), "serialize"))?;
+                    tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
+                }
+                "newsletter_upcoming_summary" => {
+                    let q: NewsletterDataQuery = serde_json::from_value(params.arguments)
+                        .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
+                    let data = newsletter_data_with_user(&state, &user, q)
+                        .await
+                        .map_err(|e| mcp_from_app_error(id.clone(), e))?;
+                    let v = serde_json::to_value(data)
+                        .map_err(|_| internal_error(id.clone(), "serialize"))?;
+                    tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
+                }
+                "send_newsletter_preview" => {
+                    let payload: SendNewsletterPreviewRequest =
+                        serde_json::from_value(params.arguments)
+                            .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
+                    send_newsletter_preview_with_user(&state, &user, payload)
+                        .await
+                        .map_err(|e| mcp_from_app_error(id.clone(), e))?;
+                    let v = serde_json::to_value(json!({ "sent": true }))
+                        .map_err(|_| internal_error(id.clone(), "serialize"))?;
+                    tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
+                }
+                "update_my_club_profile" => {
+                    let Some(organizer_id) = organizer_id else {
+                        return Err(mcp_from_app_error(
+                            id,
+                            AppError::unauthorized("organizer account required"),
+                        ));
+                    };
+                    let payload: UpdateOrganizerRequest = serde_json::from_value(params.arguments)
+                        .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
+                    let org = update_organizer_with_user(&state, &user, organizer_id, payload)
+                        .await
+                        .map_err(|e| mcp_from_app_error(id.clone(), e))?;
+                    let v = serde_json::to_value(org)
+                        .map_err(|_| internal_error(id.clone(), "serialize"))?;
+                    tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
+                }
+                other => {
+                    return Err(method_not_found(id, other));
+                }
+            };
 
             let result = result?;
             Ok((StatusCode::OK, json_rpc_ok(id, result)))
