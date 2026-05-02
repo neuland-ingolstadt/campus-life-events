@@ -86,11 +86,6 @@ struct EventIdArgs {
 }
 
 #[derive(Debug, Deserialize)]
-struct OrganizerIdArgs {
-    id: i64,
-}
-
-#[derive(Debug, Deserialize)]
 struct UpdateEventToolArgs {
     id: i64,
     #[serde(flatten)]
@@ -357,19 +352,6 @@ fn tool_schema_list_clubs_with_invites() -> Value {
     })
 }
 
-fn tool_schema_delete_club() -> Value {
-    json!({
-        "name": "delete_club",
-        "description": "Delete a club (organizer) by id, including its events (admin only).",
-        "inputSchema": {
-            "type": "object",
-            "required": ["id"],
-            "properties": { "id": { "type": "integer" } },
-            "additionalProperties": false
-        }
-    })
-}
-
 fn tool_schema_my_events() -> Value {
     json!({
         "name": "my_events",
@@ -563,7 +545,6 @@ fn mcp_tools_list_result_admin() -> Value {
             tool_schema_list_admins_with_invites(),
             tool_schema_list_clubs_with_invites(),
             tool_schema_invite_club(),
-            tool_schema_delete_club(),
             tool_schema_newsletter_upcoming_summary(),
             tool_schema_send_newsletter_preview(),
         ]
@@ -637,7 +618,6 @@ async fn handle_post(
                         | "list_admins_with_invites"
                         | "list_clubs_with_invites"
                         | "invite_club"
-                        | "delete_club"
                         | "newsletter_upcoming_summary"
                         | "send_newsletter_preview"
                 )
@@ -748,46 +728,6 @@ async fn handle_post(
                         json!({ "setup_token": token, "organizer_id": organizer.id }),
                     )
                     .map_err(|_| internal_error(id.clone(), "serialize"))?;
-                    tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
-                }
-                "delete_club" => {
-                    let args: OrganizerIdArgs = serde_json::from_value(params.arguments)
-                        .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
-
-                    let mut tx = state
-                        .db
-                        .begin()
-                        .await
-                        .map_err(|e| mcp_from_app_error(id.clone(), AppError::from(e)))?;
-
-                    sqlx::query("DELETE FROM events WHERE organizer_id = $1")
-                        .bind(args.id)
-                        .execute(&mut *tx)
-                        .await
-                        .map_err(|e| mcp_from_app_error(id.clone(), AppError::from(e)))?;
-
-                    let result = sqlx::query("DELETE FROM organizers WHERE id = $1")
-                        .bind(args.id)
-                        .execute(&mut *tx)
-                        .await
-                        .map_err(|e| mcp_from_app_error(id.clone(), AppError::from(e)))?;
-
-                    if result.rows_affected() == 0 {
-                        return Err(mcp_from_app_error(
-                            id,
-                            AppError::not_found("Organizer not found"),
-                        ));
-                    }
-
-                    tx.commit()
-                        .await
-                        .map_err(|e| mcp_from_app_error(id.clone(), AppError::from(e)))?;
-
-                    invalidate_public_organizer_caches(&state).await;
-
-                    let v =
-                        serde_json::to_value(json!({ "deleted": true, "organizer_id": args.id }))
-                            .map_err(|_| internal_error(id.clone(), "serialize"))?;
                     tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
                 }
                 "my_events" => {
