@@ -67,7 +67,7 @@ export default function ManageAdminsPage() {
 					<DataTableColumnHeader column={column} title="E-Mail" />
 				),
 				cell: ({ row }) => (
-					<div className="text-sm">{row.original.email || '—'}</div>
+					<div className="text-sm">{row.original.email || '-'}</div>
 				),
 				size: 200
 			},

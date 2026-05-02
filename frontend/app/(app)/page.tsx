@@ -186,8 +186,7 @@ export default function Dashboard() {
 									</p>
 									<p className="text-sm text-muted-foreground text-pretty max-w-prose">
 										Nutze MCP in Cursor, Claude oder anderen Clients: Events
-										verwalten, Vereinsinfos pflegen und mehr — API-Token und
-										Kurzsetup über einen Klick.
+										verwalten, Vereinsinfos pflegen und mehr.
 									</p>
 								</div>
 							</div>
