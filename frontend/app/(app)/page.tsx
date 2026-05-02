@@ -9,6 +9,7 @@ import {
 	Calendar,
 	Clock,
 	Plus,
+	Sparkles,
 	TrendingUp,
 	Users
 } from 'lucide-react'
@@ -164,6 +165,39 @@ export default function Dashboard() {
 									</Link>
 								</div>
 							</div>
+						</div>
+					</div>
+				)}
+
+				{user?.account_type === 'ORGANIZER' && (
+					<div className="relative overflow-hidden rounded-2xl border border-violet-200/70 bg-linear-to-br from-violet-500/7 via-background to-cyan-500/5 p-5 shadow-sm dark:border-violet-800/45 dark:from-violet-400/9 dark:to-cyan-500/4">
+						<div
+							className="pointer-events-none absolute -right-10 -top-10 size-36 rounded-full bg-violet-500/12 blur-2xl dark:bg-violet-400/15"
+							aria-hidden
+						/>
+						<div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+							<div className="flex gap-3 min-w-0">
+								<div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-600 dark:text-violet-400">
+									<Sparkles className="size-5" aria-hidden />
+								</div>
+								<div className="min-w-0 space-y-1">
+									<p className="text-sm font-semibold tracking-tight text-foreground">
+										KI-Tools (MCP) für Events &amp; Vereinsprofil
+									</p>
+									<p className="text-sm text-muted-foreground text-pretty max-w-prose">
+										Nutze MCP in Cursor, Claude oder anderen Clients: Events
+										verwalten, Vereinsinfos pflegen und mehr — API-Token und
+										Kurzsetup über einen Klick.
+									</p>
+								</div>
+							</div>
+							<Button
+								asChild
+								variant="secondary"
+								className="shrink-0 border-violet-200/90 bg-background/90 shadow-sm hover:bg-background dark:border-violet-800/55"
+							>
+								<Link href="/mcp-setup">MCP Setup</Link>
+							</Button>
 						</div>
 					</div>
 				)}
