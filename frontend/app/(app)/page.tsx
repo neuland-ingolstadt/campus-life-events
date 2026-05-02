@@ -91,32 +91,28 @@ export default function Dashboard() {
 			value: userEvents.length || 0,
 			icon: Calendar,
 			description: 'Events, die du erstellt hast',
-			color: 'text-blue-600',
-			gradient: 'from-blue-500/10 to-cyan-500/10'
+			color: 'text-blue-600'
 		},
 		{
 			title: 'Anstehende Events',
 			value: userUpcomingEvents.length,
 			icon: Clock,
 			description: 'Events, die du erstellt hast und die bevorstehen',
-			color: 'text-green-600',
-			gradient: 'from-green-500/10 to-emerald-500/10'
+			color: 'text-green-600'
 		},
 		{
 			title: 'Veröffentlicht',
 			value: userPublishedEvents.length,
 			icon: TrendingUp,
 			description: 'In der App live',
-			color: 'text-purple-600',
-			gradient: 'from-purple-500/10 to-pink-500/10'
+			color: 'text-purple-600'
 		},
 		{
 			title: 'Alle Vereine',
 			value: organizerList.length,
 			icon: Users,
 			description: 'Alle Vereine',
-			color: 'text-orange-600',
-			gradient: 'from-orange-500/10 to-yellow-500/10'
+			color: 'text-orange-600'
 		}
 	]
 
@@ -200,31 +196,26 @@ export default function Dashboard() {
 								{stats.map((stat, _index) => (
 									<Card
 										key={stat.title}
-										className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg"
+										className="transition-all duration-300 hover:shadow-lg"
 									>
-										<div
-											className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
-										/>
-										<div className="relative">
-											<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-												<CardTitle className="text-sm font-medium">
-													{stat.title}
-												</CardTitle>
-												<stat.icon className={`h-4 w-4`} />
-											</CardHeader>
-											<CardContent>
-												<div className="flex items-center">
-													<div className={`text-2xl font-bold ${stat.color}`}>
-														{stat.value}
-													</div>
+										<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+											<CardTitle className="text-sm font-medium">
+												{stat.title}
+											</CardTitle>
+											<stat.icon className={`h-4 w-4`} />
+										</CardHeader>
+										<CardContent>
+											<div className="flex items-center">
+												<div className={`text-2xl font-bold ${stat.color}`}>
+													{stat.value}
 												</div>
-												<div className="space-y-2">
-													<p className="text-xs text-muted-foreground">
-														{stat.description}
-													</p>
-												</div>
-											</CardContent>
-										</div>
+											</div>
+											<div className="space-y-2">
+												<p className="text-xs text-muted-foreground">
+													{stat.description}
+												</p>
+											</div>
+										</CardContent>
 									</Card>
 								))}
 							</div>
@@ -234,9 +225,8 @@ export default function Dashboard() {
 
 						{/* Your Events */}
 						<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-							<Card className="col-span-4 group relative overflow-hidden border-primary/20 hover:border-primary/40 transition-all duration-300">
-								<div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-								<CardHeader className="relative">
+							<Card className="col-span-4 border-primary/20 hover:border-primary/40 transition-all duration-300">
+								<CardHeader>
 									<div className="flex items-center justify-between">
 										<div>
 											<CardTitle className="flex items-center gap-2">
@@ -249,7 +239,7 @@ export default function Dashboard() {
 										</div>
 									</div>
 								</CardHeader>
-								<CardContent className="relative">
+								<CardContent>
 									{eventsLoading ? (
 										<div className="space-y-3">
 											{Array.from({ length: 3 }, (_, i) => (
@@ -280,7 +270,7 @@ export default function Dashboard() {
 											{userUpcomingEvents.slice(0, 5).map((event) => (
 												<HoverCard key={event.id}>
 													<HoverCardTrigger asChild>
-														<div className="flex items-center justify-between p-3 rounded-lg border hover:bg-blue-50/50 dark:hover:bg-blue-950/20 transition-all duration-200 hover:shadow-sm cursor-pointer">
+														<div className="flex items-center justify-between p-3 rounded-lg border transition-all duration-200 hover:shadow-sm cursor-pointer">
 															<div className="space-y-1">
 																<div className="flex items-center gap-2">
 																	<p className="text-sm font-medium leading-none">
@@ -350,9 +340,8 @@ export default function Dashboard() {
 								</CardContent>
 							</Card>
 
-							<Card className="col-span-3 group relative overflow-hidden border-primary/20 hover:border-primary/40 transition-all duration-300">
-								<div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-								<CardHeader className="relative">
+							<Card className="col-span-3 border-primary/20 hover:border-primary/40 transition-all duration-300">
+								<CardHeader>
 									<div className="flex items-center justify-between">
 										<div>
 											<CardTitle className="flex items-center gap-2">
@@ -365,7 +354,7 @@ export default function Dashboard() {
 										</div>
 									</div>
 								</CardHeader>
-								<CardContent className="relative">
+								<CardContent>
 									{eventsLoading ? (
 										<div className="space-y-3">
 											{Array.from({ length: 3 }, (_, i) => (
@@ -390,7 +379,7 @@ export default function Dashboard() {
 											{userEvents.slice(0, 4).map((event) => (
 												<div
 													key={event.id}
-													className="flex items-center justify-between p-2 rounded border hover:bg-purple-50/50 dark:hover:bg-purple-950/20 transition-colors duration-200"
+													className="flex items-center justify-between p-2 rounded border transition-colors duration-200"
 												>
 													<div className="space-y-1">
 														<p className="text-sm font-medium leading-none line-clamp-1">

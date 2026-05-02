@@ -98,10 +98,9 @@ export default function OrganizersPage() {
 									.map((o) => (
 										<Card
 											key={o.id}
-											className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg"
+											className="transition-all duration-300 hover:shadow-lg"
 										>
-											<div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-											<CardHeader className="relative">
+											<CardHeader>
 												<div className="flex flex-row items-start justify-between gap-4">
 													<div className="flex-1 space-y-2">
 														<CardTitle className="text-xl flex items-center gap-3">
@@ -123,7 +122,7 @@ export default function OrganizersPage() {
 													</div>
 												</div>
 											</CardHeader>
-											<CardContent className="space-y-4 relative">
+											<CardContent className="space-y-4">
 												{isProfileIncomplete && (
 													<div className="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-amber-800 dark:bg-amber-950">
 														<div className="flex items-start gap-3">
@@ -163,7 +162,7 @@ export default function OrganizersPage() {
 																	href={o.website_url}
 																	target="_blank"
 																	rel="noreferrer"
-																	className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-blue-600 hover:bg-blue-50 transition-colors"
+																	className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-blue-600"
 																>
 																	<svg
 																		className="h-4 w-4"
@@ -207,7 +206,7 @@ export default function OrganizersPage() {
 																	href={o.instagram_url}
 																	target="_blank"
 																	rel="noreferrer"
-																	className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-pink-600 hover:bg-pink-50 transition-colors"
+																	className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-pink-600"
 																>
 																	<Instagram className="h-4 w-4" />
 																	Instagram
@@ -223,7 +222,7 @@ export default function OrganizersPage() {
 																	href={o.linkedin_url}
 																	target="_blank"
 																	rel="noreferrer"
-																	className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-sky-600 hover:bg-sky-50 transition-colors"
+																	className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-sky-600"
 																>
 																	<Linkedin className="h-4 w-4" />
 																	LinkedIn
@@ -297,11 +296,10 @@ export default function OrganizersPage() {
 									.map((o) => (
 										<Card
 											key={o.id}
-											className="cursor-pointer group relative overflow-hidden transition-all duration-300 hover:shadow-lg"
+											className="cursor-pointer transition-all duration-300 hover:shadow-lg"
 											onClick={() => setViewing(o)}
 										>
-											<div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-											<CardHeader className="pb-3 relative">
+											<CardHeader className="pb-3">
 												<div className="flex items-center gap-3">
 													<Avatar className="h-10 w-10 flex-shrink-0">
 														<AvatarFallback className=" from-primary/90 to-primary bg-gradient-to-br text-primary-foreground font-semibold text-lg">
@@ -315,7 +313,7 @@ export default function OrganizersPage() {
 													</div>
 												</div>
 											</CardHeader>
-											<CardContent className="space-y-3 relative">
+											<CardContent className="space-y-3">
 												<p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
 													{o.description_de ||
 														o.description_en ||

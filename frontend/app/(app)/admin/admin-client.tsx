@@ -302,7 +302,7 @@ export function AdminDashboardClient() {
 												entry={entry}
 												organizerName={organizerMap.get(entry.organizer_id)}
 											>
-												<tr className="border-t cursor-pointer hover:bg-muted/50 transition-colors">
+												<tr className="border-t cursor-pointer transition-colors">
 													<td className="py-2 pr-4 align-top whitespace-nowrap">
 														{format(new Date(entry.at), 'dd.MM.yyyy HH:mm')}
 													</td>

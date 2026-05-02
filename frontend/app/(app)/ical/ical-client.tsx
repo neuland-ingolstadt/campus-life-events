@@ -52,9 +52,8 @@ export function ICalClient({ backendUrl, userId }: ICalClientProps) {
 
 				<div className="grid gap-6 md:grid-cols-2">
 					{/* Global Calendar */}
-					<Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg">
-						<div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-						<CardHeader className="relative">
+					<Card className="transition-all duration-300 hover:shadow-lg">
+						<CardHeader>
 							<div className="flex items-center gap-2">
 								<Globe className="h-5 w-5 " />
 								<CardTitle>Alle Events</CardTitle>
@@ -64,7 +63,7 @@ export function ICalClient({ backendUrl, userId }: ICalClientProps) {
 								Vereinen
 							</CardDescription>
 						</CardHeader>
-						<CardContent className="space-y-4 relative">
+						<CardContent className="space-y-4">
 							<div className="space-y-2">
 								<label htmlFor={globalIcalId} className="text-sm font-medium">
 									iCal URL:
@@ -93,16 +92,15 @@ export function ICalClient({ backendUrl, userId }: ICalClientProps) {
 
 					{/* Personal Calendar or Admin Info */}
 					{userId ? (
-						<Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg">
-							<div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-							<CardHeader className="relative">
+						<Card className="transition-all duration-300 hover:shadow-lg">
+							<CardHeader>
 								<div className="flex items-center gap-2">
 									<Calendar className="h-5 w-5" />
 									<CardTitle>Deine Vereins-Events</CardTitle>
 								</div>
 								<CardDescription>Events von deinem Verein</CardDescription>
 							</CardHeader>
-							<CardContent className="space-y-4 relative">
+							<CardContent className="space-y-4">
 								<div className="space-y-2">
 									<label
 										htmlFor={personalIcalId}
@@ -132,15 +130,14 @@ export function ICalClient({ backendUrl, userId }: ICalClientProps) {
 							</CardContent>
 						</Card>
 					) : (
-						<Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg">
-							<div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-							<CardHeader className="relative">
+						<Card className="transition-all duration-300 hover:shadow-lg">
+							<CardHeader>
 								<div className="flex items-center gap-2">
 									<Calendar className="h-5 w-5" />
 									<CardTitle>Vereins-spezifische Kalender</CardTitle>
 								</div>
 							</CardHeader>
-							<CardContent className="space-y-4 relative">
+							<CardContent className="space-y-4">
 								<div className="space-y-3 text-sm text-muted-foreground">
 									<p>
 										Als Administrator hast du keinen eigenen Vereins-Kalender.
@@ -164,15 +161,14 @@ export function ICalClient({ backendUrl, userId }: ICalClientProps) {
 				</div>
 
 				{/* How to Use Section */}
-				<Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg">
-					<div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-yellow-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-					<CardHeader className="relative">
+				<Card className="transition-all duration-300 hover:shadow-lg">
+					<CardHeader>
 						<CardTitle>So fügst du den Kalender hinzu</CardTitle>
 						<CardDescription>
 							Schritt-für-Schritt Anleitung für verschiedene Kalender-Apps
 						</CardDescription>
 					</CardHeader>
-					<CardContent className="space-y-6 relative">
+					<CardContent className="space-y-6">
 						<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 							<div className="space-y-2">
 								<h4 className="font-medium">Google Calendar</h4>

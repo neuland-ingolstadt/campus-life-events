@@ -235,7 +235,7 @@ function RegisterForm({ token }: { token: string }) {
 										<TooltipTrigger asChild>
 											<button
 												type="button"
-												className="w-4 h-4 rounded-full bg-muted-foreground/20 hover:bg-muted-foreground/30 flex items-center justify-center text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+												className="w-4 h-4 rounded-full bg-muted-foreground/20 flex items-center justify-center text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
 											>
 												?
 											</button>
