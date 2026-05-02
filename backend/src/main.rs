@@ -1,4 +1,6 @@
+mod api_token;
 mod app_state;
+mod authed_user;
 mod cache;
 mod dto;
 mod email;
@@ -9,10 +11,10 @@ mod responses;
 mod routes;
 
 use std::net::SocketAddr;
+use std::path::Path;
 
 use axum::Router;
 use axum::http::{HeaderValue, Method, header};
-use dotenvy::dotenv;
 use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
 use tower_http::{cors::CorsLayer, set_header::SetResponseHeaderLayer};
@@ -29,11 +31,44 @@ use crate::{
     routes::api_router,
 };
 
+fn load_dotenv_from_backend_dir() {
+    let dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let _ = dotenvy::from_path_override(dir.join(".env"));
+    let _ = dotenvy::from_path_override(dir.join(".env.local"));
+}
+
+fn api_token_secret_raw_from_env_files(dir: &Path) -> Option<String> {
+    for name in [".env.local", ".env"] {
+        if let Some(s) = read_env_file_key(dir.join(name), "API_TOKEN_SECRET") {
+            return Some(s);
+        }
+    }
+    None
+}
+
+fn read_env_file_key(path: impl AsRef<Path>, key: &str) -> Option<String> {
+    let content = std::fs::read_to_string(path.as_ref()).ok()?;
+    let prefix = format!("{key}=");
+    let mut last = None;
+    for line in content.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let Some(rest) = line.strip_prefix(&prefix) else {
+            continue;
+        };
+        let v = rest.trim().trim_matches('"').trim_matches('\'').to_string();
+        if !v.is_empty() {
+            last = Some(v);
+        }
+    }
+    last
+}
+
 #[tokio::main]
 async fn main() {
-    if dotenvy::from_filename(".env.local").is_err() {
-        dotenv().ok();
-    }
+    load_dotenv_from_backend_dir();
     init_tracing();
 
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
@@ -100,10 +135,37 @@ async fn main() {
 
     let cache = build_cache().await;
 
+    let backend_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let api_token_secret = std::env::var("API_TOKEN_SECRET")
+        .ok()
+        .filter(|s| !s.trim().is_empty())
+        .map(|s| s.trim().to_string())
+        .or_else(|| api_token_secret_raw_from_env_files(backend_dir));
+    let api_token_hmac_key = api_token_secret
+        .as_deref()
+        .map(crate::api_token::derive_key);
+    if api_token_hmac_key.is_some() {
+        info!(
+            target: "startup",
+            component = "api_tokens",
+            action = "init",
+            "API token management enabled"
+        );
+    } else {
+        warn!(
+            target: "startup",
+            component = "api_tokens",
+            action = "init",
+            path = %backend_dir.join(".env.local").display(),
+            "API token management disabled; set API_TOKEN_SECRET in the environment or in .env.local next to backend/Cargo.toml"
+        );
+    }
+
     let state = AppState {
         db: pool.clone(),
         email: email_client,
         cache,
+        api_token_hmac_key,
     };
 
     // Configure CORS to be more restrictive

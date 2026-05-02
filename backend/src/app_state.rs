@@ -7,4 +7,5 @@ pub struct AppState {
     pub db: PgPool,
     pub email: Option<EmailClient>,
     pub cache: Option<CacheService>,
+    pub api_token_hmac_key: Option<[u8; 32]>,
 }

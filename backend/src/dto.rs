@@ -177,3 +177,10 @@ pub struct ResetPasswordRequest {
     pub token: String,
     pub new_password: String,
 }
+
+#[derive(Debug, Deserialize, ToSchema)]
+#[serde(deny_unknown_fields)]
+pub struct CreateApiTokenRequest {
+    #[serde(default)]
+    pub label: String,
+}

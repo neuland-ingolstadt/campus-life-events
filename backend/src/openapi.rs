@@ -2,17 +2,18 @@ use utoipa::OpenApi;
 
 use crate::{
     dto::{
-        ChangePasswordRequest, CreateEventRequest, CreateOrganizerRequest, InitAccountRequest,
-        InviteAdminRequest, ListAuditLogsQuery, ListEventsQuery, LoginRequest,
+        ChangePasswordRequest, CreateApiTokenRequest, CreateEventRequest, CreateOrganizerRequest,
+        InitAccountRequest, InviteAdminRequest, ListAuditLogsQuery, ListEventsQuery, LoginRequest,
         RequestPasswordResetRequest, ResetPasswordRequest, SendNewsletterPreviewRequest,
         SetupTokenLookupRequest, UpdateEventRequest, UpdateOrganizerPermissionsRequest,
         UpdateOrganizerRequest,
     },
     models::{AdminWithInvite, AuditLogEntry, Event, InviteStatus, Organizer, OrganizerWithInvite},
     responses::{
-        AuthUserResponse, ErrorResponse, HealthResponse, IcalEventResponse, NewsletterDataResponse,
-        OrganizerWithStatsResponse, PasswordResetRequestResponse, PublicEventResponse,
-        PublicOrganizerResponse, SetupTokenInfoResponse, SetupTokenResponse,
+        ApiTokenCreatedResponse, ApiTokenSummaryResponse, AuthUserResponse, ErrorResponse,
+        HealthResponse, IcalEventResponse, NewsletterDataResponse, OrganizerWithStatsResponse,
+        PasswordResetRequestResponse, PublicEventResponse, PublicOrganizerResponse,
+        SetupTokenInfoResponse, SetupTokenResponse,
     },
     routes,
 };
@@ -67,7 +68,10 @@ use crate::{
         routes::auth::init_account,
         routes::auth::change_password,
         routes::auth::request_password_reset,
-        routes::auth::reset_password
+        routes::auth::reset_password,
+        routes::api_tokens::list_api_tokens,
+        routes::api_tokens::create_api_token,
+        routes::api_tokens::revoke_api_token
     ),
     components(schemas(
         AdminWithInvite,
@@ -95,6 +99,9 @@ use crate::{
         ErrorResponse,
         HealthResponse,
         AuthUserResponse,
+        CreateApiTokenRequest,
+        ApiTokenSummaryResponse,
+        ApiTokenCreatedResponse,
         SetupTokenResponse,
         SetupTokenInfoResponse,
         NewsletterDataResponse,

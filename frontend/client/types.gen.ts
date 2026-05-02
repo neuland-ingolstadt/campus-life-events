@@ -16,6 +16,24 @@ export type AdminWithInvite = {
     updated_at: string;
 };
 
+export type ApiTokenCreatedResponse = {
+    created_at: string;
+    expires_at: string;
+    id: number;
+    label: string;
+    token: string;
+    token_last_four: string;
+};
+
+export type ApiTokenSummaryResponse = {
+    created_at: string;
+    expires_at: string;
+    id: number;
+    label: string;
+    last_used_at?: string | null;
+    token_last_four: string;
+};
+
 export type AuditLogEntry = {
     at: string;
     event_id: number;
@@ -40,6 +58,10 @@ export type AuthUserResponse = {
 export type ChangePasswordRequest = {
     current_password: string;
     new_password: string;
+};
+
+export type CreateApiTokenRequest = {
+    label?: string;
 };
 
 export type CreateEventRequest = {
@@ -109,6 +131,21 @@ export type EventWithOrganizer = {
 export type HealthResponse = {
     message: string;
     status: string;
+};
+
+export type IcalEventResponse = {
+    description_de?: string | null;
+    description_en?: string | null;
+    end_date_time: string;
+    event_url?: string | null;
+    id: number;
+    is_internal: boolean;
+    location?: string | null;
+    organizer_id: number;
+    organizer_name: string;
+    start_date_time: string;
+    title_de: string;
+    title_en: string;
 };
 
 export type InitAccountRequest = {
@@ -310,7 +347,7 @@ export type ListOrganizerIcalEventsResponses = {
     /**
      * Events for organizer that are iCal eligible
      */
-    200: Array<PublicEventResponse>;
+    200: Array<IcalEventResponse>;
 };
 
 export type ListOrganizerIcalEventsResponse = ListOrganizerIcalEventsResponses[keyof ListOrganizerIcalEventsResponses];
@@ -388,6 +425,88 @@ export type ListAuditLogsResponses = {
 };
 
 export type ListAuditLogsResponse = ListAuditLogsResponses[keyof ListAuditLogsResponses];
+
+export type ListApiTokensData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/api-tokens';
+};
+
+export type ListApiTokensErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ListApiTokensResponses = {
+    /**
+     * API tokens for the current account
+     */
+    200: Array<ApiTokenSummaryResponse>;
+};
+
+export type ListApiTokensResponse = ListApiTokensResponses[keyof ListApiTokensResponses];
+
+export type CreateApiTokenData = {
+    body: CreateApiTokenRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/api-tokens';
+};
+
+export type CreateApiTokenErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+    /**
+     * Server not configured for API tokens
+     */
+    503: unknown;
+};
+
+export type CreateApiTokenResponses = {
+    /**
+     * New token; copy `token` now; it is not shown again
+     */
+    200: ApiTokenCreatedResponse;
+};
+
+export type CreateApiTokenResponse = CreateApiTokenResponses[keyof CreateApiTokenResponses];
+
+export type RevokeApiTokenData = {
+    body?: never;
+    path: {
+        /**
+         * API token id
+         */
+        id: number;
+    };
+    query?: never;
+    url: '/api/v1/auth/api-tokens/{id}';
+};
+
+export type RevokeApiTokenErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+    /**
+     * Not found
+     */
+    404: unknown;
+};
+
+export type RevokeApiTokenResponses = {
+    /**
+     * Revoked
+     */
+    204: void;
+};
+
+export type RevokeApiTokenResponse = RevokeApiTokenResponses[keyof RevokeApiTokenResponses];
 
 export type ChangePasswordData = {
     body: ChangePasswordRequest;

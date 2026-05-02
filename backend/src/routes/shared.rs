@@ -3,29 +3,18 @@ use cookie::Cookie;
 use tracing::warn;
 use uuid::Uuid;
 
-use crate::{app_state::AppState, error::AppError, models::AccountType};
+use crate::{api_token, app_state::AppState, error::AppError, models::AccountType};
 
-#[derive(Clone, Debug)]
-pub(crate) struct AuthedUser {
-    pub(crate) account_id: i64,
-    pub(crate) account_type: AccountType,
-    pub(crate) organizer_id: Option<i64>,
-}
-
-impl AuthedUser {
-    pub(crate) fn is_admin(&self) -> bool {
-        matches!(self.account_type, AccountType::Admin)
-    }
-
-    pub(crate) fn organizer_id(&self) -> Option<i64> {
-        self.organizer_id
-    }
-}
+pub(crate) use crate::authed_user::AuthedUser;
 
 pub(crate) async fn current_user_from_headers(
     headers: &HeaderMap,
     state: &AppState,
 ) -> Result<AuthedUser, AppError> {
+    if let Some(raw) = bearer_token(headers) {
+        return api_token::authed_user_from_bearer(raw, state).await;
+    }
+
     let Some(session_id) = get_cookie(headers, "session_id") else {
         return Err(AppError::unauthorized("missing session"));
     };
@@ -54,6 +43,18 @@ pub(crate) async fn current_user_from_headers(
         account_type: row.account_type,
         organizer_id: row.organizer_id,
     })
+}
+
+fn bearer_token(headers: &HeaderMap) -> Option<&str> {
+    let hv = headers
+        .get(axum::http::header::AUTHORIZATION)?
+        .to_str()
+        .ok()?;
+    let rest = hv
+        .strip_prefix("Bearer ")
+        .or_else(|| hv.strip_prefix("bearer "))?;
+    let t = rest.trim();
+    (!t.is_empty()).then_some(t)
 }
 
 pub(crate) fn get_cookie(headers: &HeaderMap, name: &str) -> Option<String> {

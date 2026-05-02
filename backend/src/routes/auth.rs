@@ -308,39 +308,21 @@ pub(crate) async fn me(
     State(state): State<AppState>,
     headers: HeaderMap,
 ) -> Result<Json<AuthUserResponse>, AppError> {
-    let Some(session_id) = get_cookie(&headers, "session_id") else {
-        return Err(AppError::unauthorized("missing session"));
-    };
-
-    let uuid = Uuid::parse_str(&session_id)
-        .map_err(|_| AppError::unauthorized("invalid session format"))?;
+    let user = current_user_from_headers(&headers, &state).await?;
     let rec = sqlx::query!(
-        r#"
-        SELECT a.id, a.display_name, a.account_type as "account_type: AccountType", a.organizer_id
-        FROM sessions s
-        JOIN accounts a ON a.id = s.account_id
-        WHERE s.id = $1 AND s.expires_at > NOW()
-        "#,
-        uuid
+        r#"SELECT display_name FROM accounts WHERE id = $1"#,
+        user.account_id
     )
-    .fetch_optional(&state.db)
+    .fetch_one(&state.db)
     .await?;
 
-    let Some(row) = rec else {
-        return Err(AppError::unauthorized("invalid or expired session"));
-    };
-
-    let account_id = row.id;
-    let display_name = row.display_name;
-    let account_type = row.account_type;
-    let organizer_id = row.organizer_id;
     let can_access_newsletter =
-        determine_newsletter_access(&state, &account_type, organizer_id).await?;
+        determine_newsletter_access(&state, &user.account_type, user.organizer_id).await?;
     Ok(Json(AuthUserResponse {
-        account_id,
-        display_name,
-        account_type,
-        organizer_id,
+        account_id: user.account_id,
+        display_name: rec.display_name,
+        account_type: user.account_type,
+        organizer_id: user.organizer_id,
         can_access_newsletter,
     }))
 }
@@ -723,4 +705,5 @@ pub(crate) fn router() -> Router<AppState> {
         .route("/request-password-reset", post(request_password_reset))
         .route("/reset-password", post(reset_password))
         .route("/me", get(me))
+        .merge(super::api_tokens::router())
 }

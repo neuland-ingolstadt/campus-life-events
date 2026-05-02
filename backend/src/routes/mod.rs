@@ -1,4 +1,5 @@
 pub(crate) mod admin;
+pub(crate) mod api_tokens;
 pub(crate) mod audit;
 pub(crate) mod auth;
 pub(crate) mod events;

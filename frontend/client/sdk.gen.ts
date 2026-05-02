@@ -2,9 +2,9 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { ChangePasswordData, ChangePasswordResponses, CreateEventData, CreateEventResponses, CreateOrganizerData, CreateOrganizerResponses, DeleteEventData, DeleteEventResponses, DeleteOrganizerData, DeleteOrganizerResponses, GenerateSetupTokenData, GenerateSetupTokenResponses, GetEventData, GetEventErrors, GetEventResponses, GetNewsletterDataData, GetNewsletterDataErrors, GetNewsletterDataResponses, GetOrganizerData, GetOrganizerErrors, GetOrganizerResponses, GetPublicEventData, GetPublicEventErrors, GetPublicEventResponses, GetPublicOrganizerData, GetPublicOrganizerErrors, GetPublicOrganizerResponses, HealthCheckData, HealthCheckResponses, InitAccountData, InitAccountErrors, InitAccountResponses, InviteAdminData, InviteAdminResponses, ListAdminsData, ListAdminsResponses, ListAuditLogsData, ListAuditLogsResponses, ListEventsData, ListEventsErrors, ListEventsResponses, ListOrganizerIcalEventsData, ListOrganizerIcalEventsResponses, ListOrganizersAdminData, ListOrganizersAdminResponses, ListOrganizersData, ListOrganizersErrors, ListOrganizersResponses, ListPublicEventsData, ListPublicEventsResponses, ListPublicOrganizersData, ListPublicOrganizersResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutResponses, LookupSetupTokenData, LookupSetupTokenErrors, LookupSetupTokenResponses, MeData, MeErrors, MeResponses, RequestPasswordResetData, RequestPasswordResetResponses, ResetPasswordData, ResetPasswordErrors, ResetPasswordResponses, SendNewsletterPreviewData, SendNewsletterPreviewErrors, SendNewsletterPreviewResponses, UpdateEventData, UpdateEventResponses, UpdateOrganizerData, UpdateOrganizerPermissionsData, UpdateOrganizerPermissionsResponses, UpdateOrganizerResponses } from './types.gen';
+import type { ChangePasswordData, ChangePasswordResponses, CreateApiTokenData, CreateApiTokenErrors, CreateApiTokenResponses, CreateEventData, CreateEventResponses, CreateOrganizerData, CreateOrganizerResponses, DeleteEventData, DeleteEventResponses, DeleteOrganizerData, DeleteOrganizerResponses, GenerateSetupTokenData, GenerateSetupTokenResponses, GetEventData, GetEventErrors, GetEventResponses, GetNewsletterDataData, GetNewsletterDataErrors, GetNewsletterDataResponses, GetOrganizerData, GetOrganizerErrors, GetOrganizerResponses, GetPublicEventData, GetPublicEventErrors, GetPublicEventResponses, GetPublicOrganizerData, GetPublicOrganizerErrors, GetPublicOrganizerResponses, HealthCheckData, HealthCheckResponses, InitAccountData, InitAccountErrors, InitAccountResponses, InviteAdminData, InviteAdminResponses, ListAdminsData, ListAdminsResponses, ListApiTokensData, ListApiTokensErrors, ListApiTokensResponses, ListAuditLogsData, ListAuditLogsResponses, ListEventsData, ListEventsErrors, ListEventsResponses, ListOrganizerIcalEventsData, ListOrganizerIcalEventsResponses, ListOrganizersAdminData, ListOrganizersAdminResponses, ListOrganizersData, ListOrganizersErrors, ListOrganizersResponses, ListPublicEventsData, ListPublicEventsResponses, ListPublicOrganizersData, ListPublicOrganizersResponses, LoginData, LoginErrors, LoginResponses, LogoutData, LogoutResponses, LookupSetupTokenData, LookupSetupTokenErrors, LookupSetupTokenResponses, MeData, MeErrors, MeResponses, RequestPasswordResetData, RequestPasswordResetResponses, ResetPasswordData, ResetPasswordErrors, ResetPasswordResponses, RevokeApiTokenData, RevokeApiTokenErrors, RevokeApiTokenResponses, SendNewsletterPreviewData, SendNewsletterPreviewErrors, SendNewsletterPreviewResponses, UpdateEventData, UpdateEventResponses, UpdateOrganizerData, UpdateOrganizerPermissionsData, UpdateOrganizerPermissionsResponses, UpdateOrganizerResponses } from './types.gen';
 
-export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
+export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
      * You can provide a client instance returned by `createClient()` instead of
      * individual options. This might be also useful if you want to implement a
@@ -18,278 +18,170 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
     meta?: Record<string, unknown>;
 };
 
-export const listOrganizerIcalEvents = <ThrowOnError extends boolean = false>(options: Options<ListOrganizerIcalEventsData, ThrowOnError>) => {
-    return (options.client ?? client).get<ListOrganizerIcalEventsResponses, unknown, ThrowOnError>({
-        url: '/api/ical/{organizer_id}/events',
-        ...options
-    });
-};
+export const listOrganizerIcalEvents = <ThrowOnError extends boolean = false>(options: Options<ListOrganizerIcalEventsData, ThrowOnError>) => (options.client ?? client).get<ListOrganizerIcalEventsResponses, unknown, ThrowOnError>({ url: '/api/ical/{organizer_id}/events', ...options });
 
-export const inviteAdmin = <ThrowOnError extends boolean = false>(options: Options<InviteAdminData, ThrowOnError>) => {
-    return (options.client ?? client).post<InviteAdminResponses, unknown, ThrowOnError>({
-        url: '/api/v1/admin/invite',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
+export const inviteAdmin = <ThrowOnError extends boolean = false>(options: Options<InviteAdminData, ThrowOnError>) => (options.client ?? client).post<InviteAdminResponses, unknown, ThrowOnError>({
+    url: '/api/v1/admin/invite',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
-export const listAdmins = <ThrowOnError extends boolean = false>(options?: Options<ListAdminsData, ThrowOnError>) => {
-    return (options?.client ?? client).get<ListAdminsResponses, unknown, ThrowOnError>({
-        url: '/api/v1/admin/list',
-        ...options
-    });
-};
+export const listAdmins = <ThrowOnError extends boolean = false>(options?: Options<ListAdminsData, ThrowOnError>) => (options?.client ?? client).get<ListAdminsResponses, unknown, ThrowOnError>({ url: '/api/v1/admin/list', ...options });
 
-export const updateOrganizerPermissions = <ThrowOnError extends boolean = false>(options: Options<UpdateOrganizerPermissionsData, ThrowOnError>) => {
-    return (options.client ?? client).put<UpdateOrganizerPermissionsResponses, unknown, ThrowOnError>({
-        url: '/api/v1/admin/organizers/{id}/permissions',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
+export const updateOrganizerPermissions = <ThrowOnError extends boolean = false>(options: Options<UpdateOrganizerPermissionsData, ThrowOnError>) => (options.client ?? client).put<UpdateOrganizerPermissionsResponses, unknown, ThrowOnError>({
+    url: '/api/v1/admin/organizers/{id}/permissions',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
-export const listAuditLogs = <ThrowOnError extends boolean = false>(options?: Options<ListAuditLogsData, ThrowOnError>) => {
-    return (options?.client ?? client).get<ListAuditLogsResponses, unknown, ThrowOnError>({
-        url: '/api/v1/audit-logs',
-        ...options
-    });
-};
+export const listAuditLogs = <ThrowOnError extends boolean = false>(options?: Options<ListAuditLogsData, ThrowOnError>) => (options?.client ?? client).get<ListAuditLogsResponses, unknown, ThrowOnError>({ url: '/api/v1/audit-logs', ...options });
 
-export const changePassword = <ThrowOnError extends boolean = false>(options: Options<ChangePasswordData, ThrowOnError>) => {
-    return (options.client ?? client).post<ChangePasswordResponses, unknown, ThrowOnError>({
-        url: '/api/v1/auth/change-password',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
+export const listApiTokens = <ThrowOnError extends boolean = false>(options?: Options<ListApiTokensData, ThrowOnError>) => (options?.client ?? client).get<ListApiTokensResponses, ListApiTokensErrors, ThrowOnError>({ url: '/api/v1/auth/api-tokens', ...options });
 
-export const initAccount = <ThrowOnError extends boolean = false>(options: Options<InitAccountData, ThrowOnError>) => {
-    return (options.client ?? client).post<InitAccountResponses, InitAccountErrors, ThrowOnError>({
-        url: '/api/v1/auth/init',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
+export const createApiToken = <ThrowOnError extends boolean = false>(options: Options<CreateApiTokenData, ThrowOnError>) => (options.client ?? client).post<CreateApiTokenResponses, CreateApiTokenErrors, ThrowOnError>({
+    url: '/api/v1/auth/api-tokens',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
-export const login = <ThrowOnError extends boolean = false>(options: Options<LoginData, ThrowOnError>) => {
-    return (options.client ?? client).post<LoginResponses, LoginErrors, ThrowOnError>({
-        url: '/api/v1/auth/login',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
+export const revokeApiToken = <ThrowOnError extends boolean = false>(options: Options<RevokeApiTokenData, ThrowOnError>) => (options.client ?? client).delete<RevokeApiTokenResponses, RevokeApiTokenErrors, ThrowOnError>({ url: '/api/v1/auth/api-tokens/{id}', ...options });
 
-export const logout = <ThrowOnError extends boolean = false>(options?: Options<LogoutData, ThrowOnError>) => {
-    return (options?.client ?? client).post<LogoutResponses, unknown, ThrowOnError>({
-        url: '/api/v1/auth/logout',
-        ...options
-    });
-};
+export const changePassword = <ThrowOnError extends boolean = false>(options: Options<ChangePasswordData, ThrowOnError>) => (options.client ?? client).post<ChangePasswordResponses, unknown, ThrowOnError>({
+    url: '/api/v1/auth/change-password',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
-export const me = <ThrowOnError extends boolean = false>(options?: Options<MeData, ThrowOnError>) => {
-    return (options?.client ?? client).get<MeResponses, MeErrors, ThrowOnError>({
-        url: '/api/v1/auth/me',
-        ...options
-    });
-};
+export const initAccount = <ThrowOnError extends boolean = false>(options: Options<InitAccountData, ThrowOnError>) => (options.client ?? client).post<InitAccountResponses, InitAccountErrors, ThrowOnError>({
+    url: '/api/v1/auth/init',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
-export const lookupSetupToken = <ThrowOnError extends boolean = false>(options: Options<LookupSetupTokenData, ThrowOnError>) => {
-    return (options.client ?? client).post<LookupSetupTokenResponses, LookupSetupTokenErrors, ThrowOnError>({
-        url: '/api/v1/auth/register-info',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
+export const login = <ThrowOnError extends boolean = false>(options: Options<LoginData, ThrowOnError>) => (options.client ?? client).post<LoginResponses, LoginErrors, ThrowOnError>({
+    url: '/api/v1/auth/login',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
-export const requestPasswordReset = <ThrowOnError extends boolean = false>(options: Options<RequestPasswordResetData, ThrowOnError>) => {
-    return (options.client ?? client).post<RequestPasswordResetResponses, unknown, ThrowOnError>({
-        url: '/api/v1/auth/request-password-reset',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
+export const logout = <ThrowOnError extends boolean = false>(options?: Options<LogoutData, ThrowOnError>) => (options?.client ?? client).post<LogoutResponses, unknown, ThrowOnError>({ url: '/api/v1/auth/logout', ...options });
 
-export const resetPassword = <ThrowOnError extends boolean = false>(options: Options<ResetPasswordData, ThrowOnError>) => {
-    return (options.client ?? client).post<ResetPasswordResponses, ResetPasswordErrors, ThrowOnError>({
-        url: '/api/v1/auth/reset-password',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
+export const me = <ThrowOnError extends boolean = false>(options?: Options<MeData, ThrowOnError>) => (options?.client ?? client).get<MeResponses, MeErrors, ThrowOnError>({ url: '/api/v1/auth/me', ...options });
 
-export const listEvents = <ThrowOnError extends boolean = false>(options?: Options<ListEventsData, ThrowOnError>) => {
-    return (options?.client ?? client).get<ListEventsResponses, ListEventsErrors, ThrowOnError>({
-        url: '/api/v1/events',
-        ...options
-    });
-};
+export const lookupSetupToken = <ThrowOnError extends boolean = false>(options: Options<LookupSetupTokenData, ThrowOnError>) => (options.client ?? client).post<LookupSetupTokenResponses, LookupSetupTokenErrors, ThrowOnError>({
+    url: '/api/v1/auth/register-info',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
-export const createEvent = <ThrowOnError extends boolean = false>(options: Options<CreateEventData, ThrowOnError>) => {
-    return (options.client ?? client).post<CreateEventResponses, unknown, ThrowOnError>({
-        url: '/api/v1/events',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
+export const requestPasswordReset = <ThrowOnError extends boolean = false>(options: Options<RequestPasswordResetData, ThrowOnError>) => (options.client ?? client).post<RequestPasswordResetResponses, unknown, ThrowOnError>({
+    url: '/api/v1/auth/request-password-reset',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
-export const getNewsletterData = <ThrowOnError extends boolean = false>(options?: Options<GetNewsletterDataData, ThrowOnError>) => {
-    return (options?.client ?? client).get<GetNewsletterDataResponses, GetNewsletterDataErrors, ThrowOnError>({
-        url: '/api/v1/events/newsletter-data',
-        ...options
-    });
-};
+export const resetPassword = <ThrowOnError extends boolean = false>(options: Options<ResetPasswordData, ThrowOnError>) => (options.client ?? client).post<ResetPasswordResponses, ResetPasswordErrors, ThrowOnError>({
+    url: '/api/v1/auth/reset-password',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
-export const sendNewsletterPreview = <ThrowOnError extends boolean = false>(options: Options<SendNewsletterPreviewData, ThrowOnError>) => {
-    return (options.client ?? client).post<SendNewsletterPreviewResponses, SendNewsletterPreviewErrors, ThrowOnError>({
-        url: '/api/v1/events/newsletter-preview',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
+export const listEvents = <ThrowOnError extends boolean = false>(options?: Options<ListEventsData, ThrowOnError>) => (options?.client ?? client).get<ListEventsResponses, ListEventsErrors, ThrowOnError>({ url: '/api/v1/events', ...options });
 
-export const deleteEvent = <ThrowOnError extends boolean = false>(options: Options<DeleteEventData, ThrowOnError>) => {
-    return (options.client ?? client).delete<DeleteEventResponses, unknown, ThrowOnError>({
-        url: '/api/v1/events/{id}',
-        ...options
-    });
-};
+export const createEvent = <ThrowOnError extends boolean = false>(options: Options<CreateEventData, ThrowOnError>) => (options.client ?? client).post<CreateEventResponses, unknown, ThrowOnError>({
+    url: '/api/v1/events',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
-export const getEvent = <ThrowOnError extends boolean = false>(options: Options<GetEventData, ThrowOnError>) => {
-    return (options.client ?? client).get<GetEventResponses, GetEventErrors, ThrowOnError>({
-        url: '/api/v1/events/{id}',
-        ...options
-    });
-};
+export const getNewsletterData = <ThrowOnError extends boolean = false>(options?: Options<GetNewsletterDataData, ThrowOnError>) => (options?.client ?? client).get<GetNewsletterDataResponses, GetNewsletterDataErrors, ThrowOnError>({ url: '/api/v1/events/newsletter-data', ...options });
 
-export const updateEvent = <ThrowOnError extends boolean = false>(options: Options<UpdateEventData, ThrowOnError>) => {
-    return (options.client ?? client).put<UpdateEventResponses, unknown, ThrowOnError>({
-        url: '/api/v1/events/{id}',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
+export const sendNewsletterPreview = <ThrowOnError extends boolean = false>(options: Options<SendNewsletterPreviewData, ThrowOnError>) => (options.client ?? client).post<SendNewsletterPreviewResponses, SendNewsletterPreviewErrors, ThrowOnError>({
+    url: '/api/v1/events/newsletter-preview',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
-export const healthCheck = <ThrowOnError extends boolean = false>(options?: Options<HealthCheckData, ThrowOnError>) => {
-    return (options?.client ?? client).get<HealthCheckResponses, unknown, ThrowOnError>({
-        url: '/api/v1/healthcheck',
-        ...options
-    });
-};
+export const deleteEvent = <ThrowOnError extends boolean = false>(options: Options<DeleteEventData, ThrowOnError>) => (options.client ?? client).delete<DeleteEventResponses, unknown, ThrowOnError>({ url: '/api/v1/events/{id}', ...options });
 
-export const listOrganizers = <ThrowOnError extends boolean = false>(options?: Options<ListOrganizersData, ThrowOnError>) => {
-    return (options?.client ?? client).get<ListOrganizersResponses, ListOrganizersErrors, ThrowOnError>({
-        url: '/api/v1/organizers',
-        ...options
-    });
-};
+export const getEvent = <ThrowOnError extends boolean = false>(options: Options<GetEventData, ThrowOnError>) => (options.client ?? client).get<GetEventResponses, GetEventErrors, ThrowOnError>({ url: '/api/v1/events/{id}', ...options });
 
-export const createOrganizer = <ThrowOnError extends boolean = false>(options: Options<CreateOrganizerData, ThrowOnError>) => {
-    return (options.client ?? client).post<CreateOrganizerResponses, unknown, ThrowOnError>({
-        url: '/api/v1/organizers',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
+export const updateEvent = <ThrowOnError extends boolean = false>(options: Options<UpdateEventData, ThrowOnError>) => (options.client ?? client).put<UpdateEventResponses, unknown, ThrowOnError>({
+    url: '/api/v1/events/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
-export const listOrganizersAdmin = <ThrowOnError extends boolean = false>(options?: Options<ListOrganizersAdminData, ThrowOnError>) => {
-    return (options?.client ?? client).get<ListOrganizersAdminResponses, unknown, ThrowOnError>({
-        url: '/api/v1/organizers/admin',
-        ...options
-    });
-};
+export const healthCheck = <ThrowOnError extends boolean = false>(options?: Options<HealthCheckData, ThrowOnError>) => (options?.client ?? client).get<HealthCheckResponses, unknown, ThrowOnError>({ url: '/api/v1/healthcheck', ...options });
 
-export const deleteOrganizer = <ThrowOnError extends boolean = false>(options: Options<DeleteOrganizerData, ThrowOnError>) => {
-    return (options.client ?? client).delete<DeleteOrganizerResponses, unknown, ThrowOnError>({
-        url: '/api/v1/organizers/{id}',
-        ...options
-    });
-};
+export const listOrganizers = <ThrowOnError extends boolean = false>(options?: Options<ListOrganizersData, ThrowOnError>) => (options?.client ?? client).get<ListOrganizersResponses, ListOrganizersErrors, ThrowOnError>({ url: '/api/v1/organizers', ...options });
 
-export const getOrganizer = <ThrowOnError extends boolean = false>(options: Options<GetOrganizerData, ThrowOnError>) => {
-    return (options.client ?? client).get<GetOrganizerResponses, GetOrganizerErrors, ThrowOnError>({
-        url: '/api/v1/organizers/{id}',
-        ...options
-    });
-};
+export const createOrganizer = <ThrowOnError extends boolean = false>(options: Options<CreateOrganizerData, ThrowOnError>) => (options.client ?? client).post<CreateOrganizerResponses, unknown, ThrowOnError>({
+    url: '/api/v1/organizers',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
-export const updateOrganizer = <ThrowOnError extends boolean = false>(options: Options<UpdateOrganizerData, ThrowOnError>) => {
-    return (options.client ?? client).put<UpdateOrganizerResponses, unknown, ThrowOnError>({
-        url: '/api/v1/organizers/{id}',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
+export const listOrganizersAdmin = <ThrowOnError extends boolean = false>(options?: Options<ListOrganizersAdminData, ThrowOnError>) => (options?.client ?? client).get<ListOrganizersAdminResponses, unknown, ThrowOnError>({ url: '/api/v1/organizers/admin', ...options });
 
-export const generateSetupToken = <ThrowOnError extends boolean = false>(options: Options<GenerateSetupTokenData, ThrowOnError>) => {
-    return (options.client ?? client).post<GenerateSetupTokenResponses, unknown, ThrowOnError>({
-        url: '/api/v1/organizers/{id}/setup-token',
-        ...options
-    });
-};
+export const deleteOrganizer = <ThrowOnError extends boolean = false>(options: Options<DeleteOrganizerData, ThrowOnError>) => (options.client ?? client).delete<DeleteOrganizerResponses, unknown, ThrowOnError>({ url: '/api/v1/organizers/{id}', ...options });
 
-export const listPublicEvents = <ThrowOnError extends boolean = false>(options?: Options<ListPublicEventsData, ThrowOnError>) => {
-    return (options?.client ?? client).get<ListPublicEventsResponses, unknown, ThrowOnError>({
-        url: '/api/v1/public/events',
-        ...options
-    });
-};
+export const getOrganizer = <ThrowOnError extends boolean = false>(options: Options<GetOrganizerData, ThrowOnError>) => (options.client ?? client).get<GetOrganizerResponses, GetOrganizerErrors, ThrowOnError>({ url: '/api/v1/organizers/{id}', ...options });
 
-export const getPublicEvent = <ThrowOnError extends boolean = false>(options: Options<GetPublicEventData, ThrowOnError>) => {
-    return (options.client ?? client).get<GetPublicEventResponses, GetPublicEventErrors, ThrowOnError>({
-        url: '/api/v1/public/events/{id}',
-        ...options
-    });
-};
+export const updateOrganizer = <ThrowOnError extends boolean = false>(options: Options<UpdateOrganizerData, ThrowOnError>) => (options.client ?? client).put<UpdateOrganizerResponses, unknown, ThrowOnError>({
+    url: '/api/v1/organizers/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
-export const listPublicOrganizers = <ThrowOnError extends boolean = false>(options?: Options<ListPublicOrganizersData, ThrowOnError>) => {
-    return (options?.client ?? client).get<ListPublicOrganizersResponses, unknown, ThrowOnError>({
-        url: '/api/v1/public/organizers',
-        ...options
-    });
-};
+export const generateSetupToken = <ThrowOnError extends boolean = false>(options: Options<GenerateSetupTokenData, ThrowOnError>) => (options.client ?? client).post<GenerateSetupTokenResponses, unknown, ThrowOnError>({ url: '/api/v1/organizers/{id}/setup-token', ...options });
 
-export const getPublicOrganizer = <ThrowOnError extends boolean = false>(options: Options<GetPublicOrganizerData, ThrowOnError>) => {
-    return (options.client ?? client).get<GetPublicOrganizerResponses, GetPublicOrganizerErrors, ThrowOnError>({
-        url: '/api/v1/public/organizers/{id}',
-        ...options
-    });
-};
+export const listPublicEvents = <ThrowOnError extends boolean = false>(options?: Options<ListPublicEventsData, ThrowOnError>) => (options?.client ?? client).get<ListPublicEventsResponses, unknown, ThrowOnError>({ url: '/api/v1/public/events', ...options });
+
+export const getPublicEvent = <ThrowOnError extends boolean = false>(options: Options<GetPublicEventData, ThrowOnError>) => (options.client ?? client).get<GetPublicEventResponses, GetPublicEventErrors, ThrowOnError>({ url: '/api/v1/public/events/{id}', ...options });
+
+export const listPublicOrganizers = <ThrowOnError extends boolean = false>(options?: Options<ListPublicOrganizersData, ThrowOnError>) => (options?.client ?? client).get<ListPublicOrganizersResponses, unknown, ThrowOnError>({ url: '/api/v1/public/organizers', ...options });
+
+export const getPublicOrganizer = <ThrowOnError extends boolean = false>(options: Options<GetPublicOrganizerData, ThrowOnError>) => (options.client ?? client).get<GetPublicOrganizerResponses, GetPublicOrganizerErrors, ThrowOnError>({ url: '/api/v1/public/organizers/{id}', ...options });

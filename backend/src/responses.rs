@@ -25,6 +25,26 @@ pub struct AuthUserResponse {
 }
 
 #[derive(Debug, Serialize, ToSchema)]
+pub struct ApiTokenSummaryResponse {
+    pub id: i64,
+    pub label: String,
+    pub token_last_four: String,
+    pub created_at: DateTime<Utc>,
+    pub expires_at: DateTime<Utc>,
+    pub last_used_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ApiTokenCreatedResponse {
+    pub id: i64,
+    pub label: String,
+    pub token: String,
+    pub token_last_four: String,
+    pub created_at: DateTime<Utc>,
+    pub expires_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
 pub struct SetupTokenResponse {
     pub setup_token: String,
 }
