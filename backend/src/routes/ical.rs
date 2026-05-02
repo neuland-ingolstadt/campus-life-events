@@ -7,7 +7,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use chrono_tz::Europe::Berlin;
-use icalendar::{Calendar, Component, Event as ICalEvent, Property};
+use icalendar::{Calendar, Component, Event as ICalEvent, EventLike, Property};
 use tracing::{instrument, warn};
 
 use crate::{
@@ -65,13 +65,13 @@ impl EventWithOrganizer {
 
         let start_local = self.start_date_time.with_timezone(&Berlin);
         let mut start_property =
-            Property::new("DTSTART", &start_local.format("%Y%m%dT%H%M%S").to_string());
+            Property::new("DTSTART", start_local.format("%Y%m%dT%H%M%S").to_string());
         start_property.add_parameter("TZID", BERLIN_TZID);
         ical_event.append_property(start_property);
 
         let end_local = self.end_date_time.with_timezone(&Berlin);
         let mut end_property =
-            Property::new("DTEND", &end_local.format("%Y%m%dT%H%M%S").to_string());
+            Property::new("DTEND", end_local.format("%Y%m%dT%H%M%S").to_string());
         end_property.add_parameter("TZID", BERLIN_TZID);
         ical_event.append_property(end_property);
 
