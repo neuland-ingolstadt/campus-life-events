@@ -11,6 +11,7 @@ use icalendar::{Calendar, Component, Event as ICalEvent, EventLike, Property};
 use tracing::{instrument, warn};
 
 use crate::{
+    api_token,
     app_state::AppState,
     error::AppError,
     models::{Event, Organizer},
@@ -307,16 +308,7 @@ fn extract_bearer_token(headers: &HeaderMap) -> Result<String, AppError> {
 
 async fn validate_api_token(state: &AppState, headers: &HeaderMap) -> Result<(), AppError> {
     let token = extract_bearer_token(headers)?;
-
-    let token_row = sqlx::query("SELECT 1 FROM api_tokens WHERE token = $1")
-        .bind(token)
-        .fetch_optional(&state.db)
-        .await?;
-
-    if token_row.is_none() {
-        return Err(AppError::unauthorized("invalid API token"));
-    }
-
+    api_token::authed_user_from_bearer(&token, state).await?;
     Ok(())
 }
 

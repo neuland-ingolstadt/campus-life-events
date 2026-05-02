@@ -24,6 +24,457 @@ use crate::{
 
 use super::shared::{AuthedUser, current_user_from_headers, refresh_organizer_activity_stats};
 
+pub(crate) async fn create_event_with_user(
+    state: &AppState,
+    user: &AuthedUser,
+    payload: CreateEventRequest,
+) -> Result<Event, AppError> {
+    let organizer_id = user
+        .organizer_id()
+        .ok_or_else(|| AppError::unauthorized("organizer account required"))?;
+    let CreateEventRequest {
+        title_de,
+        title_en,
+        description_de,
+        description_en,
+        start_date_time,
+        end_date_time,
+        event_url,
+        location,
+        publish_app,
+        publish_newsletter,
+        publish_in_ical,
+        publish_web,
+    } = payload;
+
+    if end_date_time < start_date_time {
+        return Err(AppError::validation(
+            "end date time must not be before start date time",
+        ));
+    }
+
+    let mut transaction = state.db.begin().await?;
+
+    let event = sqlx::query_as!(
+        Event,
+        r#"
+        INSERT INTO events (organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
+        "#,
+        organizer_id,
+        title_de,
+        title_en,
+        description_de,
+        description_en,
+        start_date_time,
+        end_date_time,
+        event_url,
+        location,
+        publish_app,
+        publish_newsletter,
+        publish_in_ical,
+        publish_web
+    )
+    .fetch_one(&mut *transaction)
+    .await?;
+
+    record_audit(
+        &mut transaction,
+        event.id,
+        event.organizer_id,
+        user.account_id,
+        AuditType::Create,
+        None,
+        Some(&event),
+    )
+    .await?;
+
+    transaction.commit().await?;
+
+    invalidate_public_event_caches(state).await;
+
+    Ok(event)
+}
+
+pub(crate) async fn get_event_with_user(
+    state: &AppState,
+    user: &AuthedUser,
+    id: i64,
+) -> Result<Event, AppError> {
+    let event = sqlx::query_as!(
+        Event,
+        r#"
+        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
+        FROM events
+        WHERE id = $1
+        "#,
+        id
+    )
+    .fetch_optional(&state.db)
+    .await?;
+
+    let Some(event) = event else {
+        return Err(AppError::not_found("event not found"));
+    };
+
+    if user.is_admin() || user.organizer_id() == Some(event.organizer_id) {
+        Ok(event)
+    } else {
+        Err(AppError::not_found("event not found"))
+    }
+}
+
+pub(crate) async fn update_event_with_user(
+    state: &AppState,
+    user: &AuthedUser,
+    id: i64,
+    payload: UpdateEventRequest,
+) -> Result<Event, AppError> {
+    let organizer_id = if user.is_admin() {
+        None
+    } else {
+        Some(
+            user.organizer_id()
+                .ok_or_else(|| AppError::unauthorized("organizer account required"))?,
+        )
+    };
+
+    let has_updates = payload.has_updates();
+    let UpdateEventRequest {
+        title_de,
+        title_en,
+        description_de,
+        description_en,
+        start_date_time,
+        end_date_time,
+        event_url,
+        location,
+        publish_app,
+        publish_newsletter,
+        publish_in_ical,
+        publish_web,
+    } = payload;
+
+    if !has_updates {
+        return Err(AppError::validation("No fields supplied for update"));
+    }
+
+    let mut transaction = state.db.begin().await?;
+
+    let existing_event = sqlx::query_as!(
+        Event,
+        r#"
+        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
+        FROM events
+        WHERE id = $1
+        "#,
+        id
+    )
+    .fetch_one(&mut *transaction)
+    .await?;
+
+    if let Some(organizer_id) = organizer_id
+        && existing_event.organizer_id != organizer_id
+    {
+        return Err(AppError::unauthorized(
+            "cannot update another organizer's event",
+        ));
+    }
+
+    let effective_start = start_date_time.unwrap_or(existing_event.start_date_time);
+    let effective_end = end_date_time.unwrap_or(existing_event.end_date_time);
+
+    if effective_end < effective_start {
+        return Err(AppError::validation(
+            "end date time must not be before start date time",
+        ));
+    }
+
+    let mut builder = QueryBuilder::<Postgres>::new("UPDATE events SET updated_at = NOW()");
+    if let Some(title_de) = title_de {
+        builder.push(", title_de = ").push_bind(title_de);
+    }
+    if let Some(title_en) = title_en {
+        builder.push(", title_en = ").push_bind(title_en);
+    }
+    if let Some(description_de) = description_de {
+        builder
+            .push(", description_de = ")
+            .push_bind(description_de);
+    }
+    if let Some(description_en) = description_en {
+        builder
+            .push(", description_en = ")
+            .push_bind(description_en);
+    }
+    if let Some(start_date_time) = start_date_time {
+        builder
+            .push(", start_date_time = ")
+            .push_bind(start_date_time);
+    }
+    if let Some(end_date_time) = end_date_time {
+        builder.push(", end_date_time = ").push_bind(end_date_time);
+    }
+    if let Some(event_url) = event_url {
+        builder.push(", event_url = ").push_bind(event_url);
+    }
+    if let Some(location) = location {
+        builder.push(", location = ").push_bind(location);
+    }
+    if let Some(publish_app) = publish_app {
+        builder.push(", publish_app = ").push_bind(publish_app);
+    }
+    if let Some(publish_newsletter) = publish_newsletter {
+        builder
+            .push(", publish_newsletter = ")
+            .push_bind(publish_newsletter);
+    }
+    if let Some(publish_in_ical) = publish_in_ical {
+        builder
+            .push(", publish_in_ical = ")
+            .push_bind(publish_in_ical);
+    }
+    if let Some(publish_web) = publish_web {
+        builder.push(", publish_web = ").push_bind(publish_web);
+    }
+
+    builder.push(" WHERE id = ").push_bind(id);
+    builder.push(" RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at");
+
+    let updated_event = builder
+        .build_query_as::<Event>()
+        .fetch_one(&mut *transaction)
+        .await?;
+
+    record_audit(
+        &mut transaction,
+        updated_event.id,
+        updated_event.organizer_id,
+        user.account_id,
+        AuditType::Update,
+        Some(&existing_event),
+        Some(&updated_event),
+    )
+    .await?;
+
+    transaction.commit().await?;
+
+    invalidate_public_event_caches(state).await;
+
+    Ok(updated_event)
+}
+
+pub(crate) async fn delete_event_with_user(
+    state: &AppState,
+    user: &AuthedUser,
+    id: i64,
+) -> Result<(), AppError> {
+    let organizer_id = if user.is_admin() {
+        None
+    } else {
+        Some(
+            user.organizer_id()
+                .ok_or_else(|| AppError::unauthorized("organizer account required"))?,
+        )
+    };
+    let mut transaction = state.db.begin().await?;
+
+    let existing_event = sqlx::query_as!(
+        Event,
+        r#"
+        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
+        FROM events
+        WHERE id = $1
+        "#,
+        id
+    )
+    .fetch_optional(&mut *transaction)
+    .await?;
+
+    let Some(existing_event) = existing_event else {
+        return Err(AppError::not_found("Event not found"));
+    };
+
+    if let Some(organizer_id) = organizer_id
+        && existing_event.organizer_id != organizer_id
+    {
+        return Err(AppError::unauthorized(
+            "cannot delete another organizer's event",
+        ));
+    }
+
+    sqlx::query!("DELETE FROM events WHERE id = $1", id)
+        .execute(&mut *transaction)
+        .await?;
+
+    record_audit(
+        &mut transaction,
+        existing_event.id,
+        existing_event.organizer_id,
+        user.account_id,
+        AuditType::Delete,
+        Some(&existing_event),
+        None,
+    )
+    .await?;
+
+    transaction.commit().await?;
+
+    invalidate_public_event_caches(state).await;
+
+    Ok(())
+}
+
+pub(crate) async fn list_events_for_organizer(
+    state: &AppState,
+    organizer_id: i64,
+    upcoming_only: Option<bool>,
+    limit: Option<i64>,
+    offset: Option<i64>,
+) -> Result<Vec<Event>, AppError> {
+    let mut builder = QueryBuilder::<Postgres>::new(
+        "SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at FROM events",
+    );
+
+    builder
+        .push(" WHERE organizer_id = ")
+        .push_bind(organizer_id);
+
+    if upcoming_only.unwrap_or(false) {
+        builder.push(" AND end_date_time >= ").push_bind(Utc::now());
+    }
+
+    builder.push(" ORDER BY start_date_time ASC");
+
+    if let Some(limit) = limit {
+        builder.push(" LIMIT ").push_bind(limit.max(1));
+    }
+    if let Some(offset) = offset {
+        builder.push(" OFFSET ").push_bind(offset.max(0));
+    }
+
+    let events = builder
+        .build_query_as::<Event>()
+        .fetch_all(&state.db)
+        .await?;
+
+    Ok(events)
+}
+
+pub(crate) async fn newsletter_data_with_user(
+    state: &AppState,
+    user: &AuthedUser,
+    query_params: NewsletterDataQuery,
+) -> Result<NewsletterDataResponse, AppError> {
+    ensure_newsletter_access(user, state).await?;
+
+    let now = Utc::now();
+    let default_next_week = next_week_monday(now);
+    let (next_week_start, week_after_start, week_after_end) =
+        match query_params.week_start.as_deref().map(str::trim) {
+            Some("") => return Err(AppError::validation("week_start cannot be empty")),
+            Some(value) => {
+                let parsed_date = NaiveDate::parse_from_str(value, "%Y-%m-%d")
+                    .map_err(|_| AppError::validation("invalid week_start, expected YYYY-MM-DD"))?;
+                let monday = parsed_date
+                    - Duration::days(parsed_date.weekday().num_days_from_monday() as i64);
+                compute_week_boundaries(monday)
+            }
+            None => compute_week_boundaries(default_next_week),
+        };
+
+    let events = sqlx::query_as!(
+        EventWithOrganizer,
+        r#"
+        SELECT e.id, e.organizer_id, e.title_de, e.title_en, e.description_de, e.description_en,
+               e.start_date_time, e.end_date_time, e.event_url, e.location, e.publish_app, 
+               e.publish_newsletter, e.publish_in_ical, e.publish_web, e.created_at, e.updated_at,
+               o.name as organizer_name, o.website_url as organizer_website
+        FROM events e
+        JOIN organizers o ON e.organizer_id = o.id
+        WHERE e.publish_newsletter = true
+        AND e.start_date_time >= $1
+        AND e.start_date_time < $2
+        ORDER BY e.start_date_time ASC
+        "#,
+        next_week_start,
+        week_after_end
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    let (next_week_events, following_week_events): (Vec<_>, Vec<_>) = events
+        .into_iter()
+        .partition(|event| event.start_date_time < week_after_start);
+
+    let subject = build_newsletter_subject(next_week_start);
+
+    let all_organizers = sqlx::query_as!(
+        Organizer,
+        "SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at FROM organizers ORDER BY name"
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(NewsletterDataResponse {
+        subject,
+        next_week_events,
+        following_week_events,
+        all_organizers,
+        next_week_start,
+        week_after_start,
+    })
+}
+
+pub(crate) async fn send_newsletter_preview_with_user(
+    state: &AppState,
+    user: &AuthedUser,
+    payload: SendNewsletterPreviewRequest,
+) -> Result<(), AppError> {
+    ensure_newsletter_access(user, state).await?;
+
+    let subject = payload.subject.trim();
+    if subject.is_empty() {
+        return Err(AppError::validation("subject is required"));
+    }
+
+    let html = payload.html.trim();
+    if html.is_empty() {
+        return Err(AppError::validation("html content is required"));
+    }
+
+    let Some(email_client) = &state.email else {
+        return Err(AppError::internal("email delivery not configured"));
+    };
+
+    let account = sqlx::query!(
+        r#"
+        SELECT email
+        FROM accounts
+        WHERE id = $1
+        "#,
+        user.account_id
+    )
+    .fetch_optional(&state.db)
+    .await?;
+
+    let Some(account) = account else {
+        return Err(AppError::unauthorized("account not found"));
+    };
+
+    let Some(email) = account.email else {
+        return Err(AppError::validation("account is missing an email address"));
+    };
+
+    let preview_subject = format!("[Vorschau] {subject}");
+    email_client
+        .send_newsletter_preview_email(&email, &preview_subject, html)
+        .await?;
+
+    Ok(())
+}
+
 #[utoipa::path(
     get,
     path = "/api/v1/events",
@@ -98,71 +549,7 @@ pub(crate) async fn create_event(
     Json(payload): Json<CreateEventRequest>,
 ) -> Result<impl IntoResponse, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
-    let organizer_id = user
-        .organizer_id()
-        .ok_or_else(|| AppError::unauthorized("organizer account required"))?;
-    let CreateEventRequest {
-        title_de,
-        title_en,
-        description_de,
-        description_en,
-        start_date_time,
-        end_date_time,
-        event_url,
-        location,
-        publish_app,
-        publish_newsletter,
-        publish_in_ical,
-        publish_web,
-    } = payload;
-
-    if end_date_time < start_date_time {
-        return Err(AppError::validation(
-            "end date time must not be before start date time",
-        ));
-    }
-
-    let mut transaction = state.db.begin().await?;
-
-    let event = sqlx::query_as!(
-        Event,
-        r#"
-        INSERT INTO events (organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-        RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
-        "#,
-        organizer_id,
-        title_de,
-        title_en,
-        description_de,
-        description_en,
-        start_date_time,
-        end_date_time,
-        event_url,
-        location,
-        publish_app,
-        publish_newsletter,
-        publish_in_ical,
-        publish_web
-    )
-    .fetch_one(&mut *transaction)
-    .await?;
-
-    record_audit(
-        &mut transaction,
-        event.id,
-        event.organizer_id,
-        user.account_id,
-        AuditType::Create,
-        None,
-        Some(&event),
-    )
-    .await?;
-
-    transaction.commit().await?;
-
-    invalidate_public_event_caches(&state).await;
-
+    let event = create_event_with_user(&state, &user, payload).await?;
     Ok((StatusCode::CREATED, Json(event)))
 }
 
@@ -179,31 +566,9 @@ pub(crate) async fn get_event(
     headers: HeaderMap,
     Path(id): Path<i64>,
 ) -> Result<Json<Event>, AppError> {
-    let event = sqlx::query_as!(
-        Event,
-        r#"
-        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
-        FROM events
-        WHERE id = $1
-        "#,
-        id
-    )
-    .fetch_optional(&state.db)
-    .await?;
-
-    let Some(event) = event else {
-        return Err(AppError::not_found("event not found"));
-    };
-
-    // Require authentication for this endpoint
     let user = current_user_from_headers(&headers, &state).await?;
-
-    // Only allow admins or the event's organizer to access the event
-    if user.is_admin() || user.organizer_id() == Some(event.organizer_id) {
-        Ok(Json(event))
-    } else {
-        Err(AppError::not_found("event not found"))
-    }
+    let event = get_event_with_user(&state, &user, id).await?;
+    Ok(Json(event))
 }
 
 #[utoipa::path(
@@ -222,142 +587,8 @@ pub(crate) async fn update_event(
     Json(payload): Json<UpdateEventRequest>,
 ) -> Result<Json<Event>, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
-
-    // Allow admins to edit any event, organizers can only edit their own events
-    let organizer_id = if user.is_admin() {
-        None // Admin can edit any event, so we don't need to check organizer_id
-    } else {
-        Some(
-            user.organizer_id()
-                .ok_or_else(|| AppError::unauthorized("organizer account required"))?,
-        )
-    };
-
-    let has_updates = payload.has_updates();
-    let UpdateEventRequest {
-        title_de,
-        title_en,
-        description_de,
-        description_en,
-        start_date_time,
-        end_date_time,
-        event_url,
-        location,
-        publish_app,
-        publish_newsletter,
-        publish_in_ical,
-        publish_web,
-    } = payload;
-
-    if !has_updates {
-        return Err(AppError::validation("No fields supplied for update"));
-    }
-
-    let mut transaction = state.db.begin().await?;
-
-    let existing_event = sqlx::query_as!(
-        Event,
-        r#"
-        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
-        FROM events
-        WHERE id = $1
-        "#,
-        id
-    )
-    .fetch_one(&mut *transaction)
-    .await?;
-
-    // Only check ownership if the user is not an admin
-    if let Some(organizer_id) = organizer_id
-        && existing_event.organizer_id != organizer_id
-    {
-        return Err(AppError::unauthorized(
-            "cannot update another organizer's event",
-        ));
-    }
-
-    let effective_start = start_date_time.unwrap_or(existing_event.start_date_time);
-    let effective_end = end_date_time.unwrap_or(existing_event.end_date_time);
-
-    if effective_end < effective_start {
-        return Err(AppError::validation(
-            "end date time must not be before start date time",
-        ));
-    }
-
-    // Build assignments defensively to avoid any stray commas
-    let mut builder = QueryBuilder::<Postgres>::new("UPDATE events SET updated_at = NOW()");
-    if let Some(title_de) = title_de {
-        builder.push(", title_de = ").push_bind(title_de);
-    }
-    if let Some(title_en) = title_en {
-        builder.push(", title_en = ").push_bind(title_en);
-    }
-    if let Some(description_de) = description_de {
-        builder
-            .push(", description_de = ")
-            .push_bind(description_de);
-    }
-    if let Some(description_en) = description_en {
-        builder
-            .push(", description_en = ")
-            .push_bind(description_en);
-    }
-    if let Some(start_date_time) = start_date_time {
-        builder
-            .push(", start_date_time = ")
-            .push_bind(start_date_time);
-    }
-    if let Some(end_date_time) = end_date_time {
-        builder.push(", end_date_time = ").push_bind(end_date_time);
-    }
-    if let Some(event_url) = event_url {
-        builder.push(", event_url = ").push_bind(event_url);
-    }
-    if let Some(location) = location {
-        builder.push(", location = ").push_bind(location);
-    }
-    if let Some(publish_app) = publish_app {
-        builder.push(", publish_app = ").push_bind(publish_app);
-    }
-    if let Some(publish_newsletter) = publish_newsletter {
-        builder
-            .push(", publish_newsletter = ")
-            .push_bind(publish_newsletter);
-    }
-    if let Some(publish_in_ical) = publish_in_ical {
-        builder
-            .push(", publish_in_ical = ")
-            .push_bind(publish_in_ical);
-    }
-    if let Some(publish_web) = publish_web {
-        builder.push(", publish_web = ").push_bind(publish_web);
-    }
-
-    builder.push(" WHERE id = ").push_bind(id);
-    builder.push(" RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at");
-
-    let updated_event = builder
-        .build_query_as::<Event>()
-        .fetch_one(&mut *transaction)
-        .await?;
-
-    record_audit(
-        &mut transaction,
-        updated_event.id,
-        updated_event.organizer_id,
-        user.account_id,
-        AuditType::Update,
-        Some(&existing_event),
-        Some(&updated_event),
-    )
-    .await?;
-
-    transaction.commit().await?;
-
-    invalidate_public_event_caches(&state).await;
-
-    Ok(Json(updated_event))
+    let updated = update_event_with_user(&state, &user, id, payload).await?;
+    Ok(Json(updated))
 }
 
 #[utoipa::path(
@@ -374,62 +605,7 @@ pub(crate) async fn delete_event(
     Path(id): Path<i64>,
 ) -> Result<StatusCode, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
-
-    // Allow admins to delete any event, organizers can only delete their own events
-    let organizer_id = if user.is_admin() {
-        None // Admin can delete any event, so we don't need to check organizer_id
-    } else {
-        Some(
-            user.organizer_id()
-                .ok_or_else(|| AppError::unauthorized("organizer account required"))?,
-        )
-    };
-    let mut transaction = state.db.begin().await?;
-
-    let existing_event = sqlx::query_as!(
-        Event,
-        r#"
-        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
-        FROM events
-        WHERE id = $1
-        "#,
-        id
-    )
-    .fetch_optional(&mut *transaction)
-    .await?;
-
-    let Some(existing_event) = existing_event else {
-        return Err(AppError::not_found("Event not found"));
-    };
-
-    // Only check ownership if the user is not an admin
-    if let Some(organizer_id) = organizer_id
-        && existing_event.organizer_id != organizer_id
-    {
-        return Err(AppError::unauthorized(
-            "cannot delete another organizer's event",
-        ));
-    }
-
-    sqlx::query!("DELETE FROM events WHERE id = $1", id)
-        .execute(&mut *transaction)
-        .await?;
-
-    record_audit(
-        &mut transaction,
-        existing_event.id,
-        existing_event.organizer_id,
-        user.account_id,
-        AuditType::Delete,
-        Some(&existing_event),
-        None,
-    )
-    .await?;
-
-    transaction.commit().await?;
-
-    invalidate_public_event_caches(&state).await;
-
+    delete_event_with_user(&state, &user, id).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 
@@ -451,65 +627,8 @@ pub(crate) async fn get_newsletter_data(
     headers: HeaderMap,
 ) -> Result<Json<NewsletterDataResponse>, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
-    ensure_newsletter_access(&user, &state).await?;
-
-    let now = Utc::now();
-    let default_next_week = next_week_monday(now);
-    let (next_week_start, week_after_start, week_after_end) =
-        match query_params.week_start.as_deref().map(str::trim) {
-            Some("") => return Err(AppError::validation("week_start cannot be empty")),
-            Some(value) => {
-                let parsed_date = NaiveDate::parse_from_str(value, "%Y-%m-%d")
-                    .map_err(|_| AppError::validation("invalid week_start, expected YYYY-MM-DD"))?;
-                let monday = parsed_date
-                    - Duration::days(parsed_date.weekday().num_days_from_monday() as i64);
-                compute_week_boundaries(monday)
-            }
-            None => compute_week_boundaries(default_next_week),
-        };
-
-    let events = sqlx::query_as!(
-        EventWithOrganizer,
-        r#"
-        SELECT e.id, e.organizer_id, e.title_de, e.title_en, e.description_de, e.description_en,
-               e.start_date_time, e.end_date_time, e.event_url, e.location, e.publish_app, 
-               e.publish_newsletter, e.publish_in_ical, e.publish_web, e.created_at, e.updated_at,
-               o.name as organizer_name, o.website_url as organizer_website
-        FROM events e
-        JOIN organizers o ON e.organizer_id = o.id
-        WHERE e.publish_newsletter = true
-        AND e.start_date_time >= $1
-        AND e.start_date_time < $2
-        ORDER BY e.start_date_time ASC
-        "#,
-        next_week_start,
-        week_after_end
-    )
-    .fetch_all(&state.db)
-    .await?;
-
-    let (next_week_events, following_week_events): (Vec<_>, Vec<_>) = events
-        .into_iter()
-        .partition(|event| event.start_date_time < week_after_start);
-
-    let subject = build_newsletter_subject(next_week_start);
-
-    // Get all organizers for the footer
-    let all_organizers = sqlx::query_as!(
-        Organizer,
-        "SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at FROM organizers ORDER BY name"
-    )
-    .fetch_all(&state.db)
-    .await?;
-
-    Ok(Json(NewsletterDataResponse {
-        subject,
-        next_week_events,
-        following_week_events,
-        all_organizers,
-        next_week_start,
-        week_after_start,
-    }))
+    let data = newsletter_data_with_user(&state, &user, query_params).await?;
+    Ok(Json(data))
 }
 
 #[utoipa::path(
@@ -531,46 +650,7 @@ pub(crate) async fn send_newsletter_preview(
     Json(payload): Json<SendNewsletterPreviewRequest>,
 ) -> Result<StatusCode, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
-    ensure_newsletter_access(&user, &state).await?;
-
-    let subject = payload.subject.trim();
-    if subject.is_empty() {
-        return Err(AppError::validation("subject is required"));
-    }
-
-    let html = payload.html.trim();
-    if html.is_empty() {
-        return Err(AppError::validation("html content is required"));
-    }
-
-    let Some(email_client) = &state.email else {
-        return Err(AppError::internal("email delivery not configured"));
-    };
-
-    let account = sqlx::query!(
-        r#"
-        SELECT email
-        FROM accounts
-        WHERE id = $1
-        "#,
-        user.account_id
-    )
-    .fetch_optional(&state.db)
-    .await?;
-
-    let Some(account) = account else {
-        return Err(AppError::unauthorized("account not found"));
-    };
-
-    let Some(email) = account.email else {
-        return Err(AppError::validation("account is missing an email address"));
-    };
-
-    let preview_subject = format!("[Vorschau] {subject}");
-    email_client
-        .send_newsletter_preview_email(&email, &preview_subject, html)
-        .await?;
-
+    send_newsletter_preview_with_user(&state, &user, payload).await?;
     Ok(StatusCode::NO_CONTENT)
 }
 

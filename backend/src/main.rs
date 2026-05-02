@@ -256,6 +256,7 @@ async fn main() {
 
     let app = Router::new()
         .merge(api)
+        .merge(routes::mcp::router())
         .layer(cors)
         .layer(SetResponseHeaderLayer::overriding(
             header::X_FRAME_OPTIONS,

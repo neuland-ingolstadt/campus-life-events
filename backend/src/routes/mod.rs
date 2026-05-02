@@ -5,6 +5,7 @@ pub(crate) mod auth;
 pub(crate) mod events;
 pub(crate) mod health;
 pub(crate) mod ical;
+pub(crate) mod mcp;
 pub(crate) mod organizers;
 pub(crate) mod public_events;
 mod shared;

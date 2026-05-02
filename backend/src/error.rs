@@ -50,6 +50,22 @@ impl AppError {
         Self::ServiceUnavailable(msg.into())
     }
 
+    pub(crate) fn http_status(&self) -> StatusCode {
+        self.status_code()
+    }
+
+    pub(crate) fn safe_jsonrpc_message(&self) -> String {
+        match self {
+            AppError::NotFound { message } => message.clone(),
+            AppError::Validation(message) => message.clone(),
+            AppError::Unauthorized(message) => message.clone(),
+            AppError::ServiceUnavailable(_) => "service unavailable".to_string(),
+            AppError::Internal(_) | AppError::Sqlx(_) | AppError::Serde(_) | AppError::Email(_) => {
+                "request failed".to_string()
+            }
+        }
+    }
+
     fn status_code(&self) -> StatusCode {
         match self {
             AppError::NotFound { .. } => StatusCode::NOT_FOUND,

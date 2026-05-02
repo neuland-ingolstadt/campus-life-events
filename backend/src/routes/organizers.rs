@@ -20,6 +20,83 @@ use super::shared::{
     current_user_from_headers, generate_setup_token_value, refresh_organizer_activity_stats,
 };
 
+pub(crate) async fn update_organizer_with_user(
+    state: &AppState,
+    user: &super::shared::AuthedUser,
+    id: i64,
+    payload: UpdateOrganizerRequest,
+) -> Result<Organizer, AppError> {
+    let editing_self = user.organizer_id() == Some(id);
+    if !editing_self && !user.is_admin() {
+        return Err(AppError::unauthorized("cannot update another organizer"));
+    }
+    let has_updates = payload.has_updates();
+    let UpdateOrganizerRequest {
+        name,
+        description_de,
+        description_en,
+        website_url,
+        instagram_url,
+        location,
+        linkedin_url,
+        registration_number,
+        non_profit,
+    } = payload;
+
+    if !has_updates {
+        return Err(AppError::validation("No fields supplied for update"));
+    }
+
+    let mut builder = QueryBuilder::<Postgres>::new("UPDATE organizers SET updated_at = NOW()");
+    if let Some(name) = name {
+        builder.push(", name = ").push_bind(name);
+    }
+    if let Some(description_de) = description_de {
+        builder
+            .push(", description_de = ")
+            .push_bind(description_de);
+    }
+    if let Some(description_en) = description_en {
+        builder
+            .push(", description_en = ")
+            .push_bind(description_en);
+    }
+    if let Some(website_url) = website_url {
+        builder.push(", website_url = ").push_bind(website_url);
+    }
+    if let Some(instagram_url) = instagram_url {
+        builder.push(", instagram_url = ").push_bind(instagram_url);
+    }
+    if let Some(location) = location {
+        builder.push(", location = ").push_bind(location);
+    }
+    if let Some(linkedin_url) = linkedin_url {
+        builder.push(", linkedin_url = ").push_bind(linkedin_url);
+    }
+    if let Some(registration_number) = registration_number {
+        builder
+            .push(", registration_number = ")
+            .push_bind(registration_number);
+    }
+    if let Some(non_profit) = non_profit {
+        builder.push(", non_profit = ").push_bind(non_profit);
+    }
+
+    builder.push(" WHERE id = ").push_bind(id);
+    builder.push(
+        " RETURNING id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at",
+    );
+
+    let organizer = builder
+        .build_query_as::<Organizer>()
+        .fetch_one(&state.db)
+        .await?;
+
+    invalidate_public_organizer_caches(state).await;
+
+    Ok(organizer)
+}
+
 #[utoipa::path(
     get,
     path = "/api/v1/organizers",
@@ -290,75 +367,7 @@ pub(crate) async fn update_organizer(
     Json(payload): Json<UpdateOrganizerRequest>,
 ) -> Result<Json<Organizer>, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
-    let editing_self = user.organizer_id() == Some(id);
-    if !editing_self && !user.is_admin() {
-        return Err(AppError::unauthorized("cannot update another organizer"));
-    }
-    let has_updates = payload.has_updates();
-    let UpdateOrganizerRequest {
-        name,
-        description_de,
-        description_en,
-        website_url,
-        instagram_url,
-        location,
-        linkedin_url,
-        registration_number,
-        non_profit,
-    } = payload;
-
-    if !has_updates {
-        return Err(AppError::validation("No fields supplied for update"));
-    }
-
-    // Build assignments defensively to avoid any stray commas
-    let mut builder = QueryBuilder::<Postgres>::new("UPDATE organizers SET updated_at = NOW()");
-    if let Some(name) = name {
-        builder.push(", name = ").push_bind(name);
-    }
-    if let Some(description_de) = description_de {
-        builder
-            .push(", description_de = ")
-            .push_bind(description_de);
-    }
-    if let Some(description_en) = description_en {
-        builder
-            .push(", description_en = ")
-            .push_bind(description_en);
-    }
-    if let Some(website_url) = website_url {
-        builder.push(", website_url = ").push_bind(website_url);
-    }
-    if let Some(instagram_url) = instagram_url {
-        builder.push(", instagram_url = ").push_bind(instagram_url);
-    }
-    if let Some(location) = location {
-        builder.push(", location = ").push_bind(location);
-    }
-    if let Some(linkedin_url) = linkedin_url {
-        builder.push(", linkedin_url = ").push_bind(linkedin_url);
-    }
-    if let Some(registration_number) = registration_number {
-        builder
-            .push(", registration_number = ")
-            .push_bind(registration_number);
-    }
-    if let Some(non_profit) = non_profit {
-        builder.push(", non_profit = ").push_bind(non_profit);
-    }
-
-    builder.push(" WHERE id = ").push_bind(id);
-    builder.push(
-        " RETURNING id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at",
-    );
-
-    let organizer = builder
-        .build_query_as::<Organizer>()
-        .fetch_one(&state.db)
-        .await?;
-
-    invalidate_public_organizer_caches(&state).await;
-
+    let organizer = update_organizer_with_user(&state, &user, id, payload).await?;
     Ok(Json(organizer))
 }
 
