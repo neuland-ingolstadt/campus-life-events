@@ -138,7 +138,8 @@ export default function McpSetupPage() {
 						<ol className="list-decimal pl-5 space-y-2">
 							<li>
 								Die Konfiguration unten kannst du{' '}
-								<strong>1:1 übernehmen</strong>. Du musst nur den Token einsetzen:
+								<strong>1:1 übernehmen</strong>. Du musst nur den Token
+								einsetzen:
 								<code className="text-xs bg-muted px-1.5 py-0.5 rounded mx-1">
 									headers.Authorization
 								</code>
@@ -161,9 +162,7 @@ export default function McpSetupPage() {
 							</li>
 							<li>Cursor neu laden bzw. MCP-Server aktivieren.</li>
 						</ol>
-						<p className="text-muted-foreground">
-							Beispiel (Token einsetzen):
-						</p>
+						<p className="text-muted-foreground">Beispiel (Token einsetzen):</p>
 						<pre className="text-xs bg-muted p-4 rounded-lg overflow-x-auto border leading-relaxed">
 							{`{
   "mcpServers": {
