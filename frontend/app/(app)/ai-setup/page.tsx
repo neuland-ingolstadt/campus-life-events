@@ -2,7 +2,6 @@
 
 import { ArrowLeft, KeyRound, Sparkles, Terminal } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
 	Card,
@@ -13,18 +12,7 @@ import {
 } from '@/components/ui/card'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 
-function McpUrlHint() {
-	const [origin, setOrigin] = useState<string | null>(null)
-	useEffect(() => {
-		setOrigin(window.location.origin)
-	}, [])
-	const url = origin ? `${origin}/mcp` : 'https://cl.neuland.ing/mcp'
-	return (
-		<code className="text-xs sm:text-sm bg-muted px-2 py-1 rounded break-all">
-			{url}
-		</code>
-	)
-}
+const MCP_URL = 'https://cl.neuland.ing/mcp'
 
 export default function McpSetupPage() {
 	return (
@@ -121,33 +109,17 @@ export default function McpSetupPage() {
 							2. MCP-Endpunkt
 						</CardTitle>
 						<CardDescription>
-							JSON-RPC über HTTPS POST — typisch dieselbe Basis-URL wie das
-							Dashboard, Pfad{' '}
+							JSON-RPC über HTTPS POST — unser MCP-Endpunkt ist fix und lautet{' '}
 							<code className="text-xs bg-muted px-1 rounded">/mcp</code>.
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-3 text-sm">
-						<p className="text-muted-foreground">
-							Aktuelle Basis-URL (aus diesem Browser):
-						</p>
+						<p className="text-muted-foreground">MCP-URL:</p>
 						<div className="rounded-lg border bg-muted/30 p-3">
-							<McpUrlHint />
+							<code className="text-xs sm:text-sm bg-muted px-2 py-1 rounded break-all">
+								{MCP_URL}
+							</code>
 						</div>
-						<p className="text-muted-foreground">
-							Öffentlich z.&nbsp;B.{' '}
-							<code className="text-xs bg-muted px-1.5 py-0.5 rounded break-all">
-								https://cl.neuland.ing/mcp
-							</code>{' '}
-							oder{' '}
-							<code className="text-xs bg-muted px-1.5 py-0.5 rounded break-all">
-								https://cl.neuland-ingolstadt.de/mcp
-							</code>
-							. Reines lokales Backend ohne HTTPS-Proxy:{' '}
-							<code className="text-xs bg-muted px-1.5 py-0.5 rounded">
-								http://localhost:8080/mcp
-							</code>
-							.
-						</p>
 					</CardContent>
 				</Card>
 
@@ -165,10 +137,8 @@ export default function McpSetupPage() {
 					<CardContent className="space-y-4 text-sm text-pretty">
 						<ol className="list-decimal pl-5 space-y-2">
 							<li>
-								<code className="text-xs bg-muted px-1.5 py-0.5 rounded">
-									url
-								</code>{' '}
-								auf deinen MCP-Endpunkt setzen,
+								Die Konfiguration unten kannst du{' '}
+								<strong>1:1 übernehmen</strong>. Du musst nur den Token einsetzen:
 								<code className="text-xs bg-muted px-1.5 py-0.5 rounded mx-1">
 									headers.Authorization
 								</code>
@@ -192,13 +162,13 @@ export default function McpSetupPage() {
 							<li>Cursor neu laden bzw. MCP-Server aktivieren.</li>
 						</ol>
 						<p className="text-muted-foreground">
-							Beispiel (Server-Name und URL anpassen, Token einsetzen):
+							Beispiel (Token einsetzen):
 						</p>
 						<pre className="text-xs bg-muted p-4 rounded-lg overflow-x-auto border leading-relaxed">
 							{`{
   "mcpServers": {
     "campus-life-events-local": {
-      "url": "https://cl.neuland.ing/mcp",
+      "url": "${MCP_URL}",
       "headers": {
         "Authorization": "Bearer DEIN_API_TOKEN",
         "Accept": "application/json, text/event-stream",
