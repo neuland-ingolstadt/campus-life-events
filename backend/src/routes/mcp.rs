@@ -13,8 +13,8 @@ use crate::{
     api_token,
     app_state::AppState,
     dto::{
-        CreateEventRequest, CreateOrganizerRequest, NewsletterDataQuery,
-        SendNewsletterPreviewRequest, UpdateEventRequest, UpdateOrganizerRequest,
+        CreateEventRequest, CreateOrganizerRequest, NewsletterDataQuery, UpdateEventRequest,
+        UpdateOrganizerRequest,
     },
     error::AppError,
     models::{
@@ -25,7 +25,7 @@ use crate::{
 
 use super::events::{
     create_event_with_user, delete_event_with_user, get_event_with_user, list_events_for_organizer,
-    newsletter_data_with_user, send_newsletter_preview_with_user, update_event_with_user,
+    newsletter_data_with_user, update_event_with_user,
 };
 use super::organizers::update_organizer_with_user;
 use super::shared::{AuthedUser, generate_setup_token_value, refresh_organizer_activity_stats};
@@ -469,22 +469,6 @@ fn tool_schema_newsletter_upcoming_summary() -> Value {
     })
 }
 
-fn tool_schema_send_newsletter_preview() -> Value {
-    json!({
-        "name": "send_newsletter_preview",
-        "description": "Send a newsletter preview email to the account email (requires newsletter permission and SMTP).",
-        "inputSchema": {
-            "type": "object",
-            "required": ["subject", "html"],
-            "properties": {
-                "subject": { "type": "string" },
-                "html": { "type": "string" }
-            },
-            "additionalProperties": false
-        }
-    })
-}
-
 fn tool_schema_update_my_club_profile() -> Value {
     json!({
         "name": "update_my_club_profile",
@@ -532,7 +516,6 @@ fn mcp_tools_list_result() -> Value {
             tool_schema_delete_my_event(),
             tool_schema_list_my_events_filtered(),
             tool_schema_newsletter_upcoming_summary(),
-            tool_schema_send_newsletter_preview(),
             tool_schema_update_my_club_profile(),
         ]
     })
@@ -546,7 +529,6 @@ fn mcp_tools_list_result_admin() -> Value {
             tool_schema_list_clubs_with_invites(),
             tool_schema_invite_club(),
             tool_schema_newsletter_upcoming_summary(),
-            tool_schema_send_newsletter_preview(),
         ]
     })
 }
@@ -619,7 +601,6 @@ async fn handle_post(
                         | "list_clubs_with_invites"
                         | "invite_club"
                         | "newsletter_upcoming_summary"
-                        | "send_newsletter_preview"
                 )
             {
                 return Err(method_not_found(id, params.name.as_str()));
@@ -814,17 +795,6 @@ async fn handle_post(
                         .await
                         .map_err(|e| mcp_from_app_error(id.clone(), e))?;
                     let v = serde_json::to_value(data)
-                        .map_err(|_| internal_error(id.clone(), "serialize"))?;
-                    tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
-                }
-                "send_newsletter_preview" => {
-                    let payload: SendNewsletterPreviewRequest =
-                        serde_json::from_value(params.arguments)
-                            .map_err(|_| invalid_request(id.clone(), "invalid arguments"))?;
-                    send_newsletter_preview_with_user(&state, &user, payload)
-                        .await
-                        .map_err(|e| mcp_from_app_error(id.clone(), e))?;
-                    let v = serde_json::to_value(json!({ "sent": true }))
                         .map_err(|_| internal_error(id.clone(), "serialize"))?;
                     tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
                 }
