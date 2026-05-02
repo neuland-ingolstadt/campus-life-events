@@ -196,7 +196,7 @@ export default function Dashboard() {
 								variant="secondary"
 								className="shrink-0 border-violet-200/90 bg-background/90 shadow-sm hover:bg-background dark:border-violet-800/55"
 							>
-								<Link href="/mcp-setup">MCP Setup</Link>
+								<Link href="/ai-setup">MCP Setup</Link>
 							</Button>
 						</div>
 					</div>
