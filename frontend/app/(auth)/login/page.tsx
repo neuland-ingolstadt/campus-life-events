@@ -2,6 +2,7 @@
 
 import { AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
+import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { useId, useState } from 'react'
 import { AnimateIcon } from '@/components/animate-ui/icons/icon'
@@ -29,6 +30,7 @@ function getErrorMessage(error: unknown): string {
 
 export default function LoginPage() {
 	const router = useRouter()
+	const queryClient = useQueryClient()
 	const emailId = useId()
 	const passwordId = useId()
 	const [email, setEmail] = useState('')
@@ -42,6 +44,10 @@ export default function LoginPage() {
 		setError(null)
 		try {
 			await login({ email, password })
+			await queryClient.invalidateQueries({
+				queryKey: ['auth', 'me'],
+				refetchType: 'all'
+			})
 			router.push('/')
 		} catch (err) {
 			setError(getErrorMessage(err))

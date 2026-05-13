@@ -1,5 +1,6 @@
 'use client'
 
+import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useId, useState } from 'react'
@@ -37,6 +38,7 @@ function friendlyTokenError(message: string): string {
 
 function RegisterForm({ token }: { token: string }) {
 	const router = useRouter()
+	const queryClient = useQueryClient()
 	const emailId = useId()
 	const passwordId = useId()
 	const password2Id = useId()
@@ -175,6 +177,10 @@ function RegisterForm({ token }: { token: string }) {
 		setLoading(true)
 		try {
 			await initAccount({ token, password })
+			await queryClient.invalidateQueries({
+				queryKey: ['auth', 'me'],
+				refetchType: 'all'
+			})
 			router.push('/')
 		} catch (err: unknown) {
 			const message =
