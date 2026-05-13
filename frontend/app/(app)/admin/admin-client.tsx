@@ -10,6 +10,7 @@ import { listAuditLogs, listOrganizersAdmin } from '@/client'
 import type { AuditLogEntry, OrganizerWithInvite } from '@/client/types.gen'
 import { Users } from '@/components/animate-ui/icons/users'
 import { AuditDetailsModal } from '@/components/audit-details-modal'
+import { DashboardMcpTeaser } from '@/components/dashboard-mcp-teaser'
 import { CreateOrganizerDialog } from '@/components/create-organizer-dialog'
 import { InviteAdminDialog } from '@/components/invite-admin-dialog'
 import { Badge } from '@/components/ui/badge'
@@ -160,7 +161,7 @@ export function AdminDashboardClient() {
 			</header>
 
 			<div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
-				<div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+				<div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
 					<div>
 						<h2 className="text-3xl font-bold tracking-tight">Verwaltung</h2>
 						<p className="text-muted-foreground mt-1 max-w-2xl">
@@ -168,15 +169,18 @@ export function AdminDashboardClient() {
 							bestehende zu verwalten und Änderungen im System nachzuvollziehen.
 						</p>
 					</div>
-					<div className="flex gap-2">
-						<Button
-							variant="outline"
-							size="sm"
-							className="flex items-center gap-2"
-							onClick={onRefresh}
-						>
-							<RefreshCw className="h-4 w-4" /> Aktualisieren
-						</Button>
+					<div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-start lg:pt-1">
+						<DashboardMcpTeaser />
+						<div className="flex gap-2">
+							<Button
+								variant="outline"
+								size="sm"
+								className="flex items-center gap-2"
+								onClick={onRefresh}
+							>
+								<RefreshCw className="h-4 w-4" /> Aktualisieren
+							</Button>
+						</div>
 					</div>
 				</div>
 
