@@ -1,0 +1,4 @@
+CREATE TYPE organizer_kind AS ENUM ('STUDENT_ASSOCIATION', 'THI_DEPARTMENT');
+
+ALTER TABLE organizers
+    ADD COLUMN organizer_kind organizer_kind NOT NULL DEFAULT 'STUDENT_ASSOCIATION';

@@ -3,9 +3,50 @@ use cookie::Cookie;
 use tracing::warn;
 use uuid::Uuid;
 
-use crate::{api_token, app_state::AppState, error::AppError, models::AccountType};
+use crate::{
+    api_token,
+    app_state::AppState,
+    error::AppError,
+    models::{AccountType, OrganizerKind},
+};
 
 pub(crate) use crate::authed_user::AuthedUser;
+
+#[derive(Clone, Copy)]
+pub(crate) enum SessionOrganizerKindScope {
+    All,
+    OnlyKind(OrganizerKind),
+    None,
+}
+
+pub(crate) async fn session_organizer_kind_scope(
+    state: &AppState,
+    user: &AuthedUser,
+) -> Result<SessionOrganizerKindScope, AppError> {
+    if user.is_admin() {
+        return Ok(SessionOrganizerKindScope::All);
+    }
+    if matches!(user.account_type, AccountType::Organizer) {
+        let Some(oid) = user.organizer_id else {
+            return Ok(SessionOrganizerKindScope::None);
+        };
+        let Some(row) = sqlx::query!(
+            r#"
+            SELECT organizer_kind as "organizer_kind: OrganizerKind"
+            FROM organizers
+            WHERE id = $1
+            "#,
+            oid
+        )
+        .fetch_optional(&state.db)
+        .await?
+        else {
+            return Ok(SessionOrganizerKindScope::None);
+        };
+        return Ok(SessionOrganizerKindScope::OnlyKind(row.organizer_kind));
+    }
+    Err(AppError::validation("unsupported account type"))
+}
 
 pub(crate) async fn current_user_from_headers(
     headers: &HeaderMap,

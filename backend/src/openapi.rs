@@ -3,12 +3,15 @@ use utoipa::OpenApi;
 use crate::{
     dto::{
         ChangePasswordRequest, CreateApiTokenRequest, CreateEventRequest, CreateOrganizerRequest,
-        InitAccountRequest, InviteAdminRequest, ListAuditLogsQuery, ListEventsQuery, LoginRequest,
-        RequestPasswordResetRequest, ResetPasswordRequest, SendNewsletterPreviewRequest,
-        SetupTokenLookupRequest, UpdateAccountEmailRequest, UpdateEventRequest,
-        UpdateOrganizerPermissionsRequest, UpdateOrganizerRequest,
+        InitAccountRequest, InviteAdminRequest, ListAuditLogsQuery, ListEventsQuery,
+        ListPublicOrganizersQuery, LoginRequest, RequestPasswordResetRequest, ResetPasswordRequest,
+        SendNewsletterPreviewRequest, SetupTokenLookupRequest, UpdateAccountEmailRequest,
+        UpdateEventRequest, UpdateOrganizerPermissionsRequest, UpdateOrganizerRequest,
     },
-    models::{AdminWithInvite, AuditLogEntry, Event, InviteStatus, Organizer, OrganizerWithInvite},
+    models::{
+        AdminWithInvite, AuditLogEntry, Event, InviteStatus, Organizer, OrganizerKind,
+        OrganizerWithInvite,
+    },
     responses::{
         AccountEmailUpdatedResponse, ApiTokenCreatedResponse, ApiTokenSummaryResponse,
         AuthUserResponse, ErrorResponse, HealthResponse, IcalEventResponse, NewsletterDataResponse,
@@ -60,6 +63,10 @@ use crate::{
         routes::public_events::get_public_event,
         routes::public_events::list_public_organizers,
         routes::public_events::get_public_organizer,
+        routes::ical::get_all_events_ical,
+        routes::ical::get_cl_events_ical,
+        routes::ical::get_thi_events_ical,
+        routes::ical::get_organizer_events_ical,
         routes::ical::list_organizer_ical_events,
         routes::audit::list_audit_logs,
         routes::auth::login,
@@ -95,6 +102,7 @@ use crate::{
         CreateEventRequest,
         UpdateEventRequest,
         ListEventsQuery,
+        ListPublicOrganizersQuery,
         ListAuditLogsQuery,
         SendNewsletterPreviewRequest,
         AuditLogEntry,
@@ -109,7 +117,8 @@ use crate::{
         SetupTokenInfoResponse,
         NewsletterDataResponse,
         PublicEventResponse, PublicOrganizerResponse, IcalEventResponse,
-        InviteStatus
+        InviteStatus,
+        OrganizerKind
     )),
     tags(
         (name = "Health", description = "Service availability"),

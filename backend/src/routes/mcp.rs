@@ -19,7 +19,7 @@ use crate::{
     error::AppError,
     models::{
         AccountType, AdminInviteRow, AdminWithInvite, Event, Organizer, OrganizerInviteRow,
-        OrganizerWithInvite,
+        OrganizerKind, OrganizerWithInvite,
     },
 };
 
@@ -218,7 +218,7 @@ async fn organizer_or_admin_authed_from_bearer(
 async fn fetch_my_club_info(state: &AppState, organizer_id: i64) -> Result<Organizer, AppError> {
     let row = sqlx::query_as::<_, Organizer>(
         r#"
-		SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at
+		SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, organizer_kind, created_at, updated_at
 		FROM organizers
 		WHERE id = $1
 		"#,
@@ -230,16 +230,36 @@ async fn fetch_my_club_info(state: &AppState, organizer_id: i64) -> Result<Organ
     row.ok_or_else(|| AppError::not_found("Organizer not found"))
 }
 
-async fn fetch_all_clubs_basic(state: &AppState) -> Result<Vec<BasicOrganizerInfo>, AppError> {
-    let rows = sqlx::query_as::<_, BasicOrganizerInfo>(
-        r#"
+async fn fetch_all_clubs_basic(
+    state: &AppState,
+    kind: Option<OrganizerKind>,
+) -> Result<Vec<BasicOrganizerInfo>, AppError> {
+    let rows = match kind {
+        None => {
+            sqlx::query_as::<_, BasicOrganizerInfo>(
+                r#"
 		SELECT id, name, description_de, description_en
 		FROM organizers
 		ORDER BY name
 		"#,
-    )
-    .fetch_all(&state.db)
-    .await?;
+            )
+            .fetch_all(&state.db)
+            .await?
+        }
+        Some(kind) => {
+            sqlx::query_as::<_, BasicOrganizerInfo>(
+                r#"
+		SELECT id, name, description_de, description_en
+		FROM organizers
+		WHERE organizer_kind = $1
+		ORDER BY name
+		"#,
+            )
+            .bind(kind)
+            .fetch_all(&state.db)
+            .await?
+        }
+    };
     Ok(rows)
 }
 
@@ -275,6 +295,7 @@ async fn fetch_clubs_with_invites(state: &AppState) -> Result<Vec<OrganizerWithI
             a.id AS account_id,
             a.email AS account_email,
             o.newsletter AS newsletter,
+            o.organizer_kind,
             o.created_at,
             o.updated_at,
             a.password_hash,
@@ -626,9 +647,35 @@ async fn handle_post(
                     tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
                 }
                 "list_clubs_basic" => {
-                    let clubs = fetch_all_clubs_basic(&state)
+                    let clubs = if user.is_admin() {
+                        fetch_all_clubs_basic(&state, None).await
+                    } else {
+                        let Some(oid) = organizer_id else {
+                            return Err(mcp_from_app_error(
+                                id,
+                                AppError::unauthorized("organizer account required"),
+                            ));
+                        };
+                        let row = sqlx::query!(
+                            r#"
+                            SELECT organizer_kind as "organizer_kind: OrganizerKind"
+                            FROM organizers
+                            WHERE id = $1
+                            "#,
+                            oid
+                        )
+                        .fetch_optional(&state.db)
                         .await
-                        .map_err(|e| mcp_from_app_error(id.clone(), e))?;
+                        .map_err(|e| mcp_from_app_error(id.clone(), AppError::from(e)))?;
+                        let Some(row) = row else {
+                            return Err(mcp_from_app_error(
+                                id,
+                                AppError::not_found("Organizer not found"),
+                            ));
+                        };
+                        fetch_all_clubs_basic(&state, Some(row.organizer_kind)).await
+                    }
+                    .map_err(|e| mcp_from_app_error(id.clone(), e))?;
                     let v = serde_json::to_value(clubs)
                         .map_err(|_| internal_error(id.clone(), "serialize"))?;
                     tool_text_result(v).map_err(|e| internal_error(id.clone(), e))
@@ -662,12 +709,13 @@ async fn handle_post(
 
                     let organizer = sqlx::query_as::<_, Organizer>(
                         r#"
-                        INSERT INTO organizers (name)
-                        VALUES ($1)
-                        RETURNING id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at
+                        INSERT INTO organizers (name, organizer_kind)
+                        VALUES ($1, $2)
+                        RETURNING id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, organizer_kind, created_at, updated_at
                         "#,
                     )
                     .bind(&payload.name)
+                    .bind(payload.organizer_kind)
                     .fetch_one(&mut *tx)
                     .await
                     .map_err(|e| mcp_from_app_error(id.clone(), AppError::from(e)))?;

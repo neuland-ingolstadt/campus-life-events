@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at FROM organizers ORDER BY name",
+  "query": "\n        SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, organizer_kind as \"organizer_kind: OrganizerKind\", created_at, updated_at\n        FROM organizers\n        WHERE id = $1\n        ",
   "describe": {
     "columns": [
       {
@@ -60,17 +60,34 @@
       },
       {
         "ordinal": 11,
+        "name": "organizer_kind: OrganizerKind",
+        "type_info": {
+          "Custom": {
+            "name": "organizer_kind",
+            "kind": {
+              "Enum": [
+                "STUDENT_ASSOCIATION",
+                "THI_DEPARTMENT"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 12,
         "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 12,
+        "ordinal": 13,
         "name": "updated_at",
         "type_info": "Timestamptz"
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Int8"
+      ]
     },
     "nullable": [
       false,
@@ -85,8 +102,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "f846133876dc11ec118ab539cabff1a98620de5b76ca69db60a8c2476c348fe9"
+  "hash": "a05f33ab55cd35e65a88704969f80d63b96e9935698be32304dd4a3fd8461f1a"
 }

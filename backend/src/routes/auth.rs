@@ -23,11 +23,31 @@ use crate::{
         ResetPasswordRequest, SetupTokenLookupRequest,
     },
     error::AppError,
-    models::AccountType,
+    models::{AccountType, OrganizerKind},
     responses::{AuthUserResponse, PasswordResetRequestResponse, SetupTokenInfoResponse},
 };
 
 use super::shared::{current_user_from_headers, get_cookie, session_cookie_attributes};
+
+async fn organizer_kind_for_organizer(
+    state: &AppState,
+    organizer_id: Option<i64>,
+) -> Result<Option<OrganizerKind>, AppError> {
+    let Some(oid) = organizer_id else {
+        return Ok(None);
+    };
+    let row = sqlx::query!(
+        r#"
+        SELECT organizer_kind as "organizer_kind: OrganizerKind"
+        FROM organizers
+        WHERE id = $1
+        "#,
+        oid
+    )
+    .fetch_optional(&state.db)
+    .await?;
+    Ok(row.map(|r| r.organizer_kind))
+}
 
 #[utoipa::path(
     post,
@@ -113,11 +133,14 @@ pub(crate) async fn login(
     let can_access_newsletter =
         determine_newsletter_access(&state, &account_type, organizer_id).await?;
 
+    let organizer_kind = organizer_kind_for_organizer(&state, organizer_id).await?;
+
     let body = Json(AuthUserResponse {
         account_id: id,
         display_name,
         account_type,
         organizer_id,
+        organizer_kind,
         can_access_newsletter,
     });
     let mut resp = (StatusCode::OK, body).into_response();
@@ -248,11 +271,14 @@ pub(crate) async fn init_account(
     let can_access_newsletter =
         determine_newsletter_access(&state, &account_type, organizer_id).await?;
 
+    let organizer_kind = organizer_kind_for_organizer(&state, organizer_id).await?;
+
     let body = Json(AuthUserResponse {
         account_id,
         display_name,
         account_type,
         organizer_id,
+        organizer_kind,
         can_access_newsletter,
     });
     let mut resp = (StatusCode::OK, body).into_response();
@@ -318,11 +344,13 @@ pub(crate) async fn me(
 
     let can_access_newsletter =
         determine_newsletter_access(&state, &user.account_type, user.organizer_id).await?;
+    let organizer_kind = organizer_kind_for_organizer(&state, user.organizer_id).await?;
     Ok(Json(AuthUserResponse {
         account_id: user.account_id,
         display_name: rec.display_name,
         account_type: user.account_type,
         organizer_id: user.organizer_id,
+        organizer_kind,
         can_access_newsletter,
     }))
 }
@@ -342,7 +370,7 @@ async fn determine_newsletter_access(
 
     let row = sqlx::query!(
         r#"
-        SELECT newsletter
+        SELECT newsletter, organizer_kind as "organizer_kind: OrganizerKind"
         FROM organizers
         WHERE id = $1
         "#,
@@ -351,7 +379,11 @@ async fn determine_newsletter_access(
     .fetch_optional(&state.db)
     .await?;
 
-    Ok(row.map(|record| record.newsletter).unwrap_or(false))
+    Ok(row
+        .map(|record| {
+            record.newsletter && record.organizer_kind == OrganizerKind::StudentAssociation
+        })
+        .unwrap_or(false))
 }
 
 #[utoipa::path(

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT\n            o.id AS organizer_id,\n            o.name AS organizer_name,\n            a.id AS account_id,\n            a.email AS account_email,\n            o.newsletter AS newsletter,\n            o.created_at,\n            o.updated_at,\n            a.password_hash,\n            a.setup_token,\n            a.setup_token_expires_at\n        FROM organizers o\n        LEFT JOIN accounts a\n            ON a.organizer_id = o.id AND a.account_type = 'ORGANIZER'\n        WHERE o.id = $1\n        ",
+  "query": "\n        SELECT\n            o.id AS organizer_id,\n            o.name AS organizer_name,\n            a.id AS account_id,\n            a.email AS account_email,\n            o.newsletter AS newsletter,\n            o.organizer_kind as \"organizer_kind: OrganizerKind\",\n            o.created_at,\n            o.updated_at,\n            a.password_hash,\n            a.setup_token,\n            a.setup_token_expires_at\n        FROM organizers o\n        LEFT JOIN accounts a\n            ON a.organizer_id = o.id AND a.account_type = 'ORGANIZER'\n        ORDER BY o.created_at DESC\n        ",
   "describe": {
     "columns": [
       {
@@ -30,34 +30,47 @@
       },
       {
         "ordinal": 5,
+        "name": "organizer_kind: OrganizerKind",
+        "type_info": {
+          "Custom": {
+            "name": "organizer_kind",
+            "kind": {
+              "Enum": [
+                "STUDENT_ASSOCIATION",
+                "THI_DEPARTMENT"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 6,
         "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "updated_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "password_hash",
         "type_info": "Text"
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "setup_token",
         "type_info": "Text"
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "setup_token_expires_at",
         "type_info": "Timestamptz"
       }
     ],
     "parameters": {
-      "Left": [
-        "Int8"
-      ]
+      "Left": []
     },
     "nullable": [
       false,
@@ -67,10 +80,11 @@
       false,
       false,
       false,
+      false,
       true,
       true,
       true
     ]
   },
-  "hash": "7f0ee2e586c3938a79944f796be5e6d3da8e1365f99328de3ce0e5604ed8c1ca"
+  "hash": "e93ae374ce213e681e1329bc6a8853ff11bb1330bafb6671d089cc56ed3cdf92"
 }

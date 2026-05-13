@@ -1,0 +1,32 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                            SELECT organizer_kind as \"organizer_kind: OrganizerKind\"\n                            FROM organizers\n                            WHERE id = $1\n                            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "organizer_kind: OrganizerKind",
+        "type_info": {
+          "Custom": {
+            "name": "organizer_kind",
+            "kind": {
+              "Enum": [
+                "STUDENT_ASSOCIATION",
+                "THI_DEPARTMENT"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "5cad7dd7922ac448af91c0980f2b06ed6036c46b81c91cc654e09371870fc4df"
+}

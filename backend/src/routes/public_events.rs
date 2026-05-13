@@ -7,8 +7,9 @@ use tracing::{instrument, warn};
 
 use crate::{
     app_state::AppState,
-    dto::ListEventsQuery,
+    dto::{ListEventsQuery, ListPublicOrganizersQuery},
     error::AppError,
+    models::OrganizerKind,
     responses::{PublicEventResponse, PublicOrganizerResponse},
 };
 use chrono::{DateTime, Utc};
@@ -19,6 +20,7 @@ struct PublicEventWithOrganizer {
     id: i64,
     organizer_id: i64,
     organizer_name: String,
+    organizer_kind: OrganizerKind,
     title_de: String,
     title_en: String,
     description_de: Option<String>,
@@ -41,6 +43,7 @@ struct PublicOrganizerWithStats {
     linkedin_url: Option<String>,
     registration_number: Option<String>,
     non_profit: bool,
+    organizer_kind: OrganizerKind,
     active_events_count: i64,
     activity_score: f64,
 }
@@ -69,7 +72,7 @@ pub(crate) async fn list_public_events(
     }
 
     let mut builder = QueryBuilder::<Postgres>::new(
-        "SELECT e.id, e.organizer_id, o.name AS organizer_name, e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location FROM events e INNER JOIN organizers o ON e.organizer_id = o.id",
+        "SELECT e.id, e.organizer_id, o.name AS organizer_name, o.organizer_kind, e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location FROM events e INNER JOIN organizers o ON e.organizer_id = o.id",
     );
 
     // Only show events that are published in the app
@@ -79,6 +82,12 @@ pub(crate) async fn list_public_events(
         builder
             .push(" AND e.organizer_id = ")
             .push_bind(organizer_id);
+    }
+
+    if let Some(organizer_kind) = query_params.organizer_kind {
+        builder
+            .push(" AND o.organizer_kind = ")
+            .push_bind(organizer_kind);
     }
 
     if query_params.upcoming_only.unwrap_or(false) {
@@ -107,6 +116,7 @@ pub(crate) async fn list_public_events(
             id: event.id,
             organizer_id: event.organizer_id,
             organizer_name: event.organizer_name,
+            organizer_kind: event.organizer_kind,
             title_de: event.title_de,
             title_en: event.title_en,
             description_de: event.description_de,
@@ -131,16 +141,18 @@ pub(crate) async fn list_public_events(
     get,
     path = "/api/v1/public/organizers",
     tag = "Public",
+    params(ListPublicOrganizersQuery),
     responses((status = 200, description = "List public organizers", body = [PublicOrganizerResponse]))
 )]
-#[instrument(skip(state))]
+#[instrument(skip(state, query_params))]
 pub(crate) async fn list_public_organizers(
     State(state): State<AppState>,
+    Query(query_params): Query<ListPublicOrganizersQuery>,
 ) -> Result<Json<Vec<PublicOrganizerResponse>>, AppError> {
-    let cache_key = "public:organizers:list";
+    let cache_key = format!("public:organizers:list:{query_params:?}");
     if let Some(cache) = &state.cache {
         match cache
-            .get_json::<Vec<PublicOrganizerResponse>>(cache_key)
+            .get_json::<Vec<PublicOrganizerResponse>>(&cache_key)
             .await
         {
             Ok(Some(cached)) => return Ok(Json(cached)),
@@ -151,8 +163,7 @@ pub(crate) async fn list_public_organizers(
         }
     }
 
-    let organizers = sqlx::query_as!(
-        PublicOrganizerWithStats,
+    let mut builder = QueryBuilder::<Postgres>::new(
         r#"
         SELECT
             o.id,
@@ -165,15 +176,25 @@ pub(crate) async fn list_public_organizers(
             o.linkedin_url,
             o.registration_number,
             o.non_profit,
-            COALESCE(stats.active_events_count, 0) AS "active_events_count!",
-            COALESCE(stats.activity_score, 0)::double precision AS "activity_score!"
+            o.organizer_kind,
+            COALESCE(stats.active_events_count, 0) AS active_events_count,
+            COALESCE(stats.activity_score, 0)::double precision AS activity_score
         FROM organizers o
         LEFT JOIN organizer_activity_stats stats ON stats.organizer_id = o.id
-        ORDER BY COALESCE(stats.activity_score, 0) DESC, o.name ASC
-        "#
-    )
-    .fetch_all(&state.db)
-    .await?;
+        "#,
+    );
+
+    if let Some(kind) = query_params.organizer_kind {
+        builder.push(" WHERE o.organizer_kind = ");
+        builder.push_bind(kind);
+    }
+
+    builder.push(" ORDER BY COALESCE(stats.activity_score, 0) DESC, o.name ASC");
+
+    let organizers = builder
+        .build_query_as::<PublicOrganizerWithStats>()
+        .fetch_all(&state.db)
+        .await?;
 
     let public_organizers: Vec<PublicOrganizerResponse> = organizers
         .into_iter()
@@ -188,13 +209,14 @@ pub(crate) async fn list_public_organizers(
             linkedin_url: organizer.linkedin_url,
             registration_number: organizer.registration_number,
             non_profit: organizer.non_profit,
+            organizer_kind: organizer.organizer_kind,
             active_events_count: organizer.active_events_count,
             activity_score: organizer.activity_score,
         })
         .collect();
 
     if let Some(cache) = &state.cache
-        && let Err(err) = cache.set_json(cache_key, &public_organizers).await
+        && let Err(err) = cache.set_json(&cache_key, &public_organizers).await
     {
         warn!(target: "cache", action = "set", scope = "public_organizers_list", %err, "Failed to store public organizers list in cache");
     }
@@ -228,7 +250,7 @@ pub(crate) async fn get_public_event(
     let event = sqlx::query_as!(
         PublicEventWithOrganizer,
         r#"
-        SELECT e.id, e.organizer_id, o.name AS organizer_name, e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location
+        SELECT e.id, e.organizer_id, o.name AS organizer_name, o.organizer_kind as "organizer_kind: OrganizerKind", e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location
         FROM events e
         INNER JOIN organizers o ON e.organizer_id = o.id
         WHERE e.id = $1 AND e.publish_web = true
@@ -244,6 +266,7 @@ pub(crate) async fn get_public_event(
                 id: event.id,
                 organizer_id: event.organizer_id,
                 organizer_name: event.organizer_name,
+                organizer_kind: event.organizer_kind,
                 title_de: event.title_de,
                 title_en: event.title_en,
                 description_de: event.description_de,
@@ -301,6 +324,7 @@ pub(crate) async fn get_public_organizer(
             o.linkedin_url,
             o.registration_number,
             o.non_profit,
+            o.organizer_kind as "organizer_kind: OrganizerKind",
             COALESCE(stats.active_events_count, 0) AS "active_events_count!",
             COALESCE(stats.activity_score, 0)::double precision AS "activity_score!"
         FROM organizers o
@@ -325,6 +349,7 @@ pub(crate) async fn get_public_organizer(
                 linkedin_url: organizer.linkedin_url,
                 registration_number: organizer.registration_number,
                 non_profit: organizer.non_profit,
+                organizer_kind: organizer.organizer_kind,
                 active_events_count: organizer.active_events_count,
                 activity_score: organizer.activity_score,
             };

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT e.id, e.organizer_id, o.name AS organizer_name, e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location\n        FROM events e\n        INNER JOIN organizers o ON e.organizer_id = o.id\n        WHERE e.id = $1 AND e.publish_web = true\n        ",
+  "query": "\n        SELECT e.id, e.organizer_id, o.name AS organizer_name, o.organizer_kind as \"organizer_kind: OrganizerKind\", e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location\n        FROM events e\n        INNER JOIN organizers o ON e.organizer_id = o.id\n        WHERE e.id = $1 AND e.publish_web = true\n        ",
   "describe": {
     "columns": [
       {
@@ -20,41 +20,56 @@
       },
       {
         "ordinal": 3,
+        "name": "organizer_kind: OrganizerKind",
+        "type_info": {
+          "Custom": {
+            "name": "organizer_kind",
+            "kind": {
+              "Enum": [
+                "STUDENT_ASSOCIATION",
+                "THI_DEPARTMENT"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 4,
         "name": "title_de",
         "type_info": "Text"
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "title_en",
         "type_info": "Text"
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "description_de",
         "type_info": "Text"
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "description_en",
         "type_info": "Text"
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "start_date_time",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "end_date_time",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "event_url",
         "type_info": "Text"
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "location",
         "type_info": "Text"
       }
@@ -70,6 +85,7 @@
       false,
       false,
       false,
+      false,
       true,
       true,
       false,
@@ -78,5 +94,5 @@
       true
     ]
   },
-  "hash": "caf7dcd8fa921c509c9afbf06d4818d1196911a157765464b7af7c8010d0d07e"
+  "hash": "a5eae13b726130c5c69c475466aed640dc01c51d20e5ce66f5d26ccd4e963db4"
 }

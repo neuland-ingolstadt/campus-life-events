@@ -2,11 +2,15 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 
+use crate::models::OrganizerKind;
+
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(deny_unknown_fields)]
 pub struct CreateOrganizerRequest {
     pub name: String,
     pub email: String,
+    #[serde(default)]
+    pub organizer_kind: OrganizerKind,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -47,6 +51,7 @@ impl UpdateOrganizerRequest {
 #[serde(deny_unknown_fields)]
 pub struct UpdateOrganizerPermissionsRequest {
     pub newsletter: bool,
+    pub organizer_kind: OrganizerKind,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -131,6 +136,14 @@ pub struct ListEventsQuery {
     pub upcoming_only: Option<bool>,
     pub limit: Option<i64>,
     pub offset: Option<i64>,
+    pub organizer_kind: Option<OrganizerKind>,
+}
+
+#[derive(Debug, Deserialize, ToSchema, IntoParams)]
+#[serde(deny_unknown_fields)]
+#[into_params(parameter_in = Query)]
+pub struct ListPublicOrganizersQuery {
+    pub organizer_kind: Option<OrganizerKind>,
 }
 
 #[derive(Debug, Deserialize, ToSchema, IntoParams)]

@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT newsletter, organizer_kind as \"organizer_kind: OrganizerKind\"\n        FROM organizers\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "newsletter",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 1,
+        "name": "organizer_kind: OrganizerKind",
+        "type_info": {
+          "Custom": {
+            "name": "organizer_kind",
+            "kind": {
+              "Enum": [
+                "STUDENT_ASSOCIATION",
+                "THI_DEPARTMENT"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "462c2dff2d9f8070f90f85f911eb3311c9921db678384b09c137dbd6ad10cda8"
+}

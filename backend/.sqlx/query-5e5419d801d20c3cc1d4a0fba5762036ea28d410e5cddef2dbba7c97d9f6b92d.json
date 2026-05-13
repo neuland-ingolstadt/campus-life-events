@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at\n        FROM organizers\n        WHERE id = $1\n        ",
+  "query": "\n        SELECT\n            o.id,\n            o.name,\n            o.description_de,\n            o.description_en,\n            o.website_url,\n            o.instagram_url,\n            o.location,\n            o.linkedin_url,\n            o.registration_number,\n            o.non_profit,\n            o.newsletter,\n            o.organizer_kind as \"organizer_kind: OrganizerKind\",\n            o.created_at,\n            o.updated_at,\n            COALESCE(stats.active_events_count, 0) AS \"active_events_count!\",\n            COALESCE(stats.activity_score, 0)::double precision AS \"activity_score!\"\n        FROM organizers o\n        LEFT JOIN organizer_activity_stats stats ON stats.organizer_id = o.id\n        WHERE o.id = $1\n        ",
   "describe": {
     "columns": [
       {
@@ -60,13 +60,38 @@
       },
       {
         "ordinal": 11,
+        "name": "organizer_kind: OrganizerKind",
+        "type_info": {
+          "Custom": {
+            "name": "organizer_kind",
+            "kind": {
+              "Enum": [
+                "STUDENT_ASSOCIATION",
+                "THI_DEPARTMENT"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 12,
         "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 12,
+        "ordinal": 13,
         "name": "updated_at",
         "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 14,
+        "name": "active_events_count!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 15,
+        "name": "activity_score!",
+        "type_info": "Float8"
       }
     ],
     "parameters": {
@@ -87,8 +112,11 @@
       false,
       false,
       false,
-      false
+      false,
+      false,
+      null,
+      null
     ]
   },
-  "hash": "b65bdc6d3e3d06193206f35d26eda99d7daea20d06c73a8dbcf02666cec481c6"
+  "hash": "5e5419d801d20c3cc1d4a0fba5762036ea28d410e5cddef2dbba7c97d9f6b92d"
 }

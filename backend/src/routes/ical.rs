@@ -14,12 +14,12 @@ use crate::{
     api_token,
     app_state::AppState,
     error::AppError,
-    models::{Event, Organizer},
+    models::{Event, Organizer, OrganizerKind},
     responses::IcalEventResponse,
 };
 
 #[derive(Debug, Clone)]
-struct EventWithOrganizer {
+struct IcalEventWithOrganizer {
     pub id: i64,
     pub title_de: String,
     pub title_en: String,
@@ -32,7 +32,7 @@ struct EventWithOrganizer {
     pub organizer_location: Option<String>,
 }
 
-impl EventWithOrganizer {
+impl IcalEventWithOrganizer {
     fn to_ical_event(&self) -> ICalEvent {
         let mut ical_event = ICalEvent::new();
 
@@ -102,7 +102,7 @@ struct EventWithOrganizerRow {
     pub organizer_location: Option<String>,
 }
 
-impl From<EventWithOrganizerRow> for EventWithOrganizer {
+impl From<EventWithOrganizerRow> for IcalEventWithOrganizer {
     fn from(row: EventWithOrganizerRow) -> Self {
         Self {
             id: row.id,
@@ -119,29 +119,22 @@ impl From<EventWithOrganizerRow> for EventWithOrganizer {
     }
 }
 
-#[utoipa::path(
-    get,
-    path = "/api/ical",
-    tag = "iCal",
-    responses((status = 200, description = "iCal calendar with all events", content_type = "text/calendar"))
-)]
-#[instrument(skip(state))]
-pub(crate) async fn get_all_events_ical(
-    State(state): State<AppState>,
-    _headers: HeaderMap,
-) -> Result<impl IntoResponse, AppError> {
-    let cache_key = "ical:all";
+async fn ical_response_for_organizer_kind(
+    state: &AppState,
+    kind: OrganizerKind,
+    cache_key: &'static str,
+    calendar_name: &str,
+    calendar_description: &str,
+    content_disposition: String,
+) -> Result<Response, AppError> {
     if let Some(cache) = &state.cache {
         match cache.get_string(cache_key).await {
             Ok(Some(cached)) => {
-                return build_ical_response_with_filename(
-                    cached,
-                    "attachment; filename=\"campus-life-events.ics\"".to_string(),
-                );
+                return build_ical_response_with_filename(cached, content_disposition);
             }
             Ok(None) => {}
             Err(err) => {
-                warn!(target: "cache", action = "get", scope = "ical_all", %err, "Failed to read iCal feed from cache")
+                warn!(target: "cache", action = "get", scope = "ical_kind", cache_key, %err, "Failed to read iCal feed from cache")
             }
         }
     }
@@ -156,20 +149,22 @@ pub(crate) async fn get_all_events_ical(
         FROM events e
         JOIN organizers o ON e.organizer_id = o.id
         WHERE e.publish_in_ical = true AND e.publish_app = true
+        AND o.organizer_kind = $1
         ORDER BY e.start_date_time ASC
-        "#
+        "#,
+        kind as OrganizerKind
     )
     .fetch_all(&state.db)
     .await?;
 
     let mut calendar = Calendar::new();
-    calendar.name("Campus Life Events");
-    calendar.description("All campus life events");
+    calendar.name(calendar_name);
+    calendar.description(calendar_description);
     calendar.ttl(&chrono::Duration::hours(1));
     calendar.timezone(BERLIN_TZID);
 
     for row in events_with_organizers {
-        let event_with_organizer = EventWithOrganizer::from(row);
+        let event_with_organizer = IcalEventWithOrganizer::from(row);
         let ical_event = event_with_organizer.to_ical_event();
         calendar.push(ical_event);
     }
@@ -179,13 +174,76 @@ pub(crate) async fn get_all_events_ical(
     if let Some(cache) = &state.cache
         && let Err(err) = cache.set_string(cache_key, &ical_content).await
     {
-        warn!(target: "cache", action = "set", scope = "ical_all", %err, "Failed to store iCal feed in cache");
+        warn!(target: "cache", action = "set", scope = "ical_kind", cache_key, %err, "Failed to store iCal feed in cache");
     }
 
-    build_ical_response_with_filename(
-        ical_content,
+    build_ical_response_with_filename(ical_content, content_disposition)
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/ical",
+    tag = "iCal",
+    responses((status = 200, description = "Legacy iCal: Campus Life (student associations) only", content_type = "text/calendar"))
+)]
+#[instrument(skip(state))]
+pub(crate) async fn get_all_events_ical(
+    State(state): State<AppState>,
+    _headers: HeaderMap,
+) -> Result<impl IntoResponse, AppError> {
+    ical_response_for_organizer_kind(
+        &state,
+        OrganizerKind::StudentAssociation,
+        "ical:kind:student_association",
+        "Campus Life Events",
+        "Campus Life events from student associations (legacy URL; same content as /api/ical/cl)",
         "attachment; filename=\"campus-life-events.ics\"".to_string(),
     )
+    .await
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/ical/cl",
+    tag = "iCal",
+    responses((status = 200, description = "iCal: all Campus Life (student association) events", content_type = "text/calendar"))
+)]
+#[instrument(skip(state))]
+pub(crate) async fn get_cl_events_ical(
+    State(state): State<AppState>,
+    _headers: HeaderMap,
+) -> Result<impl IntoResponse, AppError> {
+    ical_response_for_organizer_kind(
+        &state,
+        OrganizerKind::StudentAssociation,
+        "ical:kind:student_association",
+        "Campus Life Events",
+        "All public Campus Life events from student associations",
+        "attachment; filename=\"campus-life-cl-events.ics\"".to_string(),
+    )
+    .await
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/ical/thi",
+    tag = "iCal",
+    responses((status = 200, description = "iCal: all THI department events", content_type = "text/calendar"))
+)]
+#[instrument(skip(state))]
+pub(crate) async fn get_thi_events_ical(
+    State(state): State<AppState>,
+    _headers: HeaderMap,
+) -> Result<impl IntoResponse, AppError> {
+    ical_response_for_organizer_kind(
+        &state,
+        OrganizerKind::ThiDepartment,
+        "ical:kind:thi_department",
+        "THI Services Events",
+        "All public THI department and institution events",
+        "attachment; filename=\"thi-services-events.ics\"".to_string(),
+    )
+    .await
 }
 
 #[utoipa::path(
@@ -203,7 +261,7 @@ pub(crate) async fn get_organizer_events_ical(
     let organizer = sqlx::query_as!(
         Organizer,
         r#"
-        SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at
+        SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, organizer_kind as "organizer_kind: OrganizerKind", created_at, updated_at
         FROM organizers
         WHERE id = $1
         "#,
@@ -256,7 +314,7 @@ pub(crate) async fn get_organizer_events_ical(
     calendar.timezone(BERLIN_TZID);
 
     for row in events_with_organizers {
-        let event_with_organizer = EventWithOrganizer::from(row);
+        let event_with_organizer = IcalEventWithOrganizer::from(row);
         let ical_event = event_with_organizer.to_ical_event();
         calendar.push(ical_event);
     }
@@ -383,6 +441,8 @@ pub(crate) async fn list_organizer_ical_events(
 pub(crate) fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(get_all_events_ical))
+        .route("/cl", get(get_cl_events_ical))
+        .route("/thi", get(get_thi_events_ical))
         .route("/{organizer_id}", get(get_organizer_events_ical))
         .route("/{organizer_id}/events", get(list_organizer_ical_events))
 }

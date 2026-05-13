@@ -12,6 +12,17 @@ pub enum AccountType {
     Organizer,
 }
 
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type, ToSchema, Default,
+)]
+#[sqlx(type_name = "organizer_kind", rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum OrganizerKind {
+    #[default]
+    StudentAssociation,
+    ThiDepartment,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Organizer {
     pub id: i64,
@@ -25,6 +36,7 @@ pub struct Organizer {
     pub registration_number: Option<String>,
     pub non_profit: bool,
     pub newsletter: bool,
+    pub organizer_kind: OrganizerKind,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -107,6 +119,7 @@ pub struct OrganizerWithInvite {
     pub email: Option<String>,
     pub account_id: Option<i64>,
     pub newsletter: bool,
+    pub organizer_kind: OrganizerKind,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub invite_status: InviteStatus,
@@ -120,6 +133,7 @@ pub struct OrganizerInviteRow {
     pub account_id: Option<i64>,
     pub account_email: Option<String>,
     pub newsletter: bool,
+    pub organizer_kind: OrganizerKind,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub password_hash: Option<String>,
@@ -174,6 +188,7 @@ impl OrganizerWithInvite {
             email: row.account_email,
             account_id: row.account_id,
             newsletter: row.newsletter,
+            organizer_kind: row.organizer_kind,
             created_at: row.created_at,
             updated_at: row.updated_at,
             invite_status,

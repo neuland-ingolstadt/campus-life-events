@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::models::{AccountType, EventWithOrganizer, Organizer};
+use crate::models::{AccountType, EventWithOrganizer, Organizer, OrganizerKind};
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ErrorResponse {
@@ -21,6 +21,7 @@ pub struct AuthUserResponse {
     pub display_name: String,
     pub account_type: AccountType,
     pub organizer_id: Option<i64>,
+    pub organizer_kind: Option<OrganizerKind>,
     pub can_access_newsletter: bool,
 }
 
@@ -82,6 +83,7 @@ pub struct PublicEventResponse {
     pub id: i64,
     pub organizer_id: i64,
     pub organizer_name: String,
+    pub organizer_kind: OrganizerKind,
     pub title_de: String,
     pub title_en: String,
     pub description_de: Option<String>,
@@ -120,6 +122,7 @@ pub struct PublicOrganizerResponse {
     pub linkedin_url: Option<String>,
     pub registration_number: Option<String>,
     pub non_profit: bool,
+    pub organizer_kind: OrganizerKind,
     pub active_events_count: i64,
     pub activity_score: f64,
 }
@@ -137,6 +140,7 @@ pub struct OrganizerWithStatsResponse {
     pub registration_number: Option<String>,
     pub non_profit: bool,
     pub newsletter: bool,
+    pub organizer_kind: OrganizerKind,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub active_events_count: i64,

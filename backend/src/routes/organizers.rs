@@ -12,17 +12,18 @@ use crate::{
     app_state::AppState,
     dto::{CreateOrganizerRequest, UpdateOrganizerRequest},
     error::AppError,
-    models::{AccountType, Organizer, OrganizerInviteRow, OrganizerWithInvite},
+    models::{AccountType, Organizer, OrganizerInviteRow, OrganizerKind, OrganizerWithInvite},
     responses::{ErrorResponse, OrganizerWithStatsResponse, SetupTokenResponse},
 };
 
 use super::shared::{
-    current_user_from_headers, generate_setup_token_value, refresh_organizer_activity_stats,
+    AuthedUser, SessionOrganizerKindScope, current_user_from_headers, generate_setup_token_value,
+    refresh_organizer_activity_stats, session_organizer_kind_scope,
 };
 
 pub(crate) async fn update_organizer_with_user(
     state: &AppState,
-    user: &super::shared::AuthedUser,
+    user: &AuthedUser,
     id: i64,
     payload: UpdateOrganizerRequest,
 ) -> Result<Organizer, AppError> {
@@ -84,7 +85,7 @@ pub(crate) async fn update_organizer_with_user(
 
     builder.push(" WHERE id = ").push_bind(id);
     builder.push(
-        " RETURNING id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at",
+        " RETURNING id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, organizer_kind, created_at, updated_at",
     );
 
     let organizer = builder
@@ -108,9 +109,17 @@ pub(crate) async fn list_organizers(
     State(state): State<AppState>,
     headers: HeaderMap,
 ) -> Result<Json<Vec<OrganizerWithStatsResponse>>, AppError> {
-    let _user = current_user_from_headers(&headers, &state).await?;
-    let rows = sqlx::query!(
-        r#"
+    let user = current_user_from_headers(&headers, &state).await?;
+    let scope = session_organizer_kind_scope(&state, &user).await?;
+
+    if matches!(scope, SessionOrganizerKindScope::None) {
+        return Ok(Json(vec![]));
+    }
+
+    let organizers: Vec<OrganizerWithStatsResponse> = match scope {
+        SessionOrganizerKindScope::None => unreachable!(),
+        SessionOrganizerKindScope::All => sqlx::query!(
+            r#"
         SELECT
             o.id,
             o.name,
@@ -123,6 +132,7 @@ pub(crate) async fn list_organizers(
             o.registration_number,
             o.non_profit,
             o.newsletter,
+            o.organizer_kind as "organizer_kind: OrganizerKind",
             o.created_at,
             o.updated_at,
             COALESCE(stats.active_events_count, 0) AS "active_events_count!",
@@ -131,11 +141,9 @@ pub(crate) async fn list_organizers(
         LEFT JOIN organizer_activity_stats stats ON stats.organizer_id = o.id
         ORDER BY o.name
         "#
-    )
-    .fetch_all(&state.db)
-    .await?;
-
-    let organizers = rows
+        )
+        .fetch_all(&state.db)
+        .await?
         .into_iter()
         .map(|row| OrganizerWithStatsResponse {
             id: row.id,
@@ -149,12 +157,62 @@ pub(crate) async fn list_organizers(
             registration_number: row.registration_number,
             non_profit: row.non_profit,
             newsletter: row.newsletter,
+            organizer_kind: row.organizer_kind,
             created_at: row.created_at,
             updated_at: row.updated_at,
             active_events_count: row.active_events_count,
             activity_score: row.activity_score,
         })
-        .collect();
+        .collect(),
+        SessionOrganizerKindScope::OnlyKind(kind) => sqlx::query!(
+            r#"
+        SELECT
+            o.id,
+            o.name,
+            o.description_de,
+            o.description_en,
+            o.website_url,
+            o.instagram_url,
+            o.location,
+            o.linkedin_url,
+            o.registration_number,
+            o.non_profit,
+            o.newsletter,
+            o.organizer_kind as "organizer_kind: OrganizerKind",
+            o.created_at,
+            o.updated_at,
+            COALESCE(stats.active_events_count, 0) AS "active_events_count!",
+            COALESCE(stats.activity_score, 0)::double precision AS "activity_score!"
+        FROM organizers o
+        LEFT JOIN organizer_activity_stats stats ON stats.organizer_id = o.id
+        WHERE o.organizer_kind = $1
+        ORDER BY o.name
+        "#,
+            kind as OrganizerKind
+        )
+        .fetch_all(&state.db)
+        .await?
+        .into_iter()
+        .map(|row| OrganizerWithStatsResponse {
+            id: row.id,
+            name: row.name,
+            description_de: row.description_de,
+            description_en: row.description_en,
+            website_url: row.website_url,
+            instagram_url: row.instagram_url,
+            location: row.location,
+            linkedin_url: row.linkedin_url,
+            registration_number: row.registration_number,
+            non_profit: row.non_profit,
+            newsletter: row.newsletter,
+            organizer_kind: row.organizer_kind,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+            active_events_count: row.active_events_count,
+            activity_score: row.activity_score,
+        })
+        .collect(),
+    };
 
     Ok(Json(organizers))
 }
@@ -182,11 +240,12 @@ pub(crate) async fn create_organizer(
     let organizer = sqlx::query_as!(
         Organizer,
         r#"
-        INSERT INTO organizers (name)
-        VALUES ($1)
-        RETURNING id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at
+        INSERT INTO organizers (name, organizer_kind)
+        VALUES ($1, $2)
+        RETURNING id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, organizer_kind as "organizer_kind: OrganizerKind", created_at, updated_at
         "#,
-        &payload.name
+        &payload.name,
+        payload.organizer_kind as OrganizerKind
     )
     .fetch_one(&mut *tx)
     .await?;
@@ -266,6 +325,7 @@ pub(crate) async fn list_organizers_admin(
             a.id AS account_id,
             a.email AS account_email,
             o.newsletter AS newsletter,
+            o.organizer_kind as "organizer_kind: OrganizerKind",
             o.created_at,
             o.updated_at,
             a.password_hash,
@@ -301,7 +361,13 @@ pub(crate) async fn get_organizer(
     headers: HeaderMap,
     Path(id): Path<i64>,
 ) -> Result<Json<OrganizerWithStatsResponse>, AppError> {
-    let _user = current_user_from_headers(&headers, &state).await?;
+    let user = current_user_from_headers(&headers, &state).await?;
+    let scope = session_organizer_kind_scope(&state, &user).await?;
+
+    if matches!(scope, SessionOrganizerKindScope::None) {
+        return Err(AppError::not_found("Organizer not found"));
+    }
+
     let organizer = sqlx::query!(
         r#"
         SELECT
@@ -316,6 +382,7 @@ pub(crate) async fn get_organizer(
             o.registration_number,
             o.non_profit,
             o.newsletter,
+            o.organizer_kind as "organizer_kind: OrganizerKind",
             o.created_at,
             o.updated_at,
             COALESCE(stats.active_events_count, 0) AS "active_events_count!",
@@ -333,6 +400,12 @@ pub(crate) async fn get_organizer(
         return Err(AppError::not_found("Organizer not found"));
     };
 
+    if let SessionOrganizerKindScope::OnlyKind(kind) = scope
+        && row.organizer_kind != kind
+    {
+        return Err(AppError::not_found("Organizer not found"));
+    }
+
     Ok(Json(OrganizerWithStatsResponse {
         id: row.id,
         name: row.name,
@@ -345,6 +418,7 @@ pub(crate) async fn get_organizer(
         registration_number: row.registration_number,
         non_profit: row.non_profit,
         newsletter: row.newsletter,
+        organizer_kind: row.organizer_kind,
         created_at: row.created_at,
         updated_at: row.updated_at,
         active_events_count: row.active_events_count,
@@ -443,7 +517,7 @@ pub(crate) async fn generate_setup_token(
     Ok(Json(SetupTokenResponse { setup_token: token }))
 }
 
-async fn invalidate_public_organizer_caches(state: &AppState) {
+pub(crate) async fn invalidate_public_organizer_caches(state: &AppState) {
     if let Some(cache) = &state.cache {
         if let Err(err) = cache.purge_prefix("public:organizers").await {
             warn!(target: "cache", action = "purge", scope = "public_organizers", %err, "Failed to purge public organizers cache");

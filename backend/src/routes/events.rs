@@ -18,11 +18,14 @@ use crate::{
         UpdateEventRequest,
     },
     error::AppError,
-    models::{AuditType, Event, EventWithOrganizer, Organizer},
+    models::{AccountType, AuditType, Event, EventWithOrganizer, Organizer, OrganizerKind},
     responses::{ErrorResponse, NewsletterDataResponse},
 };
 
-use super::shared::{AuthedUser, current_user_from_headers, refresh_organizer_activity_stats};
+use super::shared::{
+    AuthedUser, SessionOrganizerKindScope, current_user_from_headers,
+    refresh_organizer_activity_stats, session_organizer_kind_scope,
+};
 
 pub(crate) async fn create_event_with_user(
     state: &AppState,
@@ -119,10 +122,36 @@ pub(crate) async fn get_event_with_user(
     };
 
     if user.is_admin() || user.organizer_id() == Some(event.organizer_id) {
-        Ok(event)
-    } else {
-        Err(AppError::not_found("event not found"))
+        return Ok(event);
     }
+
+    if matches!(user.account_type, AccountType::Organizer) && event.publish_app {
+        let Some(uid) = user.organizer_id() else {
+            return Err(AppError::not_found("event not found"));
+        };
+        let Some(row) = sqlx::query!(
+            r#"
+            SELECT
+                ou.organizer_kind as "user_kind: OrganizerKind",
+                oev.organizer_kind as "event_kind: OrganizerKind"
+            FROM organizers ou
+            CROSS JOIN organizers oev
+            WHERE ou.id = $1 AND oev.id = $2
+            "#,
+            uid,
+            event.organizer_id
+        )
+        .fetch_optional(&state.db)
+        .await?
+        else {
+            return Err(AppError::not_found("event not found"));
+        };
+        if row.user_kind == row.event_kind {
+            return Ok(event);
+        }
+    }
+
+    Err(AppError::not_found("event not found"))
 }
 
 pub(crate) async fn update_event_with_user(
@@ -384,11 +413,15 @@ pub(crate) async fn newsletter_data_with_user(
             None => compute_week_boundaries(default_next_week),
         };
 
+    let subject = build_newsletter_subject(next_week_start);
+
+    let club_kind = OrganizerKind::StudentAssociation;
+
     let events = sqlx::query_as!(
         EventWithOrganizer,
         r#"
         SELECT e.id, e.organizer_id, e.title_de, e.title_en, e.description_de, e.description_en,
-               e.start_date_time, e.end_date_time, e.event_url, e.location, e.publish_app, 
+               e.start_date_time, e.end_date_time, e.event_url, e.location, e.publish_app,
                e.publish_newsletter, e.publish_in_ical, e.publish_web, e.created_at, e.updated_at,
                o.name as organizer_name, o.website_url as organizer_website
         FROM events e
@@ -396,10 +429,12 @@ pub(crate) async fn newsletter_data_with_user(
         WHERE e.publish_newsletter = true
         AND e.start_date_time >= $1
         AND e.start_date_time < $2
+        AND o.organizer_kind = $3
         ORDER BY e.start_date_time ASC
         "#,
         next_week_start,
-        week_after_end
+        week_after_end,
+        club_kind as OrganizerKind
     )
     .fetch_all(&state.db)
     .await?;
@@ -408,11 +443,10 @@ pub(crate) async fn newsletter_data_with_user(
         .into_iter()
         .partition(|event| event.start_date_time < week_after_start);
 
-    let subject = build_newsletter_subject(next_week_start);
-
     let all_organizers = sqlx::query_as!(
         Organizer,
-        "SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, created_at, updated_at FROM organizers ORDER BY name"
+        r#"SELECT id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, organizer_kind as "organizer_kind: OrganizerKind", created_at, updated_at FROM organizers WHERE organizer_kind = $1 ORDER BY name"#,
+        club_kind as OrganizerKind
     )
     .fetch_all(&state.db)
     .await?;
@@ -488,37 +522,59 @@ pub(crate) async fn list_events(
     Query(query_params): Query<ListEventsQuery>,
     headers: HeaderMap,
 ) -> Result<Json<Vec<Event>>, AppError> {
-    // Require authentication for this endpoint
-    let _user = current_user_from_headers(&headers, &state).await?;
+    let user = current_user_from_headers(&headers, &state).await?;
+    let scope = session_organizer_kind_scope(&state, &user).await?;
+
+    let enforced_organizer_kind = match scope {
+        SessionOrganizerKindScope::All => None,
+        SessionOrganizerKindScope::OnlyKind(k) => Some(k),
+        SessionOrganizerKindScope::None => return Ok(Json(vec![])),
+    };
 
     let mut builder = QueryBuilder::<Postgres>::new(
-        "SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at FROM events",
+        "SELECT e.id, e.organizer_id, e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location, e.publish_app, e.publish_newsletter, e.publish_in_ical, e.publish_web, e.created_at, e.updated_at FROM events e INNER JOIN organizers o ON e.organizer_id = o.id",
     );
 
     let mut has_where = false;
 
-    if let Some(organizer_id) = query_params.organizer_id {
-        if has_where {
-            builder.push(" AND organizer_id = ").push_bind(organizer_id);
-        } else {
+    if user.is_admin() {
+        if let Some(organizer_id) = query_params.organizer_id {
             builder
-                .push(" WHERE organizer_id = ")
+                .push(" WHERE e.organizer_id = ")
                 .push_bind(organizer_id);
             has_where = true;
         }
+
+        if let Some(organizer_kind) = query_params.organizer_kind {
+            if has_where {
+                builder
+                    .push(" AND o.organizer_kind = ")
+                    .push_bind(organizer_kind);
+            } else {
+                builder
+                    .push(" WHERE o.organizer_kind = ")
+                    .push_bind(organizer_kind);
+                has_where = true;
+            }
+        }
+    } else if let Some(kind) = enforced_organizer_kind {
+        builder.push(" WHERE o.organizer_kind = ").push_bind(kind);
+        has_where = true;
     }
 
     if query_params.upcoming_only.unwrap_or(false) {
         if has_where {
-            builder.push(" AND end_date_time >= ").push_bind(Utc::now());
+            builder
+                .push(" AND e.end_date_time >= ")
+                .push_bind(Utc::now());
         } else {
             builder
-                .push(" WHERE end_date_time >= ")
+                .push(" WHERE e.end_date_time >= ")
                 .push_bind(Utc::now());
         }
     }
 
-    builder.push(" ORDER BY start_date_time ASC");
+    builder.push(" ORDER BY e.start_date_time ASC");
 
     if let Some(limit) = query_params.limit {
         builder.push(" LIMIT ").push_bind(limit.max(1));
@@ -664,7 +720,7 @@ async fn ensure_newsletter_access(user: &AuthedUser, state: &AppState) -> Result
     };
 
     let row = sqlx::query!(
-        r#"SELECT newsletter FROM organizers WHERE id = $1"#,
+        r#"SELECT newsletter, organizer_kind as "organizer_kind: OrganizerKind" FROM organizers WHERE id = $1"#,
         organizer_id
     )
     .fetch_optional(&state.db)
@@ -676,6 +732,12 @@ async fn ensure_newsletter_access(user: &AuthedUser, state: &AppState) -> Result
 
     if !row.newsletter {
         return Err(AppError::unauthorized("newsletter permission required"));
+    }
+
+    if row.organizer_kind != OrganizerKind::StudentAssociation {
+        return Err(AppError::unauthorized(
+            "newsletter is only available for student associations",
+        ));
     }
 
     Ok(())

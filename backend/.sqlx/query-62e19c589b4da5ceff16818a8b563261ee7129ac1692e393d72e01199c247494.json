@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT\n            o.id,\n            o.name,\n            o.description_de,\n            o.description_en,\n            o.website_url,\n            o.instagram_url,\n            o.location,\n            o.linkedin_url,\n            o.registration_number,\n            o.non_profit,\n            COALESCE(stats.active_events_count, 0) AS \"active_events_count!\",\n            COALESCE(stats.activity_score, 0)::double precision AS \"activity_score!\"\n        FROM organizers o\n        LEFT JOIN organizer_activity_stats stats ON stats.organizer_id = o.id\n        WHERE o.id = $1\n        ",
+  "query": "\n        INSERT INTO organizers (name, organizer_kind)\n        VALUES ($1, $2)\n        RETURNING id, name, description_de, description_en, website_url, instagram_url, location, linkedin_url, registration_number, non_profit, newsletter, organizer_kind as \"organizer_kind: OrganizerKind\", created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -55,18 +55,49 @@
       },
       {
         "ordinal": 10,
-        "name": "active_events_count!",
-        "type_info": "Int8"
+        "name": "newsletter",
+        "type_info": "Bool"
       },
       {
         "ordinal": 11,
-        "name": "activity_score!",
-        "type_info": "Float8"
+        "name": "organizer_kind: OrganizerKind",
+        "type_info": {
+          "Custom": {
+            "name": "organizer_kind",
+            "kind": {
+              "Enum": [
+                "STUDENT_ASSOCIATION",
+                "THI_DEPARTMENT"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 13,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
       "Left": [
-        "Int8"
+        "Text",
+        {
+          "Custom": {
+            "name": "organizer_kind",
+            "kind": {
+              "Enum": [
+                "STUDENT_ASSOCIATION",
+                "THI_DEPARTMENT"
+              ]
+            }
+          }
+        }
       ]
     },
     "nullable": [
@@ -80,9 +111,11 @@
       true,
       true,
       false,
-      null,
-      null
+      false,
+      false,
+      false,
+      false
     ]
   },
-  "hash": "ade293ad829de0e5cd52310ce08a9e4f2f125d6f2c45f219457ffab3eece1a08"
+  "hash": "62e19c589b4da5ceff16818a8b563261ee7129ac1692e393d72e01199c247494"
 }

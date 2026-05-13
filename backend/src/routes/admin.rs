@@ -14,12 +14,16 @@ use crate::{
     dto::{InviteAdminRequest, UpdateAccountEmailRequest, UpdateOrganizerPermissionsRequest},
     error::AppError,
     models::{
-        AccountType, AdminInviteRow, AdminWithInvite, OrganizerInviteRow, OrganizerWithInvite,
+        AccountType, AdminInviteRow, AdminWithInvite, OrganizerInviteRow, OrganizerKind,
+        OrganizerWithInvite,
     },
     responses::{AccountEmailUpdatedResponse, SetupTokenResponse},
 };
 
-use super::shared::{current_user_from_headers, generate_setup_token_value};
+use super::{
+    organizers::invalidate_public_organizer_caches,
+    shared::{current_user_from_headers, generate_setup_token_value},
+};
 
 fn normalize_account_email(raw: &str) -> Result<String, AppError> {
     let trimmed = raw.trim();
@@ -100,14 +104,22 @@ pub(crate) async fn update_organizer_permissions(
         return Err(AppError::unauthorized("insufficient permissions"));
     }
 
+    let newsletter = if matches!(payload.organizer_kind, OrganizerKind::ThiDepartment) {
+        false
+    } else {
+        payload.newsletter
+    };
+
     let result = sqlx::query!(
         r#"
         UPDATE organizers
         SET newsletter = $1,
+            organizer_kind = $2,
             updated_at = NOW()
-        WHERE id = $2
+        WHERE id = $3
         "#,
-        payload.newsletter,
+        newsletter,
+        payload.organizer_kind as OrganizerKind,
         id
     )
     .execute(&state.db)
@@ -126,6 +138,7 @@ pub(crate) async fn update_organizer_permissions(
             a.id AS account_id,
             a.email AS account_email,
             o.newsletter AS newsletter,
+            o.organizer_kind as "organizer_kind: crate::models::OrganizerKind",
             o.created_at,
             o.updated_at,
             a.password_hash,
@@ -142,6 +155,8 @@ pub(crate) async fn update_organizer_permissions(
     .await?;
 
     let organizer = OrganizerWithInvite::from_row(row);
+
+    invalidate_public_organizer_caches(&state).await;
 
     Ok(Json(organizer))
 }
