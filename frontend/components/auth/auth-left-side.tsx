@@ -1,5 +1,7 @@
+'use client'
+
 import dynamic from 'next/dynamic'
-import router from 'next/router'
+import { useRouter } from 'next/navigation'
 import type { ReactNode } from 'react'
 import NeulandPalm from '@/components/neuland-palm'
 import { Card, CardContent } from '@/components/ui/card'
@@ -10,6 +12,7 @@ interface AuthLeftSideProps {
 }
 
 export function AuthLeftSide({ children }: AuthLeftSideProps) {
+	const router = useRouter()
 	return (
 		<div className="hidden lg:block relative">
 			{/* Full screen Beams background */}

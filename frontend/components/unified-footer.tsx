@@ -12,7 +12,7 @@ export function UnifiedFooter({
 	variant = 'auth',
 	showThemeToggle = false
 }: UnifiedFooterProps) {
-	const currentYear = 2025
+	const currentYear = new Date().getFullYear()
 
 	const links = {
 		impressum: 'https://neuland-ingolstadt.de/legal/impressum',

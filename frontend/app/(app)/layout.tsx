@@ -2,10 +2,12 @@ import { DashboardSidebar } from '@/components/dashboard-sidebar'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { Toaster } from '@/components/ui/sonner'
 import { UnifiedFooter } from '@/components/unified-footer'
+import { requireUser } from '@/lib/server-auth'
 
-export default function AppLayout({
+export default async function AppLayout({
 	children
 }: Readonly<{ children: React.ReactNode }>) {
+	await requireUser()
 	return (
 		<SidebarProvider>
 			<DashboardSidebar />

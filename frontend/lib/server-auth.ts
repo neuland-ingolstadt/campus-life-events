@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { cache } from 'react'
 
 import type { AccountType } from '@/client/types.gen'
 
@@ -10,7 +11,7 @@ export type AuthUser = {
 	organizer_id?: number | null
 }
 
-export async function requireUser(): Promise<AuthUser> {
+export const requireUser = cache(async (): Promise<AuthUser> => {
 	const ck = await cookies()
 	const cookieHeader = ck.toString()
 	const base = process.env.BACKEND_URL || 'http://localhost:8080'
@@ -26,12 +27,12 @@ export async function requireUser(): Promise<AuthUser> {
 		redirect('/login')
 	}
 	return res.json()
-}
+})
 
-export async function requireAdmin(): Promise<AuthUser> {
+export const requireAdmin = cache(async (): Promise<AuthUser> => {
 	const user = await requireUser()
 	if (user.account_type !== 'ADMIN') {
 		redirect('/')
 	}
 	return user
-}
+})
