@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Mail, Pencil, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useMemo } from 'react'
 import { deleteOrganizer, listOrganizersAdmin } from '@/client'
@@ -13,6 +13,7 @@ import { RefreshCw } from '@/components/animate-ui/icons/refresh-cw'
 import { CreateOrganizerDialog } from '@/components/create-organizer-dialog'
 import { DataTableColumnHeader } from '@/components/data-table/column-header'
 import { DataTable } from '@/components/data-table/data-table'
+import { EditAccountEmailDialog } from '@/components/edit-account-email-dialog'
 import { OrganizerPermissionsDialog } from '@/components/organizer-permissions-dialog'
 import {
 	AlertDialog,
@@ -71,6 +72,10 @@ export default function ManageOrganizersPage() {
 	const onPermissionsUpdated = useCallback(async () => {
 		await qc.invalidateQueries({ queryKey: ['organizers-admin'] })
 		await qc.invalidateQueries({ queryKey: ['organizers'] })
+	}, [qc])
+
+	const onAccountEmailUpdated = useCallback(async () => {
+		await qc.invalidateQueries({ queryKey: ['organizers-admin'] })
 	}, [qc])
 
 	const columns: ColumnDef<OrganizerWithInvite>[] = useMemo(
@@ -175,6 +180,25 @@ export default function ManageOrganizersPage() {
 									newsletterEnabled={organizer.newsletter}
 									onSuccess={onPermissionsUpdated}
 								/>
+								{organizer.account_id != null ? (
+									<EditAccountEmailDialog
+										accountId={organizer.account_id}
+										currentEmail={organizer.email}
+										onSuccess={onAccountEmailUpdated}
+										title="E-Mail des Vereinskontos ändern"
+										description="Die neue Adresse gilt für die Anmeldung und System-E-Mails an diesen Verein."
+									/>
+								) : (
+									<Button
+										variant="outline"
+										size="sm"
+										className="h-8 px-2"
+										disabled
+										title="Kein Vereinskonto verknüpft"
+									>
+										<Mail className="h-4 w-4" />
+									</Button>
+								)}
 								{isPending ? (
 									<Button
 										variant="outline"
@@ -229,7 +253,7 @@ export default function ManageOrganizersPage() {
 				size: 200
 			}
 		],
-		[onDelete, onPermissionsUpdated]
+		[onDelete, onPermissionsUpdated, onAccountEmailUpdated]
 	)
 
 	const statusOptions = useMemo(

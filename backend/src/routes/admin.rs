@@ -5,19 +5,31 @@ use axum::{
     response::IntoResponse,
     routing::{get, post, put},
 };
+use lettre::message::Mailbox;
+use std::str::FromStr;
 use tracing::{error, info, instrument, warn};
 
 use crate::{
     app_state::AppState,
-    dto::{InviteAdminRequest, UpdateOrganizerPermissionsRequest},
+    dto::{InviteAdminRequest, UpdateAccountEmailRequest, UpdateOrganizerPermissionsRequest},
     error::AppError,
     models::{
         AccountType, AdminInviteRow, AdminWithInvite, OrganizerInviteRow, OrganizerWithInvite,
     },
-    responses::SetupTokenResponse,
+    responses::{AccountEmailUpdatedResponse, SetupTokenResponse},
 };
 
 use super::shared::{current_user_from_headers, generate_setup_token_value};
+
+fn normalize_account_email(raw: &str) -> Result<String, AppError> {
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return Err(AppError::validation("email must not be empty"));
+    }
+    let wrapped = format!("n <{trimmed}>");
+    Mailbox::from_str(&wrapped).map_err(|_| AppError::validation("invalid email address"))?;
+    Ok(trimmed.to_string())
+}
 
 #[utoipa::path(
     get,
@@ -111,6 +123,7 @@ pub(crate) async fn update_organizer_permissions(
         SELECT
             o.id AS organizer_id,
             o.name AS organizer_name,
+            a.id AS account_id,
             a.email AS account_email,
             o.newsletter AS newsletter,
             o.created_at,
@@ -133,14 +146,77 @@ pub(crate) async fn update_organizer_permissions(
     Ok(Json(organizer))
 }
 
-pub(crate) fn router() -> Router<AppState> {
-    Router::new()
-        .route("/invite", post(invite_admin))
-        .route("/list", get(list_admins))
-        .route(
-            "/organizers/{id}/permissions",
-            put(update_organizer_permissions),
-        )
+#[utoipa::path(
+    put,
+    path = "/api/v1/admin/accounts/{account_id}/email",
+    tag = "Admin",
+    params(("account_id" = i64, Path, description = "Account identifier")),
+    request_body = UpdateAccountEmailRequest,
+    responses((
+        status = 200,
+        description = "Account email updated",
+        body = AccountEmailUpdatedResponse,
+    )),
+)]
+#[instrument(skip(state, headers, payload))]
+pub(crate) async fn update_account_email(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(account_id): Path<i64>,
+    Json(payload): Json<UpdateAccountEmailRequest>,
+) -> Result<Json<AccountEmailUpdatedResponse>, AppError> {
+    let user = current_user_from_headers(&headers, &state).await?;
+    if !user.is_admin() {
+        return Err(AppError::unauthorized("insufficient permissions"));
+    }
+
+    let email = normalize_account_email(&payload.email)?;
+
+    let conflict = sqlx::query!(
+        r#"
+        SELECT id
+        FROM accounts
+        WHERE email = $1 AND id <> $2
+        LIMIT 1
+        "#,
+        &email,
+        account_id
+    )
+    .fetch_optional(&state.db)
+    .await?;
+
+    if conflict.is_some() {
+        return Err(AppError::validation(
+            "An account with this email already exists",
+        ));
+    }
+
+    let updated = sqlx::query!(
+        r#"
+        UPDATE accounts
+        SET email = $1,
+            updated_at = NOW()
+        WHERE id = $2
+        RETURNING id, email
+        "#,
+        &email,
+        account_id
+    )
+    .fetch_optional(&state.db)
+    .await?;
+
+    let Some(row) = updated else {
+        return Err(AppError::not_found("account not found"));
+    };
+
+    let Some(updated_email) = row.email else {
+        return Err(AppError::internal("email update returned null"));
+    };
+
+    Ok(Json(AccountEmailUpdatedResponse {
+        id: row.id,
+        email: updated_email,
+    }))
 }
 
 #[utoipa::path(
@@ -204,4 +280,15 @@ pub(crate) async fn invite_admin(
         StatusCode::CREATED,
         Json(SetupTokenResponse { setup_token: token }),
     ))
+}
+
+pub(crate) fn router() -> Router<AppState> {
+    Router::new()
+        .route("/invite", post(invite_admin))
+        .route("/list", get(list_admins))
+        .route("/accounts/{account_id}/email", put(update_account_email))
+        .route(
+            "/organizers/{id}/permissions",
+            put(update_organizer_permissions),
+        )
 }

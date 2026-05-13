@@ -272,6 +272,7 @@ async fn fetch_clubs_with_invites(state: &AppState) -> Result<Vec<OrganizerWithI
         SELECT
             o.id AS organizer_id,
             o.name AS organizer_name,
+            a.id AS account_id,
             a.email AS account_email,
             o.newsletter AS newsletter,
             o.created_at,

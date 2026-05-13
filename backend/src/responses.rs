@@ -60,6 +60,12 @@ pub struct PasswordResetRequestResponse {
     pub message: String,
 }
 
+#[derive(Debug, Serialize, ToSchema)]
+pub struct AccountEmailUpdatedResponse {
+    pub id: i64,
+    pub email: String,
+}
+
 #[allow(dead_code)]
 #[derive(Debug, Serialize, ToSchema)]
 pub struct NewsletterDataResponse {

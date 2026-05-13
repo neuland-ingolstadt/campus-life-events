@@ -105,6 +105,7 @@ pub struct OrganizerWithInvite {
     pub id: i64,
     pub name: String,
     pub email: Option<String>,
+    pub account_id: Option<i64>,
     pub newsletter: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -116,6 +117,7 @@ pub struct OrganizerWithInvite {
 pub struct OrganizerInviteRow {
     pub organizer_id: i64,
     pub organizer_name: String,
+    pub account_id: Option<i64>,
     pub account_email: Option<String>,
     pub newsletter: bool,
     pub created_at: DateTime<Utc>,
@@ -170,6 +172,7 @@ impl OrganizerWithInvite {
             id: row.organizer_id,
             name: row.organizer_name,
             email: row.account_email,
+            account_id: row.account_id,
             newsletter: row.newsletter,
             created_at: row.created_at,
             updated_at: row.updated_at,

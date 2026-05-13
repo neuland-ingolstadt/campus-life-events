@@ -4,6 +4,11 @@ export type ClientOptions = {
     baseUrl: 'http://localhost:8080' | (string & {});
 };
 
+export type AccountEmailUpdatedResponse = {
+    email: string;
+    id: number;
+};
+
 export type AccountType = 'ADMIN' | 'ORGANIZER';
 
 export type AdminWithInvite = {
@@ -206,6 +211,7 @@ export type Organizer = {
 };
 
 export type OrganizerWithInvite = {
+    account_id?: number | null;
     created_at: string;
     email?: string | null;
     id: number;
@@ -294,6 +300,10 @@ export type SetupTokenResponse = {
     setup_token: string;
 };
 
+export type UpdateAccountEmailRequest = {
+    email: string;
+};
+
 export type UpdateEventRequest = {
     description_de?: string | null;
     description_en?: string | null;
@@ -351,6 +361,27 @@ export type ListOrganizerIcalEventsResponses = {
 };
 
 export type ListOrganizerIcalEventsResponse = ListOrganizerIcalEventsResponses[keyof ListOrganizerIcalEventsResponses];
+
+export type UpdateAccountEmailData = {
+    body: UpdateAccountEmailRequest;
+    path: {
+        /**
+         * Account identifier
+         */
+        account_id: number;
+    };
+    query?: never;
+    url: '/api/v1/admin/accounts/{account_id}/email';
+};
+
+export type UpdateAccountEmailResponses = {
+    /**
+     * Account email updated
+     */
+    200: AccountEmailUpdatedResponse;
+};
+
+export type UpdateAccountEmailResponse = UpdateAccountEmailResponses[keyof UpdateAccountEmailResponses];
 
 export type InviteAdminData = {
     body: InviteAdminRequest;

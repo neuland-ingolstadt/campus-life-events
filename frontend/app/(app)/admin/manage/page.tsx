@@ -1,17 +1,18 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
 import { ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { listAdmins } from '@/client'
 import type { AdminWithInvite } from '@/client/types.gen'
 import { AnimateIcon } from '@/components/animate-ui/icons/icon'
 import { RefreshCw } from '@/components/animate-ui/icons/refresh-cw'
 import { DataTableColumnHeader } from '@/components/data-table/column-header'
 import { DataTable } from '@/components/data-table/data-table'
+import { EditAccountEmailDialog } from '@/components/edit-account-email-dialog'
 import { InviteAdminDialog } from '@/components/invite-admin-dialog'
 import {
 	Breadcrumb,
@@ -27,6 +28,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
 import { me } from '@/lib/auth'
 
 export default function ManageAdminsPage() {
+	const qc = useQueryClient()
 	const { data: meData, isLoading: meLoading } = useQuery({
 		queryKey: ['auth', 'me'],
 		queryFn: me,
@@ -44,6 +46,10 @@ export default function ManageAdminsPage() {
 	})
 
 	const admins = useMemo(() => data ?? [], [data])
+
+	const onEmailUpdated = useCallback(async () => {
+		await qc.invalidateQueries({ queryKey: ['admins'] })
+	}, [qc])
 
 	const columns: ColumnDef<AdminWithInvite>[] = useMemo(
 		() => [
@@ -117,9 +123,24 @@ export default function ManageAdminsPage() {
 					new Date(a.getValue(id) as string).getTime() -
 					new Date(b.getValue(id) as string).getTime(),
 				size: 150
+			},
+			{
+				id: 'actions',
+				header: 'Aktionen',
+				enableHiding: false,
+				cell: ({ row }) => (
+					<div className="flex justify-center">
+						<EditAccountEmailDialog
+							accountId={row.original.id}
+							currentEmail={row.original.email}
+							onSuccess={onEmailUpdated}
+						/>
+					</div>
+				),
+				size: 80
 			}
 		],
-		[]
+		[onEmailUpdated]
 	)
 
 	const statusOptions = useMemo(
