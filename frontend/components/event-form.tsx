@@ -393,8 +393,8 @@ export function EventForm({
 										<Input placeholder="https://example.com" {...field} />
 									</FormControl>
 									<FormDescription>
-										Link zur Event- oder Ticketseite. Nicht deine
-										Vereinswebsite, diese kannst du in deinem{' '}
+										Link zur Event- oder Ticketseite. Nicht deine Website der
+										Organisation, diese kannst du in deinem{' '}
 										<Link href={'/organizers'} className="font-bold">
 											Profil
 										</Link>{' '}
@@ -478,7 +478,8 @@ export function EventForm({
 												iCal-Kalender
 											</FormLabel>
 											<FormDescription className="text-xs">
-												Dieses Event im eigenen Vereins-iCal Kalender aufführen.
+												Dieses Event im eigenen Organisations-iCal-Kalender
+												aufführen.
 											</FormDescription>
 										</div>
 										<FormControl>
@@ -514,9 +515,9 @@ export function EventForm({
 							/>
 						</div>
 						<p className="text-xs text-muted-foreground -mt-3">
-							Das Event wird nur in der gemeinsamen iCal-Kalender aller Vereine
-							angezeigt, wenn „iCal-Kalender" und gleichzeitig „Neuland Next
-							App" aktiviert sind.
+							Das Event wird nur in der gemeinsamen iCal-Kalenderansicht aller
+							Organisationen angezeigt, wenn „iCal-Kalender" und gleichzeitig
+							„Neuland Next App" aktiviert sind.
 						</p>
 					</div>
 				</div>

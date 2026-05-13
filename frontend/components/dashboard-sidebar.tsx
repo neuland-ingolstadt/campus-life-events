@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useCallback, useMemo, useState } from 'react'
+import { type ElementType, useCallback, useMemo, useState } from 'react'
 import { AuthStatus } from '@/components/auth-status'
 import { ThemeToggle } from '@/components/theme-toggle'
 import {
@@ -38,6 +38,16 @@ export function DashboardSidebar() {
 	const { isMobile, setOpenMobile } = useSidebar()
 	const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set())
 
+	const brandTitle = useMemo(() => {
+		if (meData?.account_type === 'ADMIN') {
+			return 'Campus Life'
+		}
+		if (meData?.organizer_kind === 'THI_DEPARTMENT') {
+			return 'THI Services'
+		}
+		return 'Campus Life'
+	}, [meData?.account_type, meData?.organizer_kind])
+
 	const handleNavigation = useCallback(() => {
 		if (isMobile) {
 			setOpenMobile(false)
@@ -46,32 +56,40 @@ export function DashboardSidebar() {
 
 	const handleItemClick = useCallback((itemTitle: string) => {
 		setAnimatingItems((prev) => new Set(prev).add(itemTitle))
-		// Reset animation state after animation completes
 		setTimeout(() => {
 			setAnimatingItems((prev) => {
 				const newSet = new Set(prev)
 				newSet.delete(itemTitle)
 				return newSet
 			})
-		}, 600) // Match animation duration
+		}, 600)
 	}, [])
 
 	const items = useMemo(() => {
-		const navItems = [
+		type NavItem = {
+			title: string
+			url: string
+			icon: ElementType<{ className?: string; animate?: boolean }>
+			isActive: (p: string) => boolean
+		}
+		const navItems: NavItem[] = [
 			{
 				title: 'Dashboard',
 				url: '/',
-				icon: LayoutDashboard
+				icon: LayoutDashboard,
+				isActive: (p) => p === '/'
 			},
 			{
 				title: 'Events',
 				url: '/events',
-				icon: PartyPopper
+				icon: PartyPopper,
+				isActive: (p) => p.startsWith('/events')
 			},
 			{
-				title: 'Vereine',
+				title: 'Organisationen',
 				url: '/organizers',
-				icon: Users
+				icon: Users,
+				isActive: (p) => p.startsWith('/organizers')
 			}
 		]
 
@@ -79,7 +97,8 @@ export function DashboardSidebar() {
 			navItems.push({
 				title: 'Admin',
 				url: '/admin',
-				icon: Hammer
+				icon: Hammer,
+				isActive: (p) => p.startsWith('/admin')
 			})
 		}
 
@@ -87,7 +106,8 @@ export function DashboardSidebar() {
 			navItems.push({
 				title: 'Newsletter',
 				url: '/newsletter',
-				icon: Send
+				icon: Send,
+				isActive: (p) => p.startsWith('/newsletter')
 			})
 		}
 
@@ -95,17 +115,20 @@ export function DashboardSidebar() {
 			{
 				title: 'iCal Abonnements',
 				url: '/ical',
-				icon: Radio
+				icon: Radio,
+				isActive: (p) => p.startsWith('/ical')
 			},
 			{
 				title: 'Analysen',
 				url: '/analytics',
-				icon: ChartColumnIncreasing
+				icon: ChartColumnIncreasing,
+				isActive: (p) => p.startsWith('/analytics')
 			},
 			{
 				title: 'Einstellungen',
 				url: '/settings',
-				icon: Settings
+				icon: Settings,
+				isActive: (p) => p.startsWith('/settings')
 			}
 		)
 
@@ -115,7 +138,6 @@ export function DashboardSidebar() {
 	return (
 		<Sidebar variant="sidebar">
 			<SidebarHeader>
-				{/* Mobile bottom sheet handle */}
 				<div className="flex justify-center py-2 md:hidden">
 					<div className="h-1 w-8 rounded-full bg-muted-foreground/30" />
 				</div>
@@ -123,8 +145,8 @@ export function DashboardSidebar() {
 					<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
 						<NeulandPalm className="h-6 w-6" color="currentColor" />
 					</div>
-					<div className="grid flex-1 text-left text-sm leading-tight">
-						<span className="truncate font-semibold">Campus Life</span>
+					<div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
+						<span className="truncate font-semibold">{brandTitle}</span>
 						<span className="truncate text-xs text-muted-foreground">
 							Event-Dashboard
 						</span>
@@ -140,7 +162,7 @@ export function DashboardSidebar() {
 								<SidebarMenuItem key={item.title}>
 									<SidebarMenuButton
 										asChild
-										isActive={pathname === item.url}
+										isActive={item.isActive(pathname)}
 										size="lg"
 									>
 										<Link

@@ -12,6 +12,9 @@ import { RefreshCw } from '../animate-ui/icons/refresh-cw'
 type ViewMode = 'table' | 'calendar'
 
 interface EventsHeaderProps {
+	readonly tableId: string
+	readonly heading: string
+	readonly description: string
 	readonly viewMode: ViewMode
 	readonly onViewModeChange: (mode: ViewMode) => void
 	readonly onRefresh: () => void
@@ -22,6 +25,9 @@ interface EventsHeaderProps {
 }
 
 export function EventsHeader({
+	tableId,
+	heading,
+	description,
 	viewMode,
 	onViewModeChange,
 	onRefresh,
@@ -30,15 +36,13 @@ export function EventsHeader({
 	ownFilterActive,
 	onOwnFilterChange
 }: EventsHeaderProps) {
-	const ownSwitchId = 'events-own-filter-switch'
+	const ownSwitchId = `${tableId}-own-filter-switch`
 
 	return (
 		<div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
 			<div>
-				<h2 className="text-3xl font-bold tracking-tight">Events</h2>
-				<p className="text-muted-foreground mt-1">
-					Verwalte und organisiere Campus-Events mit erweiterten Filtern
-				</p>
+				<h2 className="text-3xl font-bold tracking-tight">{heading}</h2>
+				<p className="text-muted-foreground mt-1">{description}</p>
 			</div>
 			<div className="flex gap-2 items-center flex-wrap justify-end">
 				{canFilterOwn && (

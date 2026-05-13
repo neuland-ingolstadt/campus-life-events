@@ -135,12 +135,14 @@ export function OrganizerDialog({
 			<DialogContent className="sm:max-w-[500px]">
 				<DialogHeader>
 					<DialogTitle>
-						{organizer ? 'Verein bearbeiten' : 'Neuen Verein erstellen'}
+						{organizer
+							? 'Organisation bearbeiten'
+							: 'Neue Organisation erstellen'}
 					</DialogTitle>
 					<DialogDescription>
 						{organizer
-							? 'Aktualisiere die Vereinsdetails unten.'
-							: 'Fülle die Angaben aus, um einen neuen Verein anzulegen.'}
+							? 'Aktualisiere die Organisationsdetails unten.'
+							: 'Fülle die Angaben aus, um eine neue Organisation anzulegen.'}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -153,7 +155,7 @@ export function OrganizerDialog({
 								<FormItem>
 									<FormLabel>Name *</FormLabel>
 									<FormControl>
-										<Input placeholder="Name des Vereins" {...field} />
+										<Input placeholder="Name der Organisation" {...field} />
 									</FormControl>
 									<FormMessage />
 								</FormItem>
@@ -208,7 +210,7 @@ export function OrganizerDialog({
 										/>
 									</FormControl>
 									<FormDescription>
-										Optionaler Standort oder Raum des Vereins
+										Optionaler Standort oder Raum der Organisation
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -225,7 +227,7 @@ export function OrganizerDialog({
 										<Input placeholder="https://example.com" {...field} />
 									</FormControl>
 									<FormDescription>
-										Optionale Website-URL des Vereins
+										Optionale Website-URL der Organisation
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -260,7 +262,7 @@ export function OrganizerDialog({
 									<FormLabel>LinkedIn-URL</FormLabel>
 									<FormControl>
 										<Input
-											placeholder="https://linkedin.com/company/verein"
+											placeholder="https://linkedin.com/company/organisation"
 											{...field}
 										/>
 									</FormControl>
@@ -282,7 +284,7 @@ export function OrganizerDialog({
 										<Input placeholder="z. B. VR 12345" {...field} />
 									</FormControl>
 									<FormDescription>
-										Optionaler Eintrag aus dem Vereinsregister
+										Optionaler Registereintrag oder Registerauszug
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -296,10 +298,10 @@ export function OrganizerDialog({
 								<FormItem className="flex items-center justify-between rounded-md border p-4">
 									<div className="space-y-1">
 										<FormLabel className="text-sm font-medium">
-											Gemeinnütziger Verein
+											Gemeinnützige Organisation
 										</FormLabel>
 										<FormDescription className="text-xs">
-											Kennzeichnet euren Verein als gemeinnützig
+											Kennzeichnet eure Organisation als gemeinnützig
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -324,8 +326,8 @@ export function OrganizerDialog({
 								{isLoading
 									? 'Speichern...'
 									: organizer
-										? 'Verein aktualisieren'
-										: 'Verein erstellen'}
+										? 'Organisation aktualisieren'
+										: 'Organisation erstellen'}
 							</Button>
 						</DialogFooter>
 					</form>

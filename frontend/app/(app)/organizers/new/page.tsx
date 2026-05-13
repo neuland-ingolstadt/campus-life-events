@@ -62,17 +62,17 @@ export default function NewOrganizerPage() {
 			<header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/80 backdrop-blur-md px-4">
 				<SidebarTrigger className="-ml-1" />
 				<div className="flex items-center gap-2">
-					<h1 className="text-lg font-semibold">Neuen Verein einladen</h1>
+					<h1 className="text-lg font-semibold">Neue Organisation einladen</h1>
 				</div>
 			</header>
 			<div className="flex-1 p-4 md:p-8 space-y-4 pt-6">
 				<div className="max-w-2xl">
 					<h2 className="text-2xl font-bold tracking-tight mb-2">
-						Verein einladen
+						Organisation einladen
 					</h2>
 					<p className="text-muted-foreground mb-6">
-						Lade einen neuen Verein ein, indem du Name und E-Mail-Adresse
-						eingibst. Der Verein erhält eine Einladung mit einem Setup-Token,
+						Lade eine neue Organisation ein, indem du Name und E-Mail-Adresse
+						eingibst. Der Kontakt erhält eine Einladung mit einem Setup-Token,
 						mit dem er sich registrieren kann.
 					</p>
 
@@ -90,7 +90,7 @@ export default function NewOrganizerPage() {
 											Name <RequiredLabel />
 										</FormLabel>
 										<FormControl>
-											<Input placeholder="Name des Vereins" {...field} />
+											<Input placeholder="Name der Organisation" {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -106,7 +106,7 @@ export default function NewOrganizerPage() {
 										</FormLabel>
 										<FormControl>
 											<Input
-												placeholder="verein@example.com"
+												placeholder="kontakt@example.com"
 												type="email"
 												{...field}
 											/>

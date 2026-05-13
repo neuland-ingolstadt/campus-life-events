@@ -1,6 +1,6 @@
 'use client'
 
-import { Calendar, Copy, Globe } from 'lucide-react'
+import { Building2, Calendar, Copy, PartyPopper } from 'lucide-react'
 import { useId } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -19,7 +19,8 @@ interface ICalClientProps {
 }
 
 export function ICalClient({ backendUrl, userId }: ICalClientProps) {
-	const globalIcalId = useId()
+	const clIcalId = useId()
+	const thiIcalId = useId()
 	const personalIcalId = useId()
 
 	const copyToClipboard = (text: string, description: string) => {
@@ -27,7 +28,8 @@ export function ICalClient({ backendUrl, userId }: ICalClientProps) {
 		toast.success(`${description} wurde in die Zwischenablage kopiert.`)
 	}
 
-	const globalIcalUrl = `${backendUrl}/api/ical`
+	const clIcalUrl = `${backendUrl}/api/ical/cl`
+	const thiIcalUrl = `${backendUrl}/api/ical/thi`
 	const personalIcalUrl = `${backendUrl}/api/ical/${userId}`
 
 	return (
@@ -45,42 +47,42 @@ export function ICalClient({ backendUrl, userId }: ICalClientProps) {
 						iCal Abonnements
 					</h2>
 					<p className="text-muted-foreground mt-1">
-						Abonniere Campus Life Events in deinem Kalender oder teile die Links
-						mit deinen Mitgliedern!
+						Abonniere öffentliche Events in deinem Kalender: getrennt nach
+						Campus Life (Studierendenorganisationen) und THI Services
+						(Abteilungen & Einrichtungen).
 					</p>
 				</div>
 
 				<div className="grid gap-6 md:grid-cols-2">
-					{/* Global Calendar */}
-					<Card className="transition-all duration-300 hover:shadow-lg">
+					<Card className="transition-all duration-300 hover:shadow-lg border-primary/20">
 						<CardHeader>
 							<div className="flex items-center gap-2">
-								<Globe className="h-5 w-5 " />
-								<CardTitle>Alle Events</CardTitle>
+								<PartyPopper className="h-5 w-5 text-primary" />
+								<CardTitle>Campus Life (CL)</CardTitle>
 							</div>
 							<CardDescription>
-								Alle öffentlich verfügbaren Campus Life Events von allen
-								Vereinen
+								Alle öffentlichen Events von Studierendenorganisationen und
+								Hochschulgruppen
 							</CardDescription>
 						</CardHeader>
 						<CardContent className="space-y-4">
 							<div className="space-y-2">
-								<label htmlFor={globalIcalId} className="text-sm font-medium">
-									iCal URL:
+								<label htmlFor={clIcalId} className="text-sm font-medium">
+									iCal URL
 								</label>
 								<div className="flex gap-2">
 									<input
-										id={globalIcalId}
+										id={clIcalId}
 										type="text"
-										value={globalIcalUrl}
+										value={clIcalUrl}
 										readOnly
 										className="flex-1 px-3 py-2 border rounded-md bg-muted text-sm font-mono"
 									/>
 									<Button
 										variant="outline"
-										className="h-10 px-3"
+										className="h-10 px-3 shrink-0"
 										onClick={() =>
-											copyToClipboard(globalIcalUrl, 'Global iCal URL')
+											copyToClipboard(clIcalUrl, 'Campus Life iCal URL')
 										}
 									>
 										<Copy className="h-4 w-4" />
@@ -90,77 +92,111 @@ export function ICalClient({ backendUrl, userId }: ICalClientProps) {
 						</CardContent>
 					</Card>
 
-					{/* Personal Calendar or Admin Info */}
-					{userId ? (
-						<Card className="transition-all duration-300 hover:shadow-lg">
-							<CardHeader>
-								<div className="flex items-center gap-2">
-									<Calendar className="h-5 w-5" />
-									<CardTitle>Deine Vereins-Events</CardTitle>
-								</div>
-								<CardDescription>Events von deinem Verein</CardDescription>
-							</CardHeader>
-							<CardContent className="space-y-4">
-								<div className="space-y-2">
-									<label
-										htmlFor={personalIcalId}
-										className="text-sm font-medium"
+					<Card className="transition-all duration-300 hover:shadow-lg border-primary/20">
+						<CardHeader>
+							<div className="flex items-center gap-2">
+								<Building2 className="h-5 w-5 text-primary" />
+								<CardTitle>THI Services</CardTitle>
+							</div>
+							<CardDescription>
+								Alle öffentlichen Events von THI-Abteilungen und
+								Hochschuleinrichtungen
+							</CardDescription>
+						</CardHeader>
+						<CardContent className="space-y-4">
+							<div className="space-y-2">
+								<label htmlFor={thiIcalId} className="text-sm font-medium">
+									iCal URL
+								</label>
+								<div className="flex gap-2">
+									<input
+										id={thiIcalId}
+										type="text"
+										value={thiIcalUrl}
+										readOnly
+										className="flex-1 px-3 py-2 border rounded-md bg-muted text-sm font-mono"
+									/>
+									<Button
+										variant="outline"
+										className="h-10 px-3 shrink-0"
+										onClick={() =>
+											copyToClipboard(thiIcalUrl, 'THI Services iCal URL')
+										}
 									>
-										iCal URL:
-									</label>
-									<div className="flex gap-2">
-										<input
-											id={personalIcalId}
-											type="text"
-											value={personalIcalUrl}
-											readOnly
-											className="flex-1 px-3 py-2 border rounded-md bg-muted text-sm font-mono"
-										/>
-										<Button
-											variant="outline"
-											className="h-10 px-3"
-											onClick={() =>
-												copyToClipboard(personalIcalUrl, 'Personal iCal URL')
-											}
-										>
-											<Copy className="h-4 w-4" />
-										</Button>
-									</div>
+										<Copy className="h-4 w-4" />
+									</Button>
 								</div>
-							</CardContent>
-						</Card>
-					) : (
-						<Card className="transition-all duration-300 hover:shadow-lg">
-							<CardHeader>
-								<div className="flex items-center gap-2">
-									<Calendar className="h-5 w-5" />
-									<CardTitle>Vereins-spezifische Kalender</CardTitle>
-								</div>
-							</CardHeader>
-							<CardContent className="space-y-4">
-								<div className="space-y-3 text-sm text-muted-foreground">
-									<p>
-										Als Administrator hast du keinen eigenen Vereins-Kalender.
-										Vereine können ihre eigenen Kalender abonnieren, indem sie:
-									</p>
-									<ul className="space-y-2 list-disc list-inside ml-4">
-										<li>Als Organisator angemeldet sind</li>
-										<li>
-											Diese Seite besuchen, um ihre Vereins-spezifische iCal URL
-											zu erhalten
-										</li>
-									</ul>
-									<p>
-										Jeder Verein erhält eine einzigartige iCal URL, die nur die
-										Events ihres eigenen Vereins enthält.
-									</p>
-								</div>
-							</CardContent>
-						</Card>
-					)}
+							</div>
+						</CardContent>
+					</Card>
 				</div>
 
-				{/* How to Use Section */}
+				{userId ? (
+					<Card className="transition-all duration-300 hover:shadow-lg">
+						<CardHeader>
+							<div className="flex items-center gap-2">
+								<Calendar className="h-5 w-5" />
+								<CardTitle>Events deiner Organisation</CardTitle>
+							</div>
+							<CardDescription>Events deiner Organisation</CardDescription>
+						</CardHeader>
+						<CardContent className="space-y-4">
+							<div className="space-y-2">
+								<label htmlFor={personalIcalId} className="text-sm font-medium">
+									iCal URL
+								</label>
+								<div className="flex gap-2">
+									<input
+										id={personalIcalId}
+										type="text"
+										value={personalIcalUrl}
+										readOnly
+										className="flex-1 px-3 py-2 border rounded-md bg-muted text-sm font-mono"
+									/>
+									<Button
+										variant="outline"
+										className="h-10 px-3 shrink-0"
+										onClick={() =>
+											copyToClipboard(personalIcalUrl, 'Personal iCal URL')
+										}
+									>
+										<Copy className="h-4 w-4" />
+									</Button>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+				) : (
+					<Card className="transition-all duration-300 hover:shadow-lg">
+						<CardHeader>
+							<div className="flex items-center gap-2">
+								<Calendar className="h-5 w-5" />
+								<CardTitle>Kalender pro Organisation</CardTitle>
+							</div>
+						</CardHeader>
+						<CardContent className="space-y-4">
+							<div className="space-y-3 text-sm text-muted-foreground">
+								<p>
+									Als Administrator hast du keinen eigenen
+									Organisations-Kalender. Organisationen können ihre eigenen
+									Kalender abonnieren, indem sie:
+								</p>
+								<ul className="space-y-2 list-disc list-inside ml-4">
+									<li>Als Organisator angemeldet sind</li>
+									<li>
+										Diese Seite besuchen, um die organisationsspezifische
+										iCal-URL zu erhalten
+									</li>
+								</ul>
+								<p>
+									Jede Organisation erhält eine einzigartige iCal-URL, die nur
+									die Events dieser Organisation enthält.
+								</p>
+							</div>
+						</CardContent>
+					</Card>
+				)}
+
 				<Card className="transition-all duration-300 hover:shadow-lg">
 					<CardHeader>
 						<CardTitle>So fügst du den Kalender hinzu</CardTitle>
@@ -174,10 +210,10 @@ export function ICalClient({ backendUrl, userId }: ICalClientProps) {
 								<h4 className="font-medium">Google Calendar</h4>
 								<ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
 									<li>Öffne Google Calendar</li>
-									<li>Links: "Andere Kalender hinzufügen"</li>
-									<li>Wähle "Von URL"</li>
+									<li>Links: Andere Kalender hinzufügen</li>
+									<li>Wähle Von URL</li>
 									<li>Füge die iCal URL ein</li>
-									<li>Klicke "Kalender hinzufügen"</li>
+									<li>Klicke Kalender hinzufügen</li>
 								</ol>
 							</div>
 
@@ -185,9 +221,9 @@ export function ICalClient({ backendUrl, userId }: ICalClientProps) {
 								<h4 className="font-medium">Apple Calendar</h4>
 								<ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
 									<li>Öffne die Kalender-App</li>
-									<li>Menü: "Ablage" → "Neues Abonnement"</li>
+									<li>Menü: Ablage → Neues Abonnement</li>
 									<li>Füge die iCal URL ein</li>
-									<li>Klicke "Abonnieren"</li>
+									<li>Klicke Abonnieren</li>
 									<li>Wähle gewünschte Einstellungen</li>
 								</ol>
 							</div>
@@ -196,9 +232,9 @@ export function ICalClient({ backendUrl, userId }: ICalClientProps) {
 								<h4 className="font-medium">Outlook</h4>
 								<ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
 									<li>Öffne Outlook</li>
-									<li>Gehe zu "Kalender"</li>
-									<li>Klicke "Kalender hinzufügen"</li>
-									<li>Wähle "Aus dem Internet"</li>
+									<li>Gehe zu Kalender</li>
+									<li>Klicke Kalender hinzufügen</li>
+									<li>Wähle Aus dem Internet</li>
 									<li>Füge die iCal URL ein</li>
 								</ol>
 							</div>

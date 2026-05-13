@@ -14,6 +14,7 @@ import { CreateOrganizerDialog } from '@/components/create-organizer-dialog'
 import { DataTableColumnHeader } from '@/components/data-table/column-header'
 import { DataTable } from '@/components/data-table/data-table'
 import { EditAccountEmailDialog } from '@/components/edit-account-email-dialog'
+import { OrganizerKindBadge } from '@/components/organizer-kind-badge'
 import { OrganizerPermissionsDialog } from '@/components/organizer-permissions-dialog'
 import {
 	AlertDialog,
@@ -150,6 +151,23 @@ export default function ManageOrganizersPage() {
 				size: 140
 			},
 			{
+				accessorKey: 'organizer_kind',
+				header: ({ column }) => (
+					<DataTableColumnHeader column={column} title="Typ" />
+				),
+				cell: ({ row }) => (
+					<OrganizerKindBadge kind={row.original.organizer_kind} />
+				),
+				filterFn: (row, _id, value: string[]) => {
+					if (!value?.length) {
+						return true
+					}
+					return value.includes(row.original.organizer_kind)
+				},
+				enableSorting: false,
+				size: 120
+			},
+			{
 				accessorKey: 'created_at',
 				header: ({ column }) => (
 					<DataTableColumnHeader column={column} title="Erstellt" />
@@ -178,6 +196,7 @@ export default function ManageOrganizersPage() {
 								<OrganizerPermissionsDialog
 									organizerId={organizer.id}
 									newsletterEnabled={organizer.newsletter}
+									organizerKind={organizer.organizer_kind}
 									onSuccess={onPermissionsUpdated}
 								/>
 								{organizer.account_id != null ? (
@@ -185,8 +204,8 @@ export default function ManageOrganizersPage() {
 										accountId={organizer.account_id}
 										currentEmail={organizer.email}
 										onSuccess={onAccountEmailUpdated}
-										title="E-Mail des Vereinskontos ändern"
-										description="Die neue Adresse gilt für die Anmeldung und System-E-Mails an diesen Verein."
+										title="E-Mail des Organisationskontos ändern"
+										description="Die neue Adresse gilt für die Anmeldung und System-E-Mails an diese Organisation."
 									/>
 								) : (
 									<Button
@@ -194,7 +213,7 @@ export default function ManageOrganizersPage() {
 										size="sm"
 										className="h-8 px-2"
 										disabled
-										title="Kein Vereinskonto verknüpft"
+										title="Kein Organisationskonto verknüpft"
 									>
 										<Mail className="h-4 w-4" />
 									</Button>
@@ -228,7 +247,7 @@ export default function ManageOrganizersPage() {
 									</AlertDialogTrigger>
 									<AlertDialogContent>
 										<AlertDialogHeader>
-											<AlertDialogTitle>Verein löschen</AlertDialogTitle>
+											<AlertDialogTitle>Organisation löschen</AlertDialogTitle>
 											<AlertDialogDescription>
 												Bist du sicher, dass du "{organizer.name}" löschen
 												möchtest? Diese Aktion kann nicht rückgängig gemacht
@@ -265,13 +284,21 @@ export default function ManageOrganizersPage() {
 		[]
 	)
 
+	const kindOptions = useMemo(
+		() => [
+			{ label: 'Campus Life', value: 'STUDENT_ASSOCIATION' },
+			{ label: 'THI', value: 'THI_DEPARTMENT' }
+		],
+		[]
+	)
+
 	if (meLoading) {
 		return (
 			<div className="flex flex-col min-h-screen">
 				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
 					<SidebarTrigger className="-ml-1" />
 					<div className="flex items-center gap-2">
-						<h1 className="text-lg font-semibold">Vereine verwalten</h1>
+						<h1 className="text-lg font-semibold">Organisationen verwalten</h1>
 					</div>
 				</header>
 				<div className="flex-1 flex items-center justify-center">
@@ -289,7 +316,7 @@ export default function ManageOrganizersPage() {
 				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
 					<SidebarTrigger className="-ml-1" />
 					<div className="flex items-center gap-2">
-						<h1 className="text-lg font-semibold">Vereine verwalten</h1>
+						<h1 className="text-lg font-semibold">Organisationen verwalten</h1>
 					</div>
 				</header>
 				<div className="flex-1 flex items-center justify-center">
@@ -314,7 +341,7 @@ export default function ManageOrganizersPage() {
 				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
 					<SidebarTrigger className="-ml-1" />
 					<div className="flex items-center gap-2">
-						<h1 className="text-lg font-semibold">Vereine verwalten</h1>
+						<h1 className="text-lg font-semibold">Organisationen verwalten</h1>
 					</div>
 				</header>
 				<div className="flex-1 flex items-center justify-center">
@@ -324,7 +351,7 @@ export default function ManageOrganizersPage() {
 							Du benötigst Administratorrechte, um diesen Bereich zu sehen.
 						</p>
 						<Link href="/organizers">
-							<Button>Zurück zu Vereinen</Button>
+							<Button>Zurück zu Organisationen</Button>
 						</Link>
 					</div>
 				</div>
@@ -338,11 +365,11 @@ export default function ManageOrganizersPage() {
 				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
 					<SidebarTrigger className="-ml-1" />
 					<div className="flex items-center gap-2">
-						<h1 className="text-lg font-semibold">Vereine verwalten</h1>
+						<h1 className="text-lg font-semibold">Organisationen verwalten</h1>
 					</div>
 				</header>
 				<div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
-					<div className="text-center">Lade Vereine...</div>
+					<div className="text-center">Lade Organisationen...</div>
 				</div>
 			</div>
 		)
@@ -354,12 +381,12 @@ export default function ManageOrganizersPage() {
 				<header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
 					<SidebarTrigger className="-ml-1" />
 					<div className="flex items-center gap-2">
-						<h1 className="text-lg font-semibold">Vereine verwalten</h1>
+						<h1 className="text-lg font-semibold">Organisationen verwalten</h1>
 					</div>
 				</header>
 				<div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
 					<div className="text-center text-destructive">
-						Fehler beim Laden der Vereine
+						Fehler beim Laden der Organisationen
 					</div>
 				</div>
 			</div>
@@ -371,7 +398,7 @@ export default function ManageOrganizersPage() {
 			<header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/80 backdrop-blur-md px-4">
 				<SidebarTrigger className="-ml-1" />
 				<div className="flex items-center gap-2">
-					<h1 className="text-lg font-semibold">Vereine verwalten</h1>
+					<h1 className="text-lg font-semibold">Organisationen verwalten</h1>
 				</div>
 			</header>
 
@@ -384,7 +411,7 @@ export default function ManageOrganizersPage() {
 						</BreadcrumbItem>
 						<BreadcrumbSeparator />
 						<BreadcrumbItem>
-							<BreadcrumbPage>Vereine verwalten</BreadcrumbPage>
+							<BreadcrumbPage>Organisationen verwalten</BreadcrumbPage>
 						</BreadcrumbItem>
 					</BreadcrumbList>
 				</Breadcrumb>
@@ -393,10 +420,10 @@ export default function ManageOrganizersPage() {
 				<div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
 					<div>
 						<h2 className="text-3xl font-bold tracking-tight">
-							Vereine verwalten
+							Organisationen verwalten
 						</h2>
 						<p className="text-muted-foreground mt-1">
-							Verwalte alle Vereine und deren Einladungsstatus
+							Verwalte alle Organisationen und deren Einladungsstatus
 						</p>
 					</div>
 					<div className="flex gap-2 items-center">
@@ -423,7 +450,7 @@ export default function ManageOrganizersPage() {
 				{/* Data Table */}
 				<Card>
 					<CardHeader>
-						<CardTitle>Vereine ({organizers.length})</CardTitle>
+						<CardTitle>Organisationen ({organizers.length})</CardTitle>
 					</CardHeader>
 					<CardContent>
 						<DataTable
@@ -443,6 +470,11 @@ export default function ManageOrganizersPage() {
 										column: 'invite_status',
 										title: 'Status',
 										options: statusOptions
+									},
+									{
+										column: 'organizer_kind',
+										title: 'Typ',
+										options: kindOptions
 									}
 								]
 							}}

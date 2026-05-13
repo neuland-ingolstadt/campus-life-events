@@ -242,9 +242,10 @@ function RegisterForm({ token }: { token: string }) {
 										</TooltipTrigger>
 										<TooltipContent side="top" className="max-w-xs">
 											<p className="text-sm">
-												Gib deine offizielle E-Mail-Adresse für den Verein ein.
-												Sie muss nicht mit der E-Mail übereinstimmen, über die
-												du den Einladungslink erhalten hast.
+												Gib deine offizielle E-Mail-Adresse für deine
+												Organisation ein. Sie muss nicht mit der E-Mail
+												übereinstimmen, über die du den Einladungslink erhalten
+												hast.
 											</p>
 										</TooltipContent>
 									</Tooltip>

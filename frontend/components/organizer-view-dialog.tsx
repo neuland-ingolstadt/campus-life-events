@@ -21,7 +21,7 @@ export function OrganizerViewDialog({ open, onOpenChange, organizer }: Props) {
 			<DialogContent className="sm:max-w-[560px]">
 				<DialogHeader>
 					<DialogTitle>{organizer?.name}</DialogTitle>
-					<DialogDescription>Vereinsdetails</DialogDescription>
+					<DialogDescription>Organisationsdetails</DialogDescription>
 				</DialogHeader>
 				{organizer && (
 					<div className="space-y-4 text-sm">

@@ -1,8 +1,9 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { Shield, User, Users } from 'lucide-react'
+import { Shield, User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { OrganizerKindBadge } from '@/components/organizer-kind-badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -118,13 +119,30 @@ export function AuthStatus() {
 										</Tooltip>
 									)
 								) : user.organizer_id ? (
-									<Badge
-										variant="outline"
-										className="bg-gradient-to-r from-blue-500/10 to-indigo-500/10 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-									>
-										<Users className="h-3 w-3 mr-1" />
-										Verein
-									</Badge>
+									isMobile ? (
+										<OrganizerKindBadge
+											kind={user.organizer_kind ?? 'STUDENT_ASSOCIATION'}
+											showIcon
+										/>
+									) : (
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<span className="inline-flex">
+													<OrganizerKindBadge
+														kind={user.organizer_kind ?? 'STUDENT_ASSOCIATION'}
+														showIcon
+													/>
+												</span>
+											</TooltipTrigger>
+											<TooltipContent>
+												<p>
+													{user.organizer_kind === 'THI_DEPARTMENT'
+														? 'THI Services / Hochschuleinrichtung'
+														: 'Hochschulgruppe (Campus Life)'}
+												</p>
+											</TooltipContent>
+										</Tooltip>
+									)
 								) : (
 									<Badge
 										variant="outline"

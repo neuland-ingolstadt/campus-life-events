@@ -91,7 +91,7 @@ export function useEventColumns({
 			{
 				id: 'organizer',
 				header: ({ column }) => (
-					<DataTableColumnHeader column={column} title="Verein" />
+					<DataTableColumnHeader column={column} title="Organisation" />
 				),
 				accessorFn: (row) => getOrganizerName(row.organizer_id),
 				cell: ({ getValue }) => (

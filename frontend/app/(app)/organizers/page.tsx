@@ -63,7 +63,7 @@ export default function OrganizersPage() {
 			>
 				<SidebarTrigger className="-ml-1" />
 				<div className="flex items-center gap-2">
-					<h1 className="text-lg font-semibold">Vereine</h1>
+					<h1 className="text-lg font-semibold">Organisationen</h1>
 				</div>
 			</header>
 
@@ -75,7 +75,9 @@ export default function OrganizersPage() {
 						))}
 					</div>
 				) : error ? (
-					<p className="text-destructive">Fehler beim Laden der Vereine</p>
+					<p className="text-destructive">
+						Fehler beim Laden der Organisationen
+					</p>
 				) : (
 					<div className="space-y-14	">
 						{/* Your organizer first with edit only */}
@@ -86,9 +88,9 @@ export default function OrganizersPage() {
 										<User2Icon className="h-6 w-6" />
 									</div>
 									<div>
-										<h2 className="text-xl font-bold">Dein Verein</h2>
+										<h2 className="text-xl font-bold">Deine Organisation</h2>
 										<p className="text-sm text-muted-foreground">
-											Verwalte deine Vereinsinformationen
+											Verwalte die Angaben deiner Organisation
 										</p>
 									</div>
 								</div>
@@ -129,7 +131,7 @@ export default function OrganizersPage() {
 															<AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400 mt-0.5 flex-shrink-0" />
 															<div className="flex-1">
 																<h3 className="text-sm font-medium text-orange-800 dark:text-orange-200">
-																	Vereinsprofil vervollständigen
+																	Organisationsprofil vervollständigen
 																</h3>
 																<p className="mt-1 text-sm text-orange-700 dark:text-orange-300">
 																	Tippe auf Bearbeiten und aktualisiere deine
@@ -268,7 +270,7 @@ export default function OrganizersPage() {
 								</div>
 								{isAdmin ? (
 									<div>
-										<h2 className="text-xl font-bold">Alle Vereine</h2>
+										<h2 className="text-xl font-bold">Alle Organisationen</h2>
 										<p className="text-sm text-muted-foreground">
 											Verwende die{' '}
 											<Link
@@ -277,14 +279,16 @@ export default function OrganizersPage() {
 											>
 												Admin-Seite
 											</Link>{' '}
-											um alle Vereine zu verwalten.
+											um alle Organisationen zu verwalten.
 										</p>
 									</div>
 								) : (
 									<div>
-										<h2 className="text-xl font-bold">Andere Vereine</h2>
+										<h2 className="text-xl font-bold">
+											Weitere Organisationen
+										</h2>
 										<p className="text-sm text-muted-foreground">
-											Entdecke andere Vereine und Organisationen
+											Entdecke weitere Organisationen am Campus
 										</p>
 									</div>
 								)}

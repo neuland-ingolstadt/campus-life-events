@@ -17,7 +17,6 @@ export function UnifiedFooter({
 	const links = {
 		impressum: 'https://neuland-ingolstadt.de/legal/impressum',
 		privacy: 'https://neuland-ingolstadt.de/legal/datenschutz',
-		studver: 'https://studverthi.de',
 		status: 'http://status.neuland.ing'
 	}
 
@@ -101,15 +100,6 @@ export function UnifiedFooter({
 					rel="noopener noreferrer"
 				>
 					Datenschutz
-				</Link>
-				<span>•</span>
-				<Link
-					href={links.studver}
-					className={linkClass}
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					StudVer
 				</Link>
 				<span>•</span>
 				<Link

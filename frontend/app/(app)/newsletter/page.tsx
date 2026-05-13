@@ -225,7 +225,7 @@ export default function NewsletterPage() {
 			<EventsPageShell title="Newsletter" stickyHeader>
 				<Alert>
 					<AlertDescription>
-						Dieser Verein hat keinen Zugriff auf den Newsletterbereich.
+						Diese Organisation hat keinen Zugriff auf den Newsletterbereich.
 					</AlertDescription>
 				</Alert>
 			</EventsPageShell>

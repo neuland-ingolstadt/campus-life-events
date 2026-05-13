@@ -41,10 +41,10 @@ export function QuickActions({
 			href: '/events'
 		},
 		{
-			title: isAdmin ? 'Adminbereich' : 'Vereinsprofil',
+			title: isAdmin ? 'Adminbereich' : 'Organisationsprofil',
 			description: isAdmin
 				? 'Verwaltung & Audit-Log öffnen'
-				: 'Vereinsprofil verwalten',
+				: 'Organisationsprofil verwalten',
 			icon: isAdmin ? Shield : User,
 			href: isAdmin ? '/admin' : '/organizers',
 			hideForAdmin: isAdmin ? false : undefined

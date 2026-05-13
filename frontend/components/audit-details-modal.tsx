@@ -74,7 +74,7 @@ export function AuditDetailsModal({
 						<div className="flex items-center gap-2">
 							<User className="h-4 w-4 text-muted-foreground" />
 							<div>
-								<p className="text-sm font-medium">Verein</p>
+								<p className="text-sm font-medium">Organisation</p>
 								<p className="text-sm text-muted-foreground">
 									{organizerName || `#${entry.organizer_id}`}
 								</p>

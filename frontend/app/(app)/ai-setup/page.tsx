@@ -338,7 +338,7 @@ export default function McpSetupPage() {
 						</div>
 						<div className="space-y-2 min-w-0">
 							<h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-								KI-Tools für Events &amp; Vereinsprofil
+								KI-Tools für Events &amp; Organisationsprofil
 							</h2>
 							<p className="text-muted-foreground text-pretty">
 								Mit{' '}

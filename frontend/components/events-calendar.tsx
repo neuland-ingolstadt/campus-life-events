@@ -130,7 +130,7 @@ export function EventsCalendar({
 			const organizer = organizers.find(
 				(org: ApiOrganizer) => org.id === organizerId
 			)
-			return organizer?.name || 'Unbekannter Verein'
+			return organizer?.name || 'Unbekannte Organisation'
 		},
 		[organizers]
 	)

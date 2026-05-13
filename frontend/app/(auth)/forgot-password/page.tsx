@@ -124,7 +124,7 @@ export default function ForgotPasswordPage() {
 								type="email"
 								value={email}
 								onChange={(e) => setEmail(e.target.value)}
-								placeholder="vorstand@thi-verein.de"
+								placeholder="mail@example.com"
 								required
 								autoFocus
 							/>

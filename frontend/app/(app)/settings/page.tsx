@@ -430,27 +430,42 @@ export default function SettingsPage() {
 								<InfoIcon className="h-5 w-5" />
 								Informationen
 							</CardTitle>
-							<CardDescription>Über Campus Life Events</CardDescription>
+							<CardDescription>
+								Von Neuland für StudentsLife-Hochschulgruppen und THI
+							</CardDescription>
 						</CardHeader>
 						<CardContent className="space-y-4">
 							<div className="space-y-3">
 								<div className="flex items-start gap-3">
 									<div className="h-2 w-2 bg-current rounded-full mt-2 flex-shrink-0"></div>
 									<p className="text-sm text-muted-foreground">
-										Eine Kooperation von Neuland Ingolstadt e.V. und StudVer
+										<strong className="text-foreground font-medium">
+											Neuland Ingolstadt e.V.
+										</strong>{' '}
+										entwickelt, betreibt und weiterentwickelt diese Anwendung –
+										als Beitrag zu digitalem Campus und Studierendenleben in
+										Ingolstadt.
 									</p>
 								</div>
 								<div className="flex items-start gap-3">
 									<div className="h-2 w-2 bg-current rounded-full mt-2 flex-shrink-0"></div>
 									<p className="text-sm text-muted-foreground">
-										Beauftragt von der THI StudVer, als Nachfolger des
-										Moodle-Kurses
+										Genutzt wird sie von{' '}
+										<strong className="text-foreground font-medium">
+											StudentsLife-Hochschulgruppen
+										</strong>{' '}
+										(Campus Life) und von{' '}
+										<strong className="text-foreground font-medium">
+											Organisationen sowie Einrichtungen der THI
+										</strong>{' '}
+										(THI Services).
 									</p>
 								</div>
 								<div className="flex items-start gap-3">
 									<div className="h-2 w-2 bg-current rounded-full mt-2 flex-shrink-0"></div>
 									<p className="text-sm text-muted-foreground">
-										Entwickelt und betrieben von Neuland Ingolstadt e.V.
+										Veranstaltungen lassen sich zentral verwalten und über App,
+										Newsletter, iCal und Web sichtbar machen!
 									</p>
 								</div>
 							</div>

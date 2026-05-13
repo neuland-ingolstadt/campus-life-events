@@ -139,7 +139,7 @@ export function OrganizerForm({
 			>
 				<div>
 					<h2 className="text-xl font-bold tracking-tight">
-						Vereinsinformationen
+						Organisationsinformationen
 					</h2>
 					<div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-6">
 						<FormField
@@ -151,7 +151,7 @@ export function OrganizerForm({
 										Name <RequiredLabel />
 									</FormLabel>
 									<FormControl>
-										<Input placeholder="Name des Vereins" {...field} />
+										<Input placeholder="Name der Organisation" {...field} />
 									</FormControl>
 									<FormMessage />
 								</FormItem>
@@ -171,7 +171,7 @@ export function OrganizerForm({
 									<FormLabel>Deutsche Beschreibung</FormLabel>
 									<FormControl>
 										<Textarea
-											placeholder="Das Hinzufügen einer Beschreibung hilft Leuten, deinen Verein besser zu verstehen und seine Aktivitäten zu erkennen."
+											placeholder="Das Hinzufügen einer Beschreibung hilft anderen, deine Organisation besser zu verstehen und ihre Aktivitäten zu erkennen."
 											className="min-h-[120px]"
 											{...field}
 										/>
@@ -216,7 +216,7 @@ export function OrganizerForm({
 										/>
 									</FormControl>
 									<FormDescription>
-										Optionaler Standort oder Raum des Vereins
+										Optionaler Standort oder Raum der Organisation
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -234,7 +234,7 @@ export function OrganizerForm({
 											<Input placeholder="https://example.com" {...field} />
 										</FormControl>
 										<FormDescription>
-											Optionale Website-URL des Vereins
+											Optionale Website-URL der Organisation
 										</FormDescription>
 										<FormMessage />
 									</FormItem>
@@ -267,7 +267,7 @@ export function OrganizerForm({
 										<FormLabel>LinkedIn-URL</FormLabel>
 										<FormControl>
 											<Input
-												placeholder="https://linkedin.com/company/verein"
+												placeholder="https://linkedin.com/company/organisation"
 												{...field}
 											/>
 										</FormControl>
@@ -295,7 +295,7 @@ export function OrganizerForm({
 										<Input placeholder="z. B. VR 12345" {...field} />
 									</FormControl>
 									<FormDescription>
-										Optionaler Eintrag aus dem Vereinsregister
+										Optionaler Registereintrag oder Registerauszug
 									</FormDescription>
 									<FormMessage />
 								</FormItem>
@@ -308,10 +308,10 @@ export function OrganizerForm({
 								<FormItem className="flex items-center justify-between rounded-md border p-4">
 									<div className="space-y-1">
 										<FormLabel className="text-sm font-medium">
-											Gemeinnütziger Verein
+											Gemeinnützige Organisation
 										</FormLabel>
 										<FormDescription className="text-xs">
-											Kennzeichnet euren Verein als gemeinnützig
+											Kennzeichnet eure Organisation als gemeinnützig
 										</FormDescription>
 									</div>
 									<FormControl>
@@ -331,8 +331,8 @@ export function OrganizerForm({
 						{isLoading
 							? 'Speichern...'
 							: organizer
-								? 'Verein aktualisieren'
-								: 'Verein erstellen'}
+								? 'Organisation aktualisieren'
+								: 'Organisation erstellen'}
 					</Button>
 				</div>
 			</form>

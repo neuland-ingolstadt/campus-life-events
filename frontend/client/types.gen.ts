@@ -58,6 +58,7 @@ export type AuthUserResponse = {
     can_access_newsletter: boolean;
     display_name: string;
     organizer_id?: number | null;
+    organizer_kind?: null | OrganizerKind;
 };
 
 export type ChangePasswordRequest = {
@@ -87,6 +88,7 @@ export type CreateEventRequest = {
 export type CreateOrganizerRequest = {
     email: string;
     name: string;
+    organizer_kind?: OrganizerKind;
 };
 
 export type ErrorResponse = {
@@ -177,7 +179,12 @@ export type ListEventsQuery = {
     limit?: number | null;
     offset?: number | null;
     organizer_id?: number | null;
+    organizer_kind?: null | OrganizerKind;
     upcoming_only?: boolean | null;
+};
+
+export type ListPublicOrganizersQuery = {
+    organizer_kind?: null | OrganizerKind;
 };
 
 export type LoginRequest = {
@@ -205,10 +212,13 @@ export type Organizer = {
     name: string;
     newsletter: boolean;
     non_profit: boolean;
+    organizer_kind: OrganizerKind;
     registration_number?: string | null;
     updated_at: string;
     website_url?: string | null;
 };
+
+export type OrganizerKind = 'STUDENT_ASSOCIATION' | 'THI_DEPARTMENT';
 
 export type OrganizerWithInvite = {
     account_id?: number | null;
@@ -219,6 +229,7 @@ export type OrganizerWithInvite = {
     invite_status: InviteStatus;
     name: string;
     newsletter: boolean;
+    organizer_kind: OrganizerKind;
     updated_at: string;
 };
 
@@ -235,6 +246,7 @@ export type OrganizerWithStatsResponse = {
     name: string;
     newsletter: boolean;
     non_profit: boolean;
+    organizer_kind: OrganizerKind;
     registration_number?: string | null;
     updated_at: string;
     website_url?: string | null;
@@ -252,6 +264,7 @@ export type PublicEventResponse = {
     id: number;
     location?: string | null;
     organizer_id: number;
+    organizer_kind: OrganizerKind;
     organizer_name: string;
     start_date_time: string;
     title_de: string;
@@ -269,6 +282,7 @@ export type PublicOrganizerResponse = {
     location?: string | null;
     name: string;
     non_profit: boolean;
+    organizer_kind: OrganizerKind;
     registration_number?: string | null;
     website_url?: string | null;
 };
@@ -321,6 +335,7 @@ export type UpdateEventRequest = {
 
 export type UpdateOrganizerPermissionsRequest = {
     newsletter: boolean;
+    organizer_kind: OrganizerKind;
 };
 
 export type UpdateOrganizerRequest = {
@@ -710,6 +725,7 @@ export type ListEventsData = {
         upcoming_only?: boolean;
         limit?: number;
         offset?: number;
+        organizer_kind?: OrganizerKind;
     };
     url: '/api/v1/events';
 };
@@ -1058,6 +1074,7 @@ export type ListPublicEventsData = {
         upcoming_only?: boolean;
         limit?: number;
         offset?: number;
+        organizer_kind?: OrganizerKind;
     };
     url: '/api/v1/public/events';
 };
@@ -1102,7 +1119,9 @@ export type GetPublicEventResponse = GetPublicEventResponses[keyof GetPublicEven
 export type ListPublicOrganizersData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        organizer_kind?: OrganizerKind;
+    };
     url: '/api/v1/public/organizers';
 };
 

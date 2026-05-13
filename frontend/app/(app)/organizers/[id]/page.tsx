@@ -32,7 +32,7 @@ export default function EditOrganizerPage() {
 			<header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/80 backdrop-blur-md px-4">
 				<SidebarTrigger className="-ml-1" />
 				<div className="flex items-center gap-2">
-					<h1 className="text-lg font-semibold">Verein bearbeiten</h1>
+					<h1 className="text-lg font-semibold">Organisation bearbeiten</h1>
 				</div>
 			</header>
 			<div className="flex-1 p-4 md:p-8 space-y-4 pt-6">

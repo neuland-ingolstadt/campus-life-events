@@ -28,7 +28,9 @@ export default function NewEventPage() {
 				body: values as CreateEventRequest,
 				throwOnError: true
 			})
-			await qc.invalidateQueries({ queryKey: ['events'] })
+			await qc.invalidateQueries({
+				predicate: (q) => q.queryKey[0] === 'events'
+			})
 			router.push('/events')
 		} finally {
 			setSaving(false)

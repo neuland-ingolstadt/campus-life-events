@@ -27,10 +27,12 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import RequiredLabel from '@/components/ui/required-label'
+import { Switch } from '@/components/ui/switch'
 
 const createOrganizerSchema = z.object({
 	name: z.string().trim().min(1, 'Name ist erforderlich'),
-	email: z.string().trim().email('Bitte gib eine gültige E-Mail-Adresse ein')
+	email: z.string().trim().email('Bitte gib eine gültige E-Mail-Adresse ein'),
+	is_thi_department: z.boolean()
 })
 
 export type CreateOrganizerFormValues = z.infer<typeof createOrganizerSchema>
@@ -47,7 +49,8 @@ export function CreateOrganizerDialog({
 		resolver: zodResolver(createOrganizerSchema),
 		defaultValues: {
 			name: '',
-			email: ''
+			email: '',
+			is_thi_department: false
 		}
 	})
 
@@ -56,7 +59,10 @@ export function CreateOrganizerDialog({
 		try {
 			const payload: CreateOrganizerRequest = {
 				name: values.name.trim(),
-				email: values.email.trim()
+				email: values.email.trim(),
+				organizer_kind: values.is_thi_department
+					? 'THI_DEPARTMENT'
+					: 'STUDENT_ASSOCIATION'
 			}
 			await createOrganizer({ body: payload })
 			form.reset()
@@ -75,15 +81,16 @@ export function CreateOrganizerDialog({
 			<DialogTrigger asChild>
 				<Button size="sm" className="flex items-center gap-2">
 					<Plus className="h-4 w-4" />
-					Neuer Verein
+					Neue Organisation
 				</Button>
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-[425px]">
 				<DialogHeader>
-					<DialogTitle>Neuen Verein einladen</DialogTitle>
+					<DialogTitle>Neue Organisation einladen</DialogTitle>
 					<DialogDescription>
-						Lade einen neuen Verein ein, indem du Name und E-Mail-Adresse
-						angibst. Der Verein erhält eine Einladung mit einem Setup-Token.
+						Lade eine neue Organisation ein (studentische Vereinigung oder
+						THI-Einrichtung), indem du Name und E-Mail-Adresse angibst. Der
+						Kontakt erhält eine Einladung mit einem Setup-Token.
 					</DialogDescription>
 				</DialogHeader>
 				<Form {...form}>
@@ -97,7 +104,7 @@ export function CreateOrganizerDialog({
 										Name <RequiredLabel />
 									</FormLabel>
 									<FormControl>
-										<Input placeholder="Name des Vereins" {...field} />
+										<Input placeholder="Name der Organisation" {...field} />
 									</FormControl>
 									<FormMessage />
 								</FormItem>
@@ -113,12 +120,38 @@ export function CreateOrganizerDialog({
 									</FormLabel>
 									<FormControl>
 										<Input
-											placeholder="verein@example.com"
+											placeholder="kontakt@example.com"
 											type="email"
 											{...field}
 										/>
 									</FormControl>
 									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="is_thi_department"
+							render={({ field }) => (
+								<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+									<div className="space-y-0.5">
+										<FormLabel className="text-base">
+											THI-Abteilung / Hochschuleinrichtung
+										</FormLabel>
+										<p className="text-sm text-muted-foreground">
+											Aktivieren, wenn es sich nicht um eine studentische
+											Vereinigung handelt. Einträge erscheinen im THI-Services-
+											Bereich der App.
+										</p>
+									</div>
+									<FormControl>
+										<Switch
+											checked={field.value}
+											onCheckedChange={field.onChange}
+											disabled={isLoading}
+											aria-label="Organizer-Typ THI"
+										/>
+									</FormControl>
 								</FormItem>
 							)}
 						/>

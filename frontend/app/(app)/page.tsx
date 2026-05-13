@@ -9,7 +9,6 @@ import {
 	Calendar,
 	Clock,
 	Plus,
-	Sparkles,
 	TrendingUp,
 	Users
 } from 'lucide-react'
@@ -21,6 +20,7 @@ import type {
 } from '@/client/types.gen'
 import { ExternalLink } from '@/components/animate-ui/icons/external-link'
 import { AnimateIcon } from '@/components/animate-ui/icons/icon'
+import { DashboardMcpTeaser } from '@/components/dashboard-mcp-teaser'
 import QuickActions from '@/components/quick-actions'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -91,29 +91,25 @@ export default function Dashboard() {
 			title: 'Deine Events',
 			value: userEvents.length || 0,
 			icon: Calendar,
-			description: 'Events, die du erstellt hast',
-			color: 'text-blue-600'
+			description: 'Events, die du erstellt hast'
 		},
 		{
 			title: 'Anstehende Events',
 			value: userUpcomingEvents.length,
 			icon: Clock,
-			description: 'Events, die du erstellt hast und die bevorstehen',
-			color: 'text-green-600'
+			description: 'Events, die du erstellt hast und die bevorstehen'
 		},
 		{
 			title: 'Veröffentlicht',
 			value: userPublishedEvents.length,
 			icon: TrendingUp,
-			description: 'In der App live',
-			color: 'text-purple-600'
+			description: 'In der App live'
 		},
 		{
-			title: 'Alle Vereine',
+			title: 'Alle Organisationen',
 			value: organizerList.length,
 			icon: Users,
-			description: 'Alle Vereine',
-			color: 'text-orange-600'
+			description: 'Alle Organisationen'
 		}
 	]
 
@@ -133,15 +129,20 @@ export default function Dashboard() {
 			</header>
 
 			<div className="flex-1 space-y-8 p-4 md:p-8 pt-6 mb-12">
-				<div className="flex items-center justify-between">
+				<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 					<div>
 						<h2 className="text-3xl font-bold tracking-tight">
 							{user ? `Willkommen zurück, ${user.display_name}` : 'Willkommen'}
 						</h2>
 						<p className="text-muted-foreground mt-1">
-							Verwalte deine Events und dein Vereinsprofil
+							Verwalte deine Events und dein Organisationsprofil
 						</p>
 					</div>
+					{user?.account_type === 'ORGANIZER' && (
+						<div className="shrink-0 sm:pt-1">
+							<DashboardMcpTeaser />
+						</div>
+					)}
 				</div>
 
 				{isProfileIncomplete && (
@@ -150,11 +151,11 @@ export default function Dashboard() {
 							<AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400 mt-0.5 flex-shrink-0" />
 							<div className="flex-1">
 								<h3 className="text-sm font-medium text-orange-800 dark:text-orange-200">
-									Vereinsprofil vervollständigen
+									Organisationsprofil vervollständigen
 								</h3>
 								<p className="mt-1 text-sm text-orange-700 dark:text-orange-300">
-									Dein Verein ist noch nicht vollständig. Bitte fülle alle
-									Felder aus, um dein Profil zu vervollständigen.
+									Deine Organisation ist noch nicht vollständig. Bitte fülle
+									alle Felder aus, um dein Profil zu vervollständigen.
 								</p>
 								<div className="mt-3">
 									<Link href="/organizers">
@@ -169,38 +170,6 @@ export default function Dashboard() {
 					</div>
 				)}
 
-				{user?.account_type === 'ORGANIZER' && (
-					<div className="relative overflow-hidden rounded-2xl border border-violet-200/70 bg-linear-to-br from-violet-500/7 via-background to-cyan-500/5 p-5 shadow-sm dark:border-violet-800/45 dark:from-violet-400/9 dark:to-cyan-500/4">
-						<div
-							className="pointer-events-none absolute -right-10 -top-10 size-36 rounded-full bg-violet-500/12 blur-2xl dark:bg-violet-400/15"
-							aria-hidden
-						/>
-						<div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-							<div className="flex gap-3 min-w-0">
-								<div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-600 dark:text-violet-400">
-									<Sparkles className="size-5" aria-hidden />
-								</div>
-								<div className="min-w-0 space-y-1">
-									<p className="text-sm font-semibold tracking-tight text-foreground">
-										KI-Tools (MCP) für Events &amp; Vereinsprofil
-									</p>
-									<p className="text-sm text-muted-foreground text-pretty max-w-prose">
-										Nutze MCP in Cursor, Claude oder anderen Clients: Events
-										verwalten, Vereinsinfos pflegen und mehr.
-									</p>
-								</div>
-							</div>
-							<Button
-								asChild
-								variant="secondary"
-								className="shrink-0 border-violet-200/90 bg-background/90 shadow-sm hover:bg-background dark:border-violet-800/55"
-							>
-								<Link href="/ai-setup">MCP Setup</Link>
-							</Button>
-						</div>
-					</div>
-				)}
-
 				{/* Quick Actions */}
 				<div className="space-y-3">
 					<h3 className="text-lg font-semibold">Schnellaktionen</h3>
@@ -211,8 +180,9 @@ export default function Dashboard() {
 					<div>
 						<h3 className="text-lg font-semibold">Admin-Übersicht</h3>
 						<p className="text-muted-foreground mt-1">
-							Als Admin kannst du alle Events und Vereine verwalten, alle
-							Änderungen im System nachvollziehen und neue Vereine einladen.
+							Als Admin kannst du alle Events und Organisationen verwalten, alle
+							Änderungen im System nachvollziehen und neue Organisationen
+							einladen.
 						</p>
 					</div>
 				) : (
@@ -235,11 +205,11 @@ export default function Dashboard() {
 											<CardTitle className="text-sm font-medium">
 												{stat.title}
 											</CardTitle>
-											<stat.icon className={`h-4 w-4`} />
+											<stat.icon className="h-4 w-4 text-primary" />
 										</CardHeader>
 										<CardContent>
 											<div className="flex items-center">
-												<div className={`text-2xl font-bold ${stat.color}`}>
+												<div className="text-2xl font-bold text-primary">
 													{stat.value}
 												</div>
 											</div>

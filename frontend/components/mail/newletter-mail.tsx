@@ -184,7 +184,7 @@ const NewsletterMail = ({ data, customText }: NewsletterMailProps) => {
 								as="h2"
 								className="text-2xl text-brand my-8 pb-2 border-b-2 border-gray-200"
 							>
-								Events der Vereine ({activeWeekRangeLabel})
+								Events der Organisationen ({activeWeekRangeLabel})
 							</Heading>
 
 							{next_week_events.length > 0 ? (
@@ -388,7 +388,9 @@ const NewsletterMail = ({ data, customText }: NewsletterMailProps) => {
 							</Text>
 
 							<Text className="text-gray-300 mb-4">
-								<strong>Die teilnehmenden Vereine und Hochschulgruppen:</strong>
+								<strong>
+									Die teilnehmenden Organisationen und Hochschulgruppen:
+								</strong>
 								<br />
 								{all_organizers.map((org) => org.name).join(' • ')}
 							</Text>
@@ -404,7 +406,7 @@ const NewsletterMail = ({ data, customText }: NewsletterMailProps) => {
 							</Text>
 
 							<Text className="text-gray-300 mb-4">
-								Kommunikation studentischer Vereine:{' '}
+								Kommunikation studentischer Organisationen:{' '}
 								<Link
 									href="mailto:campus-life@thi.de"
 									className="text-blue-400 no-underline"

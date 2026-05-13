@@ -204,7 +204,7 @@ export default function AnalyticsPage() {
 					</div>
 					<div className="flex gap-2 items-center">
 						<Input
-							placeholder="Events/Vereine suchen"
+							placeholder="Events/Organisationen suchen"
 							value={search}
 							onChange={(e) => setSearch(e.target.value)}
 							className="w-[220px]"
@@ -532,7 +532,10 @@ export default function AnalyticsPage() {
 									{
 										accessorKey: 'organizer',
 										header: ({ column }) => (
-											<DataTableColumnHeader column={column} title="Verein" />
+											<DataTableColumnHeader
+												column={column}
+												title="Organisation"
+											/>
 										)
 									}
 								]}

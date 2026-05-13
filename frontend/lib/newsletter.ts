@@ -339,7 +339,7 @@ export function generateNewsletterHTML(
 									: ''
 							}
 							
-							<h2 style="font-size:24px;color:#215b9c;margin:32px 0 16px 0;padding-bottom:8px;border-bottom:2px solid #e5e7eb;">Events der Vereine (${getDateRange(next_week_start, week_after_start)})</h2>
+							<h2 style="font-size:24px;color:#215b9c;margin:32px 0 16px 0;padding-bottom:8px;border-bottom:2px solid #e5e7eb;">Events der Organisationen (${getDateRange(next_week_start, week_after_start)})</h2>
 							${renderNextWeekEvents()}
 							
 							<h2 style="font-size:24px;color:#215b9c;margin:32px 0 16px 0;padding-bottom:8px;border-bottom:2px solid #e5e7eb;">Ausblick Kalenderwoche ${weekAfterNumber}</h2>
@@ -357,7 +357,7 @@ export function generateNewsletterHTML(
 											<h3 style="font-size:20px;font-weight:bold;margin:0 0 8px 0;">Campus Life Events</h3>
 											<p style="margin:0 0 16px 0;font-size:14px;">Der Newsletter für studentische Veranstaltungen</p>
 											<p style="margin:0 0 16px 0;font-size:14px;line-height:1.6;">
-												<b>Die teilnehmenden Vereine und Hochschulgruppen:</b><br>
+												<b>Die teilnehmenden Organisationen und Hochschulgruppen:</b><br>
 												${all_organizers.map((org) => escapeHtml(org.name)).join(' • ')}
 											</p>
 											<p style="margin:0 0 16px 0;font-size:14px;">
@@ -365,7 +365,7 @@ export function generateNewsletterHTML(
 												<a href="mailto:campus-life@thi.de" style="color:#60a5fa;text-decoration:none;">campus-life@thi.de</a>
 											</p>
 											<p style="margin:0 0 16px 0;font-size:14px;">
-												Kommunikation studentischer Vereine: 
+												Kommunikation studentischer Organisationen: 
 												<a href="mailto:campus-life@thi.de" style="color:#60a5fa;text-decoration:none;">Campus Life (Studierendenvertretung)</a>
 											</p>
 											<p style="margin:0 0 12px 0;font-size:12px;line-height:1.6;color:#9ca3af;">
@@ -394,7 +394,7 @@ export function generateNewsletterHTML(
 										<h3 style="font-size:20px;font-weight:bold;margin:0 0 8px 0;">Campus Life Events</h3>
 										<p style="margin:0 0 16px 0;font-size:14px;">Der Newsletter für studentische Veranstaltungen</p>
 										<p style="margin:0 0 16px 0;font-size:14px;line-height:1.6;">
-											<b>Die teilnehmenden Vereine und Hochschulgruppen:</b><br>
+											<b>Die teilnehmenden Organisationen und Hochschulgruppen:</b><br>
 											${all_organizers.map((org) => escapeHtml(org.name)).join(' • ')}
 										</p>
 										<p style="margin:0 0 16px 0;font-size:14px;">
@@ -402,7 +402,7 @@ export function generateNewsletterHTML(
 											<a href="mailto:campus-life@thi.de" style="color:#60a5fa;text-decoration:none;">campus-life@thi.de</a>
 										</p>
 										<p style="margin:0 0 16px 0;font-size:14px;">
-											Kommunikation studentischer Vereine: 
+											Kommunikation studentischer Organisationen: 
 											<a href="mailto:campus-life@thi.de" style="color:#60a5fa;text-decoration:none;">Campus Life (Studierendenvertretung)</a>
 										</p>
 										<p style="margin:0 0 12px 0;color:#9ca3af;font-size:12px;line-height:1.6;">

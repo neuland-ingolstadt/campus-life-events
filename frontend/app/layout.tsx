@@ -5,7 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 
 export const metadata: Metadata = {
 	title: 'Campus Life Events',
-	description: 'Verwalte Campus-Events und Vereine',
+	description: 'Verwalte Campus-Events und Organisationen',
 	robots: {
 		index: false,
 		follow: false,
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 	openGraph: {
 		title: 'Campus Life Events',
 		description:
-			'Verwalte Campus-Events und Vereine an der THI. Ein Projekt von Neuland Ingolstadt e.V.',
+			'Verwalte Campus-Events und Organisationen an der THI. Ein Projekt von Neuland Ingolstadt e.V.',
 		type: 'website',
 		locale: 'de_DE'
 	},
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 		card: 'summary',
 		title: 'Campus Life Events',
 		description:
-			'Verwalte Campus-Events und Vereine an der THI. Ein Projekt von Neuland Ingolstadt e.V.'
+			'Verwalte Campus-Events und Organisationen an der THI. Ein Projekt von Neuland Ingolstadt e.V.'
 	},
 	other: {
 		'X-UA-Compatible': 'IE=edge'

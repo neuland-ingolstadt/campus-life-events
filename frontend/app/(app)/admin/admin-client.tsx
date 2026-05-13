@@ -164,8 +164,8 @@ export function AdminDashboardClient() {
 					<div>
 						<h2 className="text-3xl font-bold tracking-tight">Verwaltung</h2>
 						<p className="text-muted-foreground mt-1 max-w-2xl">
-							Verwende diese Seite, um neue Vereine einzuladen, bestehende zu
-							verwalten und Änderungen im System nachzuvollziehen.
+							Verwende diese Seite, um neue Organisationen einzuladen,
+							bestehende zu verwalten und Änderungen im System nachzuvollziehen.
 						</p>
 					</div>
 					<div className="flex gap-2">
@@ -184,15 +184,16 @@ export function AdminDashboardClient() {
 					<Card>
 						<CardHeader className="flex flex-row items-center justify-between">
 							<div>
-								<CardTitle>Vereine verwalten</CardTitle>
+								<CardTitle>Organisationen verwalten</CardTitle>
 								<p className="text-sm text-muted-foreground">
-									Lade neue Vereine ein oder öffne die detaillierte Verwaltung.
+									Lade neue Organisationen ein oder öffne die detaillierte
+									Verwaltung.
 								</p>
 							</div>
 							<Badge variant="outline" className="text-xs">
 								{isOrganizersLoading || meLoading
 									? '…'
-									: `${organizers.length} Vereine`}
+									: `${organizers.length} Organisationen`}
 							</Badge>
 						</CardHeader>
 						<CardContent className="flex flex-col gap-3">
@@ -208,7 +209,7 @@ export function AdminDashboardClient() {
 								className="flex items-center gap-2"
 							>
 								<Link href="/organizers/manage">
-									<Users className="h-4 w-4" /> Vereine verwalten
+									<Users className="h-4 w-4" /> Organisationen verwalten
 								</Link>
 							</Button>
 						</CardContent>
@@ -266,7 +267,7 @@ export function AdminDashboardClient() {
 					<CardHeader className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
 						<CardTitle>Neueste Audit-Log-Einträge</CardTitle>
 						<p className="text-sm text-muted-foreground">
-							Die letzten Änderungen an Events und Vereinen.
+							Die letzten Änderungen an Events und Organisationen.
 						</p>
 					</CardHeader>
 					<CardContent>
@@ -289,7 +290,7 @@ export function AdminDashboardClient() {
 									<thead className="text-left text-muted-foreground">
 										<tr>
 											<th className="py-2 pr-4 font-medium">Zeitpunkt</th>
-											<th className="py-2 pr-4 font-medium">Verein</th>
+											<th className="py-2 pr-4 font-medium">Organisation</th>
 											<th className="py-2 pr-4 font-medium">Aktion</th>
 											<th className="py-2 pr-4 font-medium">Geändert von</th>
 											<th className="py-2 pr-4 font-medium">Event-ID</th>
