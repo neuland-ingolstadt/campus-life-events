@@ -247,15 +247,11 @@ pub(crate) async fn init_account(
         24 * 60 * 60
     );
 
-    // Send welcome email
-    if let Some(email_client) = &state.email {
-        let account_type_str = match account_type {
-            AccountType::Admin => "Admin",
-            AccountType::Organizer => "Organizer",
-        };
+    let organizer_kind = organizer_kind_for_organizer(&state, organizer_id).await?;
 
+    if let Some(email_client) = &state.email {
         match email_client
-            .send_welcome_email(&invited_email, &display_name, account_type_str)
+            .send_welcome_email(&invited_email, &display_name, account_type, organizer_kind)
             .await
         {
             Ok(_) => info!("welcome email sent successfully to {}", invited_email),
@@ -271,8 +267,6 @@ pub(crate) async fn init_account(
 
     let can_access_newsletter =
         determine_newsletter_access(&state, &account_type, organizer_id).await?;
-
-    let organizer_kind = organizer_kind_for_organizer(&state, organizer_id).await?;
 
     let body = Json(AuthUserResponse {
         account_id,

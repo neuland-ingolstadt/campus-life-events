@@ -744,7 +744,12 @@ async fn handle_post(
 
                     if let Some(email_client) = &state.email {
                         let _ = email_client
-                            .send_new_organizer_invite(&payload.email, &payload.name, &token)
+                            .send_new_organizer_invite(
+                                &payload.email,
+                                &payload.name,
+                                &token,
+                                organizer.organizer_kind,
+                            )
                             .await;
                     }
 

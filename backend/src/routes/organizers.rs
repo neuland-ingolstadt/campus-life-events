@@ -273,7 +273,12 @@ pub(crate) async fn create_organizer(
 
     if let Some(email_client) = &state.email {
         match email_client
-            .send_new_organizer_invite(&payload.email, &payload.name, &token)
+            .send_new_organizer_invite(
+                &payload.email,
+                &payload.name,
+                &token,
+                payload.organizer_kind,
+            )
             .await
         {
             Ok(_) => info!("organizer invite email sent successfully"),
