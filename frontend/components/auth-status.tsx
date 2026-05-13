@@ -1,6 +1,6 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Shield, User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { OrganizerKindBadge } from '@/components/organizer-kind-badge'
@@ -21,15 +21,16 @@ import { LogOut } from './animate-ui/icons/log-out'
 
 export function AuthStatus() {
 	const router = useRouter()
+	const queryClient = useQueryClient()
 	const isMobile = useIsMobile()
-	const { data: user, refetch } = useQuery({
+	const { data: user } = useQuery({
 		queryKey: ['auth', 'me'],
 		queryFn: me
 	})
 
 	async function onLogout() {
 		await logout()
-		await refetch()
+		queryClient.clear()
 		router.push('/login')
 	}
 
