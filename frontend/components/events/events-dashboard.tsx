@@ -12,6 +12,7 @@ import type {
 } from '@/client/types.gen'
 import { DataTable } from '@/components/data-table/data-table'
 import { EventsHeader } from '@/components/events/events-header'
+import { EventsMobileList } from '@/components/events/events-mobile-list'
 import { EventsPageShell } from '@/components/events/events-page-shell'
 import { useEventColumns } from '@/components/events/use-event-columns'
 import { EventsCalendar } from '@/components/events-calendar'
@@ -329,6 +330,15 @@ export function EventsDashboard({
 					initialPageSize={10}
 					columnFilters={columnFilters}
 					onColumnFiltersChange={setColumnFilters}
+					renderMobileRows={({ rows }) => (
+						<EventsMobileList
+							events={rows.map((row) => row.original)}
+							getOrganizerName={getOrganizerName}
+							organizerId={organizerId}
+							isAdmin={isAdmin}
+							onDelete={onDelete}
+						/>
+					)}
 					filterOptions={{
 						searchFilter: {
 							column: 'title_de',

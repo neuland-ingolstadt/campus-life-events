@@ -431,7 +431,7 @@ export default function SettingsPage() {
 								Informationen
 							</CardTitle>
 							<CardDescription>
-								Von Neuland für StudentsLife-Hochschulgruppen und THI
+								Von Neuland für CampusLife-Hochschulgruppen und THI
 							</CardDescription>
 						</CardHeader>
 						<CardContent className="space-y-4">
@@ -452,9 +452,9 @@ export default function SettingsPage() {
 									<p className="text-sm text-muted-foreground">
 										Genutzt wird sie von{' '}
 										<strong className="text-foreground font-medium">
-											StudentsLife-Hochschulgruppen
+											CampusLife-Hochschulgruppen
 										</strong>{' '}
-										(Campus Life) und von{' '}
+										und von{' '}
 										<strong className="text-foreground font-medium">
 											Organisationen sowie Einrichtungen der THI
 										</strong>{' '}

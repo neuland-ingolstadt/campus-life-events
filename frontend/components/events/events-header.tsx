@@ -39,12 +39,14 @@ export function EventsHeader({
 	const ownSwitchId = `${tableId}-own-filter-switch`
 
 	return (
-		<div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-			<div>
-				<h2 className="text-3xl font-bold tracking-tight">{heading}</h2>
-				<p className="text-muted-foreground mt-1">{description}</p>
+		<div className="flex min-w-0 max-w-full flex-col justify-between gap-4 lg:flex-row lg:items-center">
+			<div className="min-w-0">
+				<h2 className="text-balance break-words text-3xl font-bold tracking-tight">
+					{heading}
+				</h2>
+				<p className="mt-1 break-words text-muted-foreground">{description}</p>
 			</div>
-			<div className="flex gap-2 items-center flex-wrap justify-end">
+			<div className="flex min-w-0 flex-wrap items-center justify-start gap-2 lg:justify-end">
 				{canFilterOwn && (
 					<div className="flex items-center gap-2 rounded-md border px-3 py-2">
 						<UserRound className="h-4 w-4 text-muted-foreground" aria-hidden />

@@ -29,10 +29,12 @@ export function DataTablePagination<TData>({
 	).sort((a, b) => a - b)
 
 	return (
-		<div className="flex items-center justify-end">
-			<div className="flex items-center space-x-6 lg:space-x-8">
-				<div className="flex items-center space-x-2">
-					<p className="text-sm font-medium">Zeilen pro Seite</p>
+		<div className="flex w-full min-w-0 flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-end">
+			<div className="flex w-full min-w-0 flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:w-auto sm:justify-end lg:gap-x-8">
+				<div className="flex flex-wrap items-center gap-2">
+					<p className="text-sm font-medium whitespace-nowrap">
+						Zeilen pro Seite
+					</p>
 					<Select
 						value={`${table.getState().pagination.pageSize}`}
 						onValueChange={(value: unknown) => {
@@ -51,11 +53,11 @@ export function DataTablePagination<TData>({
 						</SelectContent>
 					</Select>
 				</div>
-				<div className="flex w-[100px] items-center justify-center text-sm font-medium">
+				<div className="flex min-w-0 items-center justify-center text-center text-sm font-medium tabular-nums">
 					Seite {table.getState().pagination.pageIndex + 1} von{' '}
 					{Math.max(1, table.getPageCount())}
 				</div>
-				<div className="flex items-center space-x-2">
+				<div className="flex items-center gap-2">
 					<Button
 						variant="outline"
 						className="hidden h-8 w-8 p-0 lg:flex"

@@ -35,8 +35,8 @@ export function DataTableFilterToolbar<TData, TValue>({
 	'use no memo'
 
 	return (
-		<div className="flex flex-1 items-center gap-2">
-			<div className="flex items-center gap-2">
+		<div className="flex w-full min-w-0 flex-col gap-2 sm:flex-1 sm:flex-row sm:items-center">
+			<div className="flex w-full min-w-0 flex-wrap items-center gap-2">
 				{searchFilter && (
 					<Input
 						placeholder={`${searchFilter.title} filtern...`}
@@ -50,7 +50,7 @@ export function DataTableFilterToolbar<TData, TValue>({
 								.getColumn(searchFilter.column)
 								?.setFilterValue(event.target.value)
 						}
-						className="h-8 w-[150px] lg:w-[250px]"
+						className="h-8 min-w-0 max-w-full flex-1 sm:w-[150px] sm:flex-none lg:w-[250px]"
 					/>
 				)}
 				{selectFilters?.map((filter) => (

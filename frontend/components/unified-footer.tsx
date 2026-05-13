@@ -25,7 +25,7 @@ export function UnifiedFooter({
 			case 'auth':
 				return 'px-6 py-4 text-sm text-muted-foreground flex items-center justify-between gap-4 flex-wrap bg-black'
 			case 'app':
-				return 'border-t px-6 py-4 text-sm text-muted-foreground flex items-center gap-4 flex-wrap'
+				return 'border-t px-4 py-4 text-sm text-muted-foreground sm:px-6 flex w-full min-w-0 max-w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4'
 			default:
 				return 'border-t px-6 py-4 text-sm text-muted-foreground flex items-center gap-4 flex-wrap'
 		}
@@ -36,7 +36,7 @@ export function UnifiedFooter({
 			case 'auth':
 				return 'flex items-center gap-3 flex-wrap'
 			case 'app':
-				return 'flex items-center gap-3 flex-wrap'
+				return 'flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-1'
 			default:
 				return 'flex items-center gap-3 flex-wrap'
 		}
@@ -47,7 +47,7 @@ export function UnifiedFooter({
 			case 'auth':
 				return 'flex items-center gap-3 flex-wrap'
 			case 'app':
-				return 'flex items-center gap-3 flex-wrap'
+				return 'flex w-full min-w-0 shrink-0 flex-wrap items-center gap-x-3 gap-y-1 sm:w-auto'
 			default:
 				return 'flex items-center gap-3 flex-wrap'
 		}

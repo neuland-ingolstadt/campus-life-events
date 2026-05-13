@@ -1,5 +1,5 @@
 import { DashboardSidebar } from '@/components/dashboard-sidebar'
-import { SidebarProvider } from '@/components/ui/sidebar'
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Toaster } from '@/components/ui/sonner'
 import { UnifiedFooter } from '@/components/unified-footer'
 import { requireUser } from '@/lib/server-auth'
@@ -11,10 +11,12 @@ export default async function AppLayout({
 	return (
 		<SidebarProvider>
 			<DashboardSidebar />
-			<main className="flex-1 flex flex-col min-h-screen">
-				<div className="flex-1">{children}</div>
-				<UnifiedFooter variant="app" />
-			</main>
+			<SidebarInset className="min-h-svh min-w-0">
+				<div className="flex min-h-0 min-w-0 flex-1 flex-col">
+					<div className="min-w-0 flex-1">{children}</div>
+					<UnifiedFooter variant="app" />
+				</div>
+			</SidebarInset>
 			<Toaster />
 		</SidebarProvider>
 	)

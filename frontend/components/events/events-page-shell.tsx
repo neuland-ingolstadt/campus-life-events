@@ -16,10 +16,10 @@ export function EventsPageShell({
 	stickyHeader
 }: EventsPageShellProps) {
 	return (
-		<div className="flex flex-col min-h-screen">
+		<div className="flex min-h-screen min-w-0 max-w-full flex-col">
 			<header
 				className={cn(
-					'flex h-16 shrink-0 items-center gap-2 border-b px-4',
+					'flex h-16 min-w-0 shrink-0 items-center gap-2 border-b px-4',
 					stickyHeader && 'sticky top-0 z-50 bg-background/95 backdrop-blur-sm'
 				)}
 				style={
@@ -29,11 +29,13 @@ export function EventsPageShell({
 				}
 			>
 				<SidebarTrigger className="-ml-1" />
-				<div className="flex items-center gap-2">
-					<h1 className="text-lg font-semibold">{title}</h1>
+				<div className="flex min-w-0 flex-1 items-center gap-2">
+					<h1 className="truncate text-lg font-semibold">{title}</h1>
 				</div>
 			</header>
-			<div className="flex-1 space-y-6 p-4 md:p-8 pt-6">{children}</div>
+			<div className="min-w-0 max-w-full flex-1 space-y-6 p-4 pt-6 md:p-8">
+				{children}
+			</div>
 		</div>
 	)
 }

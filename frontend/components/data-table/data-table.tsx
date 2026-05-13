@@ -7,11 +7,18 @@ import {
 	getPaginationRowModel,
 	getSortedRowModel,
 	type OnChangeFn,
+	type Row,
 	type SortingState,
 	type TableState,
 	useReactTable
 } from '@tanstack/react-table'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useMemo,
+	useState
+} from 'react'
 import {
 	DataTableFilterToolbar,
 	type FilterOptions
@@ -35,6 +42,7 @@ type DataTableProps<TData, TValue> = {
 	initialSorting?: SortingState
 	columnFilters?: ColumnFiltersState
 	onColumnFiltersChange?: (filters: ColumnFiltersState) => void
+	renderMobileRows?: (args: { rows: Row<TData>[] }) => ReactNode
 } & (
 	| {
 			enableFilter: true
@@ -61,7 +69,8 @@ export function DataTable<TData, TValue>({
 	initialPageSize,
 	initialSorting,
 	columnFilters: columnFiltersProp,
-	onColumnFiltersChange
+	onColumnFiltersChange,
+	renderMobileRows
 }: DataTableProps<TData, TValue>) {
 	'use no memo'
 	const tableStateKey = useMemo(() => `tableState-${tableId}`, [tableId])
@@ -141,7 +150,7 @@ export function DataTable<TData, TValue>({
 	if (!isClient) return null
 
 	return (
-		<div className="flex flex-col gap-3">
+		<div className="flex w-full min-w-0 max-w-full flex-col gap-3">
 			{enableFilter && (
 				<DataTableFilterToolbar
 					table={table}
@@ -151,7 +160,18 @@ export function DataTable<TData, TValue>({
 				/>
 			)}
 
-			<div className="rounded-md border mt-1">
+			{renderMobileRows ? (
+				<div className="mt-1 md:hidden">
+					{renderMobileRows({ rows: table.getRowModel().rows })}
+				</div>
+			) : null}
+
+			<div
+				className={cn(
+					'rounded-md border mt-1',
+					renderMobileRows && 'hidden md:block'
+				)}
+			>
 				<Table>
 					<TableHeader className="bg-muted/50">
 						{table.getHeaderGroups().map((headerGroup) => (
