@@ -3,7 +3,6 @@ import type { SetupTokenInfoResponse } from '@/client/types.gen'
 export type LoginPayload = { email: string; password: string }
 export type InitAccountPayload = {
 	token: string
-	email: string
 	password: string
 }
 export type ChangePasswordPayload = {

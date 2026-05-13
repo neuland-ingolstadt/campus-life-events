@@ -75,6 +75,7 @@ function RegisterForm({ token }: { token: string }) {
 			.then((data) => {
 				if (cancelled) return
 				setClubName(data.account_name)
+				setEmail(data.email)
 				setTokenStatus('valid')
 			})
 			.catch((err) => {
@@ -173,7 +174,7 @@ function RegisterForm({ token }: { token: string }) {
 		}
 		setLoading(true)
 		try {
-			await initAccount({ token, email, password })
+			await initAccount({ token, password })
 			router.push('/')
 		} catch (err: unknown) {
 			const message =
@@ -242,10 +243,8 @@ function RegisterForm({ token }: { token: string }) {
 										</TooltipTrigger>
 										<TooltipContent side="top" className="max-w-xs">
 											<p className="text-sm">
-												Gib deine offizielle E-Mail-Adresse für deine
-												Organisation ein. Sie muss nicht mit der E-Mail
-												übereinstimmen, über die du den Einladungslink erhalten
-												hast.
+												Diese Adresse stammt aus deiner Einladung und wird für
+												die Anmeldung verwendet.
 											</p>
 										</TooltipContent>
 									</Tooltip>
@@ -254,8 +253,9 @@ function RegisterForm({ token }: { token: string }) {
 									id={emailId}
 									type="email"
 									value={email}
-									onChange={(e) => setEmail(e.target.value)}
-									placeholder="you@university.edu"
+									readOnly
+									className="bg-muted/50"
+									aria-readonly="true"
 									required
 								/>
 							</div>

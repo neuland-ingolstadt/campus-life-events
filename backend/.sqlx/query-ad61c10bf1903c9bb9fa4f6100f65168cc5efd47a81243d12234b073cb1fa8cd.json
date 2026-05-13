@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE accounts\n        SET password_hash = $1,\n            setup_token = NULL,\n            setup_token_expires_at = NULL,\n            updated_at = NOW()\n        WHERE id = $2\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ad61c10bf1903c9bb9fa4f6100f65168cc5efd47a81243d12234b073cb1fa8cd"
+}

@@ -54,6 +54,7 @@ pub struct SetupTokenResponse {
 pub struct SetupTokenInfoResponse {
     pub account_name: String,
     pub account_type: AccountType,
+    pub email: String,
 }
 
 #[derive(Debug, Serialize, ToSchema)]

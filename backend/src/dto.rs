@@ -168,7 +168,6 @@ pub struct LoginRequest {
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct InitAccountRequest {
     pub token: String,
-    pub email: String,
     pub password: String,
 }
 

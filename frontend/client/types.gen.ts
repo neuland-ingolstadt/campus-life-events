@@ -156,7 +156,6 @@ export type IcalEventResponse = {
 };
 
 export type InitAccountRequest = {
-    email: string;
     password: string;
     token: string;
 };
@@ -304,6 +303,7 @@ export type SendNewsletterPreviewRequest = {
 export type SetupTokenInfoResponse = {
     account_name: string;
     account_type: AccountType;
+    email: string;
 };
 
 export type SetupTokenLookupRequest = {
@@ -348,6 +348,67 @@ export type UpdateOrganizerRequest = {
     non_profit?: boolean | null;
     registration_number?: string | null;
     website_url?: string | null;
+};
+
+export type GetAllEventsIcalData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/ical';
+};
+
+export type GetAllEventsIcalResponses = {
+    /**
+     * Legacy iCal: Campus Life (student associations) only
+     */
+    200: unknown;
+};
+
+export type GetClEventsIcalData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/ical/cl';
+};
+
+export type GetClEventsIcalResponses = {
+    /**
+     * iCal: all Campus Life (student association) events
+     */
+    200: unknown;
+};
+
+export type GetThiEventsIcalData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/ical/thi';
+};
+
+export type GetThiEventsIcalResponses = {
+    /**
+     * iCal: all THI department events
+     */
+    200: unknown;
+};
+
+export type GetOrganizerEventsIcalData = {
+    body?: never;
+    path: {
+        /**
+         * Organizer identifier
+         */
+        organizer_id: number;
+    };
+    query?: never;
+    url: '/api/ical/{organizer_id}';
+};
+
+export type GetOrganizerEventsIcalResponses = {
+    /**
+     * iCal calendar with events for specific organizer
+     */
+    200: unknown;
 };
 
 export type ListOrganizerIcalEventsData = {

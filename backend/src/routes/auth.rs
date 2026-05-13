@@ -169,12 +169,14 @@ pub(crate) async fn lookup_setup_token(
     let PendingSetupToken {
         display_name,
         account_type,
+        invited_email,
         ..
     } = ensure_pending_setup_token(&state, &payload.token).await?;
 
     Ok(Json(SetupTokenInfoResponse {
         account_name: display_name,
         account_type,
+        email: invited_email,
     }))
 }
 
@@ -199,6 +201,7 @@ pub(crate) async fn init_account(
         display_name,
         account_type,
         organizer_id,
+        invited_email,
     } = pending;
 
     ensure_password_requirements(&payload.password)?;
@@ -212,14 +215,12 @@ pub(crate) async fn init_account(
     sqlx::query!(
         r#"
         UPDATE accounts
-        SET email = $1,
-            password_hash = $2,
+        SET password_hash = $1,
             setup_token = NULL,
             setup_token_expires_at = NULL,
             updated_at = NOW()
-        WHERE id = $3
+        WHERE id = $2
         "#,
-        &payload.email,
         hash,
         account_id
     )
@@ -254,12 +255,12 @@ pub(crate) async fn init_account(
         };
 
         match email_client
-            .send_welcome_email(&payload.email, &display_name, account_type_str)
+            .send_welcome_email(&invited_email, &display_name, account_type_str)
             .await
         {
-            Ok(_) => info!("welcome email sent successfully to {}", payload.email),
+            Ok(_) => info!("welcome email sent successfully to {}", invited_email),
             Err(err) => {
-                error!(error = %err, "failed to send welcome email to {}", payload.email);
+                error!(error = %err, "failed to send welcome email to {}", invited_email);
                 // Don't fail the registration if email fails
                 warn!("account created but welcome email failed - user can still login");
             }
@@ -450,6 +451,7 @@ struct PendingSetupToken {
     display_name: String,
     account_type: AccountType,
     organizer_id: Option<i64>,
+    invited_email: String,
 }
 
 async fn ensure_pending_setup_token(
@@ -474,7 +476,7 @@ async fn ensure_pending_setup_token(
 
     let row = sqlx::query!(
         r#"
-        SELECT id, display_name, password_hash, account_type as "account_type: AccountType", organizer_id, setup_token_expires_at as "setup_token_expires_at?: DateTime<Utc>"
+        SELECT id, display_name, email, password_hash, account_type as "account_type: AccountType", organizer_id, setup_token_expires_at as "setup_token_expires_at?: DateTime<Utc>"
         FROM accounts
         WHERE setup_token = $1
         "#,
@@ -498,11 +500,20 @@ async fn ensure_pending_setup_token(
         return Err(AppError::validation("account already initialized"));
     }
 
+    let invited_email = row
+        .email
+        .as_deref()
+        .map(str::trim)
+        .filter(|e| !e.is_empty())
+        .map(str::to_string)
+        .ok_or_else(|| AppError::validation("invalid setup token"))?;
+
     Ok(PendingSetupToken {
         account_id: row.id,
         display_name: row.display_name,
         account_type: row.account_type,
         organizer_id: row.organizer_id,
+        invited_email,
     })
 }
 
