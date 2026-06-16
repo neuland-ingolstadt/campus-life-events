@@ -19,12 +19,7 @@ type Event = {
 	end_date_time: string
 	event_url?: string
 	location?: string
-	publish_app: boolean
-	publish_newsletter: boolean
-	publish_in_ical: boolean
 	publish_web: boolean
-	created_at: string
-	updated_at: string
 }
 
 type Organizer = {
@@ -82,6 +77,11 @@ export default async function PublicEventPage({
 	}
 
 	const event = await getPublicEvent(id)
+
+	if (!event.publish_web) {
+		notFound()
+	}
+
 	const organizer = event.organizer_id
 		? await getPublicOrganizer(event.organizer_id)
 		: null

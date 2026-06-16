@@ -93,6 +93,7 @@ pub struct PublicEventResponse {
     pub end_date_time: DateTime<Utc>,
     pub event_url: Option<String>,
     pub location: Option<String>,
+    pub publish_web: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
