@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT e.id, e.organizer_id, o.name AS organizer_name, o.organizer_kind as \"organizer_kind: OrganizerKind\", e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location\n        FROM events e\n        INNER JOIN organizers o ON e.organizer_id = o.id\n        WHERE e.id = $1 AND e.publish_web = true\n        ",
+  "query": "\n        SELECT e.id, e.organizer_id, o.name AS organizer_name, o.organizer_kind as \"organizer_kind: OrganizerKind\", e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location, e.publish_web\n        FROM events e\n        INNER JOIN organizers o ON e.organizer_id = o.id\n        WHERE e.id = $1 AND e.publish_app = true\n        ",
   "describe": {
     "columns": [
       {
@@ -72,6 +72,11 @@
         "ordinal": 11,
         "name": "location",
         "type_info": "Text"
+      },
+      {
+        "ordinal": 12,
+        "name": "publish_web",
+        "type_info": "Bool"
       }
     ],
     "parameters": {
@@ -91,8 +96,9 @@
       false,
       false,
       true,
-      true
+      true,
+      false
     ]
   },
-  "hash": "a5eae13b726130c5c69c475466aed640dc01c51d20e5ce66f5d26ccd4e963db4"
+  "hash": "ed907168a34aba443650a63fe980e2fb9aaadb82babac532b012abbfec0b882e"
 }

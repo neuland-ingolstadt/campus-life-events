@@ -29,6 +29,7 @@ struct PublicEventWithOrganizer {
     end_date_time: DateTime<Utc>,
     event_url: Option<String>,
     location: Option<String>,
+    publish_web: bool,
 }
 
 #[derive(Debug, FromRow)]
@@ -72,7 +73,7 @@ pub(crate) async fn list_public_events(
     }
 
     let mut builder = QueryBuilder::<Postgres>::new(
-        "SELECT e.id, e.organizer_id, o.name AS organizer_name, o.organizer_kind, e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location FROM events e INNER JOIN organizers o ON e.organizer_id = o.id",
+        "SELECT e.id, e.organizer_id, o.name AS organizer_name, o.organizer_kind, e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location, e.publish_web FROM events e INNER JOIN organizers o ON e.organizer_id = o.id",
     );
 
     // Only show events that are published in the app
@@ -125,6 +126,7 @@ pub(crate) async fn list_public_events(
             end_date_time: event.end_date_time,
             event_url: event.event_url,
             location: event.location,
+            publish_web: event.publish_web,
         })
         .collect();
 
@@ -250,10 +252,10 @@ pub(crate) async fn get_public_event(
     let event = sqlx::query_as!(
         PublicEventWithOrganizer,
         r#"
-        SELECT e.id, e.organizer_id, o.name AS organizer_name, o.organizer_kind as "organizer_kind: OrganizerKind", e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location
+        SELECT e.id, e.organizer_id, o.name AS organizer_name, o.organizer_kind as "organizer_kind: OrganizerKind", e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location, e.publish_web
         FROM events e
         INNER JOIN organizers o ON e.organizer_id = o.id
-        WHERE e.id = $1 AND e.publish_web = true
+        WHERE e.id = $1 AND e.publish_app = true
         "#,
         id
     )
@@ -275,6 +277,7 @@ pub(crate) async fn get_public_event(
                 end_date_time: event.end_date_time,
                 event_url: event.event_url,
                 location: event.location,
+                publish_web: event.publish_web,
             };
             if let Some(cache) = &state.cache
                 && let Err(err) = cache.set_json(&cache_key, &public_event).await
