@@ -242,3 +242,19 @@ cargo test test_name
 - Check individual service READMEs in `backend/README.md` and `frontend/README.md`
 - Review OpenAPI documentation at `http://localhost:8080/api-docs/openapi.json`
 - Examine existing code patterns in `src/routes/` and `components/`
+
+## Cursor Cloud specific instructions
+
+The update script keeps dependencies fresh (`bun install` for the frontend, `cargo fetch` for the backend). It does NOT start services or create env files. Start services manually each session, in this order:
+
+1. Docker is installed but not managed by systemd. Start the daemon once per session: `sudo dockerd` (run it in a background terminal/tmux; it uses the `fuse-overlayfs` storage driver). Then start the database: `cd backend && docker compose up -d` (Postgres on host port `5422`, Redis on `6379`).
+2. Backend: `cd backend && SQLX_OFFLINE=true cargo run`. The `SQLX_OFFLINE=true` is REQUIRED on a fresh database. The `sqlx::query!` macros validate SQL at compile time; migrations only run at app startup, so a freshly-created DB has no schema yet and an online build (`cargo run` without the flag) fails with confusing `str` size errors. Offline mode uses the committed `.sqlx/` cache instead. Same applies to `cargo build`/`cargo clippy`/`cargo test` (CI sets `SQLX_OFFLINE=true`). After the backend has run once and migrations are applied, plain `cargo run` also works.
+3. Frontend: `cd frontend && bun run dev` (port 3000, proxies `/api/*` to the backend).
+
+Env files are local and untracked; create them if missing: `backend/.env` (`DATABASE_URL=postgres://cle:cle_password@localhost:5422/cle_db`, `REDIS_URL=redis://localhost:6379`, `ALLOWED_ORIGINS=http://localhost:3000`, `API_TOKEN_SECRET=<any-long-string>`) and `frontend/.env.local` (`BACKEND_URL=http://localhost:8080`, `NEXT_PUBLIC_COMMIT_HASH=local-dev`).
+
+Other gotchas:
+- Backend health endpoint is `/api/v1/healthcheck` (not `/health`).
+- No admin account exists by default and registration requires a setup token (admins normally issue these). To bootstrap a first account for testing, insert one directly via psql and complete setup in the browser: insert an `organizers` row plus an `accounts` row with `setup_token=<token>` and `setup_token_expires_at=NOW() + INTERVAL '7 days'`, then open `http://localhost:3000/register?token=<token>` to set a password and log in. Passwords must be ≥20 chars with upper/lower/digit/symbol (see `frontend/lib/password-policy.ts`).
+- The dashboard UI is in German.
+- Rust must be on a toolchain that supports edition 2024 (≥1.85); `rustup default stable` is used here.
