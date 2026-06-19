@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input'
 import RequiredLabel from '@/components/ui/required-label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
 
 const organizerSchema = z.object({
 	name: z.string().trim().min(1, 'Name ist erforderlich'),
@@ -101,6 +102,9 @@ export function OrganizerForm({
 		}
 	}, [organizer, form])
 
+	const { isDirty } = form.formState
+	useUnsavedChangesWarning(isDirty)
+
 	const onSubmit = async (values: OrganizerFormValues) => {
 		const payload: UpdateOrganizerRequest = {
 			name: values.name.trim(),
@@ -129,6 +133,7 @@ export function OrganizerForm({
 					: values.non_profit
 		}
 		await onSave(payload)
+		form.reset(values)
 	}
 
 	return (

@@ -27,9 +27,13 @@ import {
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
 import RequiredLabel from './ui/required-label'
 
 const END_BEFORE_START_ERROR = 'Enddatum darf nicht vor dem Startdatum liegen'
+
+const DESCRIPTION_TEXTAREA_CLASSNAME =
+	'field-sizing-fixed min-h-[120px] max-h-[320px] resize-y overflow-y-auto'
 
 const eventSchema = z
 	.object({
@@ -129,6 +133,7 @@ export function EventForm({
 		setStartDate(value)
 		if (value) {
 			form.clearErrors('start_date_time')
+			form.setValue('start_date_time', value, { shouldDirty: true })
 		}
 		validateChronology(value, endDate)
 	}
@@ -137,6 +142,7 @@ export function EventForm({
 		setEndDate(value)
 		if (value) {
 			form.clearErrors('end_date_time')
+			form.setValue('end_date_time', value, { shouldDirty: true })
 		}
 		validateChronology(startDate, value)
 	}
@@ -221,6 +227,9 @@ export function EventForm({
 		}
 	}, [startDate, endDate, form])
 
+	const { isDirty } = form.formState
+	useUnsavedChangesWarning(isDirty)
+
 	const onSubmit = async (values: EventFormValues) => {
 		const startDateTime = startDate || values.start_date_time
 		const endDateTime = endDate || values.end_date_time
@@ -260,6 +269,11 @@ export function EventForm({
 		} as CreateEventRequest | UpdateEventRequest
 
 		await onSave(payload)
+		form.reset({
+			...values,
+			start_date_time: startDateTime,
+			end_date_time: endDateTime
+		})
 	}
 
 	return (
@@ -340,7 +354,7 @@ export function EventForm({
 
 				<div>
 					<h2 className="text-xl font-bold tracking-tight">Beschreibungen</h2>
-					<div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+					<div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
 						<FormField
 							control={form.control}
 							name="description_de"
@@ -350,7 +364,7 @@ export function EventForm({
 									<FormControl>
 										<Textarea
 											placeholder="Eventbeschreibung auf Deutsch"
-											className="min-h-[120px]"
+											className={DESCRIPTION_TEXTAREA_CLASSNAME}
 											{...field}
 										/>
 									</FormControl>
@@ -367,7 +381,7 @@ export function EventForm({
 									<FormControl>
 										<Textarea
 											placeholder="Event description in English"
-											className="min-h-[120px]"
+											className={DESCRIPTION_TEXTAREA_CLASSNAME}
 											{...field}
 										/>
 									</FormControl>
