@@ -2,6 +2,7 @@ mod api_token;
 mod app_state;
 mod authed_user;
 mod cache;
+mod cors_config;
 mod dto;
 mod email;
 mod error;
@@ -14,10 +15,10 @@ use std::net::SocketAddr;
 use std::path::Path;
 
 use axum::Router;
-use axum::http::{HeaderValue, Method, header};
+use axum::http::{HeaderValue, header};
 use sqlx::postgres::PgPoolOptions;
 use tokio::net::TcpListener;
-use tower_http::{cors::CorsLayer, set_header::SetResponseHeaderLayer};
+use tower_http::set_header::SetResponseHeaderLayer;
 use tracing::{error, info, warn};
 use tracing_subscriber::{EnvFilter, fmt::time::UtcTime};
 use utoipa::OpenApi;
@@ -168,69 +169,7 @@ async fn main() {
         api_token_hmac_key,
     };
 
-    // Configure CORS to be more restrictive
-    let raw_allowed_origins = std::env::var("ALLOWED_ORIGINS")
-        .unwrap_or_else(|_| "http://localhost:3000,https://localhost:3000".to_string());
-
-    let mut allowed_origins = Vec::new();
-    for origin in raw_allowed_origins.split(',') {
-        let trimmed = origin.trim();
-        if trimmed.is_empty() {
-            continue;
-        }
-        match HeaderValue::from_str(trimmed) {
-            Ok(value) => allowed_origins.push(value),
-            Err(err) => warn!(
-                target: "startup",
-                component = "cors",
-                action = "parse_origin",
-                invalid_origin = trimmed,
-                %err,
-                "Ignoring invalid allowed origin"
-            ),
-        }
-    }
-
-    if allowed_origins.is_empty() {
-        warn!(
-            target: "startup",
-            component = "cors",
-            action = "parse_origin",
-            source = %raw_allowed_origins,
-            "No valid allowed origins configured; using default http://localhost:3000"
-        );
-        allowed_origins.push(HeaderValue::from_static("http://localhost:3000"));
-    }
-
-    let allowed_origin_strings: Vec<String> = allowed_origins
-        .iter()
-        .map(|value| {
-            value
-                .to_str()
-                .map(|s| s.to_string())
-                .unwrap_or_else(|_| String::new())
-        })
-        .collect();
-
-    info!(
-        target: "startup",
-        component = "cors",
-        action = "configure",
-        allowed_origins = ?allowed_origin_strings,
-        "Configured CORS allowed origins"
-    );
-
-    let cors = CorsLayer::new()
-        .allow_methods([
-            Method::GET,
-            Method::POST,
-            Method::PUT,
-            Method::DELETE,
-            Method::OPTIONS,
-        ])
-        .allow_origin(allowed_origins)
-        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION, header::COOKIE])
-        .allow_credentials(true);
+    let cors = cors_config::build_cors_layer();
 
     // Note: Rate limiting and CSRF protection would require additional middleware
     // that's compatible with the current Axum version. These can be added later
