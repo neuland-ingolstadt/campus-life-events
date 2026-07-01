@@ -93,6 +93,7 @@ The generated files live in the `.sqlx/` directory and are committed to version 
 ## Operational notes
 
 - CORS origins are controlled via the `ALLOWED_ORIGINS` variable (comma-separated list). Defaults cover local dashboard development.
+- Use `ALLOWED_ORIGIN_SUFFIXES` (comma-separated host suffixes such as `.expo.app`) to allow any `http://` or `https://` origin whose host matches a suffix. Exact origins from `ALLOWED_ORIGINS` are always allowed as well.
 - Security headers (`X-Frame-Options`, `X-Content-Type-Options`, and HSTS) are injected globally through `tower-http` middleware.
 - iCal feeds are available under `/api/ical/...` and are used by the frontend to export event calendars.
 
