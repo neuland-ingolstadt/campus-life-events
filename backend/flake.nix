@@ -33,10 +33,14 @@
           config = {
             Entrypoint = [ "/bin/entrypoint.sh" ];
             ExposedPorts = { "8080/tcp" = {}; };
-            WorkingDir = "/";  # Set working directory to root so relative paths work
+            WorkingDir = "/";
             Env = [
               "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
             ];
+            Labels = {
+              "org.opencontainers.image.source" = "https://github.com/neuland-ingolstadt/campus-life-events";
+              "org.opencontainers.image.revision" = self.rev or self.dirtyRev or "unknown";
+            };
           };
         };
       in
