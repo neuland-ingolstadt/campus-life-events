@@ -41,6 +41,17 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { me } from '@/lib/auth'
 
+const upcomingSkeletonKeys = [
+	'upcoming-skeleton-1',
+	'upcoming-skeleton-2',
+	'upcoming-skeleton-3'
+]
+const recentSkeletonKeys = [
+	'recent-skeleton-1',
+	'recent-skeleton-2',
+	'recent-skeleton-3'
+]
+
 export default function Dashboard() {
 	const { data: user } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
 	const { data: events = [], isLoading: eventsLoading } = useQuery<ApiEvent[]>({
@@ -245,11 +256,8 @@ export default function Dashboard() {
 								<CardContent>
 									{eventsLoading ? (
 										<div className="space-y-3">
-											{Array.from({ length: 3 }, (_, i) => (
-												<div
-													key={`upcoming-skeleton-${Date.now()}-${i}`}
-													className="space-y-2"
-												>
+											{upcomingSkeletonKeys.map((key) => (
+												<div key={key} className="space-y-2">
 													<Skeleton className="h-4 w-3/4" />
 													<Skeleton className="h-3 w-1/2" />
 												</div>
@@ -360,11 +368,8 @@ export default function Dashboard() {
 								<CardContent>
 									{eventsLoading ? (
 										<div className="space-y-3">
-											{Array.from({ length: 3 }, (_, i) => (
-												<div
-													key={`recent-skeleton-${Date.now()}-${i}`}
-													className="space-y-2"
-												>
+											{recentSkeletonKeys.map((key) => (
+												<div key={key} className="space-y-2">
 													<Skeleton className="h-3 w-full" />
 													<Skeleton className="h-2 w-1/3" />
 												</div>
