@@ -1,4 +1,4 @@
-FROM oven/bun:latest AS deps
+FROM oven/bun:latest@sha256:e10577f0db68676a7024391c6e5cb4b879ebd17188ab750cf10024a6d700e5c4 AS deps
 WORKDIR /app
 
 COPY bun.lock package.json ./
