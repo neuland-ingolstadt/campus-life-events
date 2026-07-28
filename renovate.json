@@ -1,10 +1,17 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", "customManagers:biomeVersions"],
-  "commitMessagePrefix": "chore(deps):",
-  "commitMessageLowerCase": "always",
-  "semanticCommits": "enabled",
-  "semanticCommitType": "chore",
+  "extends": [
+    "config:recommended",
+    "customManagers:biomeVersions",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)"
+  ],
+  "pin": {
+    "commitMessageAction": "pin"
+  },
+  "pinDigest": {
+    "commitMessageAction": "pin"
+  },
   "rangeStrategy": "pin",
   "pinDigests": true,
   "packageRules": [
