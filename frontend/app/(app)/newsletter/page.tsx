@@ -35,19 +35,19 @@ import {
 	PopoverTrigger
 } from '@/components/ui/popover'
 import { Skeleton } from '@/components/ui/skeleton'
-import { me } from '@/lib/auth'
 import {
 	fetchNewsletterData,
 	generateNewsletterHTML,
 	sendNewsletterPreviewEmail
 } from '@/lib/newsletter'
+import { currentUserQuery } from '@/lib/queries/auth'
 
 export default function NewsletterPage() {
 	const {
 		data: meData,
 		isLoading: isMeLoading,
 		error: meError
-	} = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
+	} = useQuery(currentUserQuery())
 
 	const canAccessNewsletter = meData?.can_access_newsletter ?? false
 

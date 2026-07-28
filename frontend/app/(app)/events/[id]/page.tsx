@@ -17,17 +17,14 @@ import {
 } from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { me } from '@/lib/auth'
+import { currentUserQuery } from '@/lib/queries/auth'
 
 export default function EditEventPage() {
 	const router = useRouter()
 	const params = useParams<{ id: string }>()
 	const id = Number(params.id)
 	const qc = useQueryClient()
-	const { data: meData } = useQuery({
-		queryKey: ['auth', 'me'],
-		queryFn: me
-	})
+	const { data: meData } = useQuery(currentUserQuery())
 	const { data, isLoading, isError } = useQuery<Event>({
 		queryKey: ['event', id],
 		queryFn: async () => {

@@ -23,7 +23,7 @@ import {
 	AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { me } from '@/lib/auth'
+import { currentUserQuery } from '@/lib/queries/auth'
 
 const localizer = momentLocalizer(moment)
 
@@ -119,7 +119,7 @@ export function EventsCalendar({
 	organizers,
 	onDelete
 }: EventsCalendarProps) {
-	const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
+	const { data: meData } = useQuery(currentUserQuery())
 	const organizerId = meData?.organizer_id ?? undefined
 	const isAdmin = meData?.account_type === 'ADMIN'
 

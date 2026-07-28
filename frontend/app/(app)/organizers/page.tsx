@@ -18,7 +18,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { me } from '@/lib/auth'
+import { currentUserQuery } from '@/lib/queries/auth'
 
 const ORGANIZER_SKELETON_KEYS = Array.from(
 	{ length: 3 },
@@ -26,7 +26,7 @@ const ORGANIZER_SKELETON_KEYS = Array.from(
 )
 
 export default function OrganizersPage() {
-	const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
+	const { data: meData } = useQuery(currentUserQuery())
 	const organizerId = meData?.organizer_id ?? undefined
 	const isAdmin = meData?.account_type === 'ADMIN'
 	const {

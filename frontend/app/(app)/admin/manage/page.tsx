@@ -25,15 +25,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SidebarTrigger } from '@/components/ui/sidebar'
-import { me } from '@/lib/auth'
+import { currentUserQuery } from '@/lib/queries/auth'
 
 export default function ManageAdminsPage() {
 	const qc = useQueryClient()
-	const { data: meData, isLoading: meLoading } = useQuery({
-		queryKey: ['auth', 'me'],
-		queryFn: me,
-		retry: false
-	})
+	const { data: meData, isLoading: meLoading } = useQuery(currentUserQuery())
 	const isAdmin = meData?.account_type === 'ADMIN'
 
 	const { data, isLoading, error, refetch } = useQuery<AdminWithInvite[]>({

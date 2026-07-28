@@ -1,4 +1,15 @@
-import type { SetupTokenInfoResponse } from '@/client/types.gen'
+import {
+	changePassword as changePasswordRequest,
+	initAccount as initAccountRequest,
+	login as loginRequest,
+	logout as logoutRequest,
+	lookupSetupToken as lookupSetupTokenRequest,
+	me as meRequest
+} from '@/client'
+import type {
+	AuthUserResponse,
+	SetupTokenInfoResponse
+} from '@/client/types.gen'
 
 export type LoginPayload = { email: string; password: string }
 export type InitAccountPayload = {
@@ -11,82 +22,61 @@ export type ChangePasswordPayload = {
 }
 
 export async function login(payload: LoginPayload) {
-	const res = await fetch('/api/v1/auth/login', {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(payload),
-		credentials: 'include'
-	})
-	if (!res.ok) {
-		const msg = await safeError(res)
-		throw new Error(msg || 'Login failed')
-	}
-	return res.json()
+	const response = await loginRequest({ body: payload })
+	return responseData(response, 'Login failed')
 }
 
 export async function initAccount(payload: InitAccountPayload) {
-	const res = await fetch('/api/v1/auth/init', {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(payload),
-		credentials: 'include'
-	})
-	if (!res.ok) {
-		const msg = await safeError(res)
-		throw new Error(msg || 'Initialization failed')
-	}
-	return res.json()
+	const response = await initAccountRequest({ body: payload })
+	return responseData(response, 'Initialization failed')
 }
 
 export async function lookupSetupToken(
 	token: string
 ): Promise<SetupTokenInfoResponse> {
-	const res = await fetch('/api/v1/auth/register-info', {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ token }),
-		credentials: 'include'
-	})
-	if (!res.ok) {
-		const msg = await safeError(res)
-		throw new Error(msg || 'Invalid setup token')
-	}
-	return res.json()
+	const response = await lookupSetupTokenRequest({ body: { token } })
+	return responseData(response, 'Invalid setup token')
 }
 
-export async function me() {
-	const res = await fetch('/api/v1/auth/me', { credentials: 'include' })
-	if (res.status === 401) return null
-	if (!res.ok) throw new Error('Failed to fetch user')
-	return res.json()
+export async function me(): Promise<AuthUserResponse | null> {
+	const response = await meRequest()
+	if (response.response?.status === 401) {
+		return null
+	}
+	return responseData(response, 'Failed to fetch user')
 }
 
 export async function logout() {
-	const res = await fetch('/api/v1/auth/logout', {
-		method: 'POST',
-		credentials: 'include'
-	})
-	if (!res.ok) throw new Error('Logout failed')
+	const response = await logoutRequest()
+	responseData(response, 'Logout failed')
 }
 
 export async function changePassword(payload: ChangePasswordPayload) {
-	const res = await fetch('/api/v1/auth/change-password', {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(payload),
-		credentials: 'include'
-	})
-	if (!res.ok) {
-		const msg = await safeError(res)
-		throw new Error(msg || 'Change password failed')
-	}
+	const response = await changePasswordRequest({ body: payload })
+	responseData(response, 'Change password failed')
 }
 
-async function safeError(res: Response): Promise<string | undefined> {
-	try {
-		const data = await res.json()
-		return data?.message || undefined
-	} catch {
-		return undefined
+function responseData<T>(
+	response: { data?: T; error?: unknown },
+	fallback: string
+): T {
+	if (response.error !== undefined) {
+		throw new Error(errorMessage(response.error, fallback))
 	}
+	if (response.data === undefined) {
+		throw new Error(fallback)
+	}
+	return response.data
+}
+
+function errorMessage(error: unknown, fallback: string): string {
+	if (
+		typeof error === 'object' &&
+		error !== null &&
+		'message' in error &&
+		typeof error.message === 'string'
+	) {
+		return error.message
+	}
+	return fallback
 }

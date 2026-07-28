@@ -39,7 +39,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
-import { me } from '@/lib/auth'
+import { currentUserQuery } from '@/lib/queries/auth'
 
 const upcomingSkeletonKeys = [
 	'upcoming-skeleton-1',
@@ -53,7 +53,7 @@ const recentSkeletonKeys = [
 ]
 
 export default function Dashboard() {
-	const { data: user } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
+	const { data: user } = useQuery(currentUserQuery())
 	const { data: events = [], isLoading: eventsLoading } = useQuery<ApiEvent[]>({
 		queryKey: ['events'],
 		queryFn: async () => {

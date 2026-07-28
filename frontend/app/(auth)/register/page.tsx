@@ -21,6 +21,7 @@ import {
 	getPasswordPolicyError,
 	PASSWORD_POLICY_SUMMARY
 } from '@/lib/password-policy'
+import { authKeys } from '@/lib/queries/auth'
 
 function friendlyTokenError(message: string): string {
 	const normalized = message.toLowerCase()
@@ -178,7 +179,7 @@ function RegisterForm({ token }: { token: string }) {
 		try {
 			await initAccount({ token, password })
 			await queryClient.invalidateQueries({
-				queryKey: ['auth', 'me'],
+				queryKey: authKeys.me(),
 				refetchType: 'all'
 			})
 			router.push('/')

@@ -15,7 +15,8 @@ import {
 	TooltipTrigger
 } from '@/components/ui/tooltip'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { logout, me } from '@/lib/auth'
+import { logout } from '@/lib/auth'
+import { currentUserQuery } from '@/lib/queries/auth'
 import { AnimateIcon } from './animate-ui/icons/icon'
 import { LogOut } from './animate-ui/icons/log-out'
 
@@ -23,10 +24,7 @@ export function AuthStatus() {
 	const router = useRouter()
 	const queryClient = useQueryClient()
 	const isMobile = useIsMobile()
-	const { data: user } = useQuery({
-		queryKey: ['auth', 'me'],
-		queryFn: me
-	})
+	const { data: user } = useQuery(currentUserQuery())
 
 	async function onLogout() {
 		await logout()

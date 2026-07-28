@@ -19,7 +19,7 @@ import {
 	SidebarMenuItem,
 	useSidebar
 } from '@/components/ui/sidebar'
-import { me } from '@/lib/auth'
+import { currentUserQuery } from '@/lib/queries/auth'
 import { ChartColumnIncreasing } from './animate-ui/icons/chart-column-increasing'
 import { Hammer } from './animate-ui/icons/hammer'
 import { LayoutDashboard } from './animate-ui/icons/layout-dashboard'
@@ -32,7 +32,7 @@ import NeulandPalm from './neuland-palm'
 
 export function DashboardSidebar() {
 	const pathname = usePathname()
-	const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
+	const { data: meData } = useQuery(currentUserQuery())
 	const isAdmin = meData?.account_type === 'ADMIN'
 	const canAccessNewsletter = meData?.can_access_newsletter ?? false
 	const { isMobile, setOpenMobile } = useSidebar()

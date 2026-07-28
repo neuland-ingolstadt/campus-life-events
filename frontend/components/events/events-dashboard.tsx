@@ -16,7 +16,7 @@ import { EventsMobileList } from '@/components/events/events-mobile-list'
 import { EventsPageShell } from '@/components/events/events-page-shell'
 import { useEventColumns } from '@/components/events/use-event-columns'
 import { EventsCalendar } from '@/components/events-calendar'
-import { me } from '@/lib/auth'
+import { currentUserQuery } from '@/lib/queries/auth'
 
 const DATE_FILTER_ID = 'start_date_time'
 
@@ -125,10 +125,7 @@ export function EventsDashboard({
 		[]
 	)
 	const columnFilters = columnFiltersState
-	const { data: meData } = useQuery({
-		queryKey: ['auth', 'me'],
-		queryFn: me
-	})
+	const { data: meData } = useQuery(currentUserQuery())
 	const organizerId = meData?.organizer_id ?? undefined
 	const isAdmin = meData?.account_type === 'ADMIN'
 
