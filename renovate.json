@@ -20,6 +20,7 @@
       "groupSlug": "frontend-major",
       "matchManagers": ["npm"],
       "excludePackageNames": ["@biomejs/biome"],
+      "minimumReleaseAge": "3 days",
       "matchUpdateTypes": ["major"]
     },
     {
@@ -27,12 +28,14 @@
       "groupSlug": "frontend-minor-and-patch",
       "matchManagers": ["npm"],
       "excludePackageNames": ["@biomejs/biome"],
+      "minimumReleaseAge": "3 days",
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"]
     },
     {
       "groupName": "Biome",
       "groupSlug": "biome",
-      "matchPackageNames": ["@biomejs/biome"]
+      "matchPackageNames": ["@biomejs/biome"],
+      "minimumReleaseAge": "3 days"
     },
     {
       "groupName": "Rust major updates",
