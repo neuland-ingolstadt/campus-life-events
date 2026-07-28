@@ -54,7 +54,7 @@ jobs:
 
       - id: repository
         name: Generate Registry String
-        uses: vishalmamidi/lowercase-action@v1
+        uses: vishalmamidi/lowercase-action@652df4eb6c25fb2a1a92ec9f6d406dd1fe464e44 # v1
         with:
           string: ${{ env.REGISTRY}}/${{ github.repository }}-backend
 
