@@ -19,17 +19,21 @@
       "groupName": "frontend major updates",
       "groupSlug": "frontend-major",
       "matchManagers": ["npm"],
-      "excludePackageNames": ["@biomejs/biome"],
       "minimumReleaseAge": "3 days",
-      "matchUpdateTypes": ["major"]
+      "matchUpdateTypes": ["major"],
+      "matchPackageNames": [
+        "!@biomejs/biome"
+      ]
     },
     {
       "groupName": "frontend minor and patch updates",
       "groupSlug": "frontend-minor-and-patch",
       "matchManagers": ["npm"],
-      "excludePackageNames": ["@biomejs/biome"],
       "minimumReleaseAge": "3 days",
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"]
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "matchPackageNames": [
+        "!@biomejs/biome"
+      ]
     },
     {
       "groupName": "Biome",
