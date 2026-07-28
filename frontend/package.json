@@ -75,7 +75,7 @@
     "zod": "^4.4.2"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.2.6",
+    "@biomejs/biome": "2.5.5",
     "@react-email/preview-server": "4.3.2",
     "@tailwindcss/postcss": "^4.2.4",
     "@types/node": "^24.12.2",
