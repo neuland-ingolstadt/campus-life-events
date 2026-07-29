@@ -56,10 +56,10 @@ export function QuickActions({
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
 				{actions.map((action) => (
 					<Link key={action.title} href={action.href} className="block">
-						<Card className="cursor-pointer transition-all duration-300 hover:shadow-lg">
+						<Card className="cursor-pointer transition-colors hover:bg-muted/50">
 							<CardContent className="px-4 py-4">
 								<div className="flex items-start gap-3 sm:gap-4">
-									<div className="rounded-full from-primary/90 to-primary bg-gradient-to-br text-primary-foreground ring-1 ring-border h-10 w-10 sm:h-9 sm:w-9 flex items-center justify-center flex-shrink-0">
+									<div className="rounded-md bg-primary text-primary-foreground h-10 w-10 sm:h-9 sm:w-9 flex items-center justify-center flex-shrink-0">
 										<action.icon className="h-5 w-5" />
 									</div>
 									<div className="min-w-0 flex-1">

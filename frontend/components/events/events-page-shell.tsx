@@ -20,13 +20,8 @@ export function EventsPageShell({
 			<header
 				className={cn(
 					'flex h-16 min-w-0 shrink-0 items-center gap-2 border-b px-4',
-					stickyHeader && 'sticky top-0 z-50 bg-background/95 backdrop-blur-sm'
+					stickyHeader && 'sticky top-0 z-50 bg-background/95'
 				)}
-				style={
-					stickyHeader
-						? { backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }
-						: undefined
-				}
 			>
 				<SidebarTrigger className="-ml-1" />
 				<div className="flex min-w-0 flex-1 items-center gap-2">

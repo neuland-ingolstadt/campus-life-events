@@ -153,8 +153,8 @@ export function EventsCalendar({
 			(organizerId !== undefined && organizerId === event.resource.organizer_id)
 		return {
 			style: {
-				backgroundColor: isOwnEvent ? '#3b82f6' : '#6b7280',
-				borderColor: isOwnEvent ? '#2563eb' : '#4b5563',
+				backgroundColor: isOwnEvent ? '#171717' : '#525252',
+				borderColor: isOwnEvent ? '#171717' : '#404040',
 				color: 'white',
 				borderRadius: '4px',
 				border: 'none',

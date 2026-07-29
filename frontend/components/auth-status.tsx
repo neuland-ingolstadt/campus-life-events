@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/tooltip'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { logout, me } from '@/lib/auth'
-import { AnimateIcon } from './animate-ui/icons/icon'
 import { LogOut } from './animate-ui/icons/log-out'
 
 export function AuthStatus() {
@@ -78,11 +77,11 @@ export function AuthStatus() {
 
 	return (
 		<TooltipProvider>
-			<Card className="border-0 bg-gradient-to-br from-muted/20 via-background to-muted/40 dark:from-background dark:to-muted/20 shadow-md ring-1 ring-border/60 dark:ring-border/40">
+			<Card className="border-sidebar-border bg-sidebar text-sidebar-foreground">
 				<CardContent className="px-3 py-0 md:py-2">
 					<div className="flex items-center gap-3">
-						<Avatar className="h-10 w-10 ring-2 ring-primary/20">
-							<AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-semibold">
+						<Avatar className="h-10 w-10">
+							<AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground font-semibold">
 								{initials}
 							</AvatarFallback>
 						</Avatar>
@@ -98,7 +97,7 @@ export function AuthStatus() {
 									isMobile ? (
 										<Badge
 											variant="secondary"
-											className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+											className="border-sidebar-border bg-sidebar-accent text-sidebar-accent-foreground px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
 										>
 											<Shield className="h-3 w-3 mr-1" />
 											Admin
@@ -108,7 +107,7 @@ export function AuthStatus() {
 											<TooltipTrigger asChild>
 												<Badge
 													variant="secondary"
-													className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+													className="border-sidebar-border bg-sidebar-accent text-sidebar-accent-foreground px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
 												>
 													<Shield className="h-3 w-3 mr-1" />
 													Admin
@@ -124,6 +123,7 @@ export function AuthStatus() {
 										<OrganizerKindBadge
 											kind={user.organizer_kind ?? 'STUDENT_ASSOCIATION'}
 											showIcon
+											className="border-sidebar-border bg-sidebar-accent text-sidebar-accent-foreground"
 										/>
 									) : (
 										<Tooltip>
@@ -132,6 +132,7 @@ export function AuthStatus() {
 													<OrganizerKindBadge
 														kind={user.organizer_kind ?? 'STUDENT_ASSOCIATION'}
 														showIcon
+														className="border-sidebar-border bg-sidebar-accent text-sidebar-accent-foreground"
 													/>
 												</span>
 											</TooltipTrigger>
@@ -147,7 +148,7 @@ export function AuthStatus() {
 								) : (
 									<Badge
 										variant="outline"
-										className="bg-gradient-to-r from-gray-500/10 to-slate-500/10 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-800 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+										className="border-sidebar-border bg-sidebar-accent text-sidebar-accent-foreground px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
 									>
 										<User className="h-3 w-3 mr-1" />
 										Benutzer
@@ -168,16 +169,14 @@ export function AuthStatus() {
 						) : (
 							<Tooltip>
 								<TooltipTrigger asChild>
-									<AnimateIcon animateOnHover animateOnTap>
-										<Button
-											size="sm"
-											variant="ghost"
-											onClick={onLogout}
-											className="shrink-0 h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
-										>
-											<LogOut className="h-4 w-4" />
-										</Button>
-									</AnimateIcon>
+									<Button
+										size="sm"
+										variant="ghost"
+										onClick={onLogout}
+										className="shrink-0 h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
+									>
+										<LogOut className="h-4 w-4" />
+									</Button>
 								</TooltipTrigger>
 								<TooltipContent>
 									<p>Abmelden</p>

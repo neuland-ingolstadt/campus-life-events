@@ -209,13 +209,13 @@ function RegisterForm({ token }: { token: string }) {
 							Richte dein Konto ein
 						</CardTitle>
 						{tokenStatus === 'valid' && clubName && (
-							<div className="lg:hidden mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+							<div className="mt-4 rounded-lg border bg-muted p-3 lg:hidden">
 								<div className="flex items-center justify-center gap-2">
-									<p className="text-sm font-medium text-blue-700 dark:text-blue-300">
+									<p className="text-sm font-medium text-foreground">
 										Willkommen
 									</p>
 								</div>
-								<p className="text-lg font-semibold text-blue-900 dark:text-blue-100 mt-1 text-center">
+								<p className="mt-1 text-center text-lg font-semibold text-foreground">
 									{clubName}
 								</p>
 							</div>

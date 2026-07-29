@@ -3,7 +3,7 @@ import NeulandPalm from '@/components/neuland-palm'
 
 export function AuthMobileHeader() {
 	return (
-		<div className="lg:hidden flex p-4 bg-neutral-100 dark:bg-[#010101] border-b">
+		<div className="flex border-b bg-neutral-100 p-4 dark:bg-[#010101] lg:hidden">
 			<Link
 				href="/"
 				className="flex items-center gap-3 hover:opacity-80 transition-opacity"

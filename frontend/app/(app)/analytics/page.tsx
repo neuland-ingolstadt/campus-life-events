@@ -198,25 +198,27 @@ export default function AnalyticsPage() {
 			</header>
 
 			<div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
-				<div className="flex items-center justify-between gap-4">
-					<div>
-						<h2 className="text-3xl font-bold tracking-tight">Analysen</h2>
+				<div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+					<div className="min-w-0">
+						<h2 className="break-words text-3xl font-bold tracking-tight">
+							Analysen
+						</h2>
 						<p className="text-sm text-muted-foreground">
 							Einblicke aus dem Audit-Log der letzten {days} Tage
 						</p>
 					</div>
-					<div className="flex gap-2 items-center">
+					<div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center lg:w-auto">
 						<Input
 							placeholder="Events/Organisationen suchen"
 							value={search}
 							onChange={(e) => setSearch(e.target.value)}
-							className="w-[220px]"
+							className="w-full min-w-0 sm:w-[220px]"
 						/>
 						<Select
 							value={String(days)}
 							onValueChange={(v) => setDays(parseInt(v, 10))}
 						>
-							<SelectTrigger className="w-[140px]">
+							<SelectTrigger className="w-full sm:w-[140px]">
 								<SelectValue placeholder="Zeitraum" />
 							</SelectTrigger>
 							<SelectContent>
@@ -253,10 +255,7 @@ export default function AnalyticsPage() {
 							value: byType.DELETE || 0
 						}
 					].map((kpi) => (
-						<Card
-							key={kpi.key}
-							className="flex flex-col transition-all duration-300 hover:shadow-lg"
-						>
+						<Card key={kpi.key} className="flex flex-col">
 							<CardHeader className="items-center pb-0">
 								<CardTitle className="text-center line-clamp-1">
 									{kpi.title}
@@ -343,7 +342,7 @@ export default function AnalyticsPage() {
 
 				<div className="grid gap-6 lg:grid-cols-2">
 					{/* Timeline line chart */}
-					<Card className="transition-all duration-300 hover:shadow-lg">
+					<Card>
 						<CardHeader>
 							<CardTitle>Veränderungen im Zeitverlauf</CardTitle>
 							<CardDescription>
@@ -401,7 +400,7 @@ export default function AnalyticsPage() {
 					</Card>
 
 					{/* Top changed events */}
-					<Card className="transition-all duration-300 hover:shadow-lg">
+					<Card>
 						<CardHeader>
 							<CardTitle>Meist geänderte Events</CardTitle>
 							<CardDescription>Meiste Aktivität im Zeitraum</CardDescription>
@@ -445,7 +444,7 @@ export default function AnalyticsPage() {
 
 				{/* Distribution by type (fancy pie chart) */}
 				<div className="grid gap-6 lg:grid-cols-3">
-					<Card className="lg:col-span-1 transition-all duration-300 hover:shadow-lg">
+					<Card className="lg:col-span-1">
 						<CardHeader>
 							<CardTitle>Verteilung nach Typ</CardTitle>
 							<CardDescription>Create / Update / Delete</CardDescription>
@@ -490,7 +489,7 @@ export default function AnalyticsPage() {
 					</Card>
 
 					{/* Audit logs table */}
-					<Card className="lg:col-span-2 transition-all duration-300 hover:shadow-lg">
+					<Card className="lg:col-span-2">
 						<CardHeader>
 							<CardTitle>Audit-Log</CardTitle>
 							<CardDescription>Einträge im gewählten Zeitraum</CardDescription>

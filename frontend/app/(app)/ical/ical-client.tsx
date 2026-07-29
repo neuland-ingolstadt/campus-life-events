@@ -54,7 +54,7 @@ export function ICalClient({ backendUrl, userId }: ICalClientProps) {
 				</div>
 
 				<div className="grid gap-6 md:grid-cols-2">
-					<Card className="transition-all duration-300 hover:shadow-lg border-primary/20">
+					<Card className="border-primary/20">
 						<CardHeader>
 							<div className="flex items-center gap-2">
 								<PartyPopper className="h-5 w-5 text-primary" />
@@ -92,7 +92,7 @@ export function ICalClient({ backendUrl, userId }: ICalClientProps) {
 						</CardContent>
 					</Card>
 
-					<Card className="transition-all duration-300 hover:shadow-lg border-primary/20">
+					<Card className="border-primary/20">
 						<CardHeader>
 							<div className="flex items-center gap-2">
 								<Building2 className="h-5 w-5 text-primary" />
@@ -132,7 +132,7 @@ export function ICalClient({ backendUrl, userId }: ICalClientProps) {
 				</div>
 
 				{userId ? (
-					<Card className="transition-all duration-300 hover:shadow-lg">
+					<Card>
 						<CardHeader>
 							<div className="flex items-center gap-2">
 								<Calendar className="h-5 w-5" />
@@ -167,7 +167,7 @@ export function ICalClient({ backendUrl, userId }: ICalClientProps) {
 						</CardContent>
 					</Card>
 				) : (
-					<Card className="transition-all duration-300 hover:shadow-lg">
+					<Card>
 						<CardHeader>
 							<div className="flex items-center gap-2">
 								<Calendar className="h-5 w-5" />
@@ -197,7 +197,7 @@ export function ICalClient({ backendUrl, userId }: ICalClientProps) {
 					</Card>
 				)}
 
-				<Card className="transition-all duration-300 hover:shadow-lg">
+				<Card>
 					<CardHeader>
 						<CardTitle>So fügst du den Kalender hinzu</CardTitle>
 						<CardDescription>

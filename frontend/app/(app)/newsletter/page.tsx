@@ -397,7 +397,7 @@ export default function NewsletterPage() {
 							value={customText}
 							onChange={(e) => setCustomText(e.target.value)}
 							placeholder="Hinweise, besondere Ankündigungen, etc. (optional)"
-							className="w-full h-32 p-3 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+							className="h-32 w-full resize-none rounded-md border border-input p-3 focus:border-ring focus:ring-2 focus:ring-ring/50"
 						/>
 					</CardContent>
 				</Card>

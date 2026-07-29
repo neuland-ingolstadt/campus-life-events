@@ -50,7 +50,7 @@ export function ThemeToggle() {
 					<Button
 						variant="ghost"
 						size="sm"
-						className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+						className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
 					>
 						{renderIcon()}
 						<span className="truncate">Design: {activeLabel}</span>
@@ -60,19 +60,19 @@ export function ThemeToggle() {
 			<DropdownMenuContent align="start" className="w-40">
 				<DropdownMenuItem
 					onClick={() => setTheme('light')}
-					className="focus:bg-gray-100 focus:text-gray-900 cursor-pointer dark:focus:bg-gray-800 dark:focus:text-gray-100"
+					className="cursor-pointer focus:bg-accent focus:text-accent-foreground"
 				>
 					<Sun className="mr-2 h-4 w-4" /> Hell
 				</DropdownMenuItem>
 				<DropdownMenuItem
 					onClick={() => setTheme('dark')}
-					className="focus:bg-gray-100 focus:text-gray-900 cursor-pointer dark:focus:bg-gray-800 dark:focus:text-gray-100"
+					className="cursor-pointer focus:bg-accent focus:text-accent-foreground"
 				>
 					<Moon className="mr-2 h-4 w-4" /> Dunkel
 				</DropdownMenuItem>
 				<DropdownMenuItem
 					onClick={() => setTheme('system')}
-					className="focus:bg-gray-100 focus:text-gray-900 cursor-pointer dark:focus:bg-gray-800 dark:focus:text-gray-100"
+					className="cursor-pointer focus:bg-accent focus:text-accent-foreground"
 				>
 					<SunMoon className="mr-2 h-4 w-4" /> System
 				</DropdownMenuItem>

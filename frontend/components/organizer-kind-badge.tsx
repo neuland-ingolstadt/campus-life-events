@@ -27,8 +27,8 @@ export function OrganizerKindBadge({
 			className={cn(
 				'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
 				kind === 'THI_DEPARTMENT'
-					? 'border-violet-500/35 bg-violet-500/5 text-violet-700 dark:border-violet-400/40 dark:text-violet-200'
-					: 'border-primary/20 bg-primary/5 text-primary',
+					? 'border-border bg-muted text-foreground'
+					: 'border-border bg-muted text-foreground',
 				className
 			)}
 		>
