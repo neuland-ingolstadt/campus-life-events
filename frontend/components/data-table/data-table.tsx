@@ -291,7 +291,7 @@ export function DataTable<TData, TValue>({
 								<TableRow key={rowId}>
 									{loadingColumnIds.map((columnId) => (
 										<TableCell key={`${rowId}-${columnId}`}>
-											<Skeleton className="h-5 w-full" />
+											<Skeleton className="h-10 w-full bg-foreground/10" />
 										</TableCell>
 									))}
 								</TableRow>
