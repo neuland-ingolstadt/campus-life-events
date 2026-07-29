@@ -1,16 +1,24 @@
 'use client'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import type { ColumnFiltersState } from '@tanstack/react-table'
+import type {
+	ColumnFiltersState,
+	OnChangeFn,
+	PaginationState,
+	SortingState
+} from '@tanstack/react-table'
 import { startOfDay } from 'date-fns'
 import dynamic from 'next/dynamic'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+	useCallback,
+	useDeferredValue,
+	useEffect,
+	useMemo,
+	useState
+} from 'react'
 import { toast } from 'sonner'
 import { deleteEvent, listEvents, listOrganizers } from '@/client'
-import type {
-	Event as ApiEvent,
-	Organizer as ApiOrganizer
-} from '@/client/types.gen'
+import type { Organizer as ApiOrganizer } from '@/client/types.gen'
 import { DataTable } from '@/components/data-table/data-table'
 import { EventsHeader } from '@/components/events/events-header'
 import { EventsMobileList } from '@/components/events/events-mobile-list'
@@ -123,6 +131,13 @@ export function EventsDashboard({
 	'use no memo'
 	const qc = useQueryClient()
 	const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
+	const [pagination, setPagination] = useState<PaginationState>({
+		pageIndex: 0,
+		pageSize: 10
+	})
+	const [sorting, setSorting] = useState<SortingState>([
+		{ id: 'start_date_time', desc: false }
+	])
 	const defaultDateFilter = useMemo(() => createUpcomingEventsFilter(), [])
 	const [columnFiltersState, setColumnFiltersState] =
 		useState<ColumnFiltersState>(() =>
@@ -134,6 +149,7 @@ export function EventsDashboard({
 				| ColumnFiltersState
 				| ((previous: ColumnFiltersState) => ColumnFiltersState)
 		) => {
+			setPagination((previous) => ({ ...previous, pageIndex: 0 }))
 			setColumnFiltersState((previous) => {
 				const next = typeof updater === 'function' ? updater(previous) : updater
 
@@ -142,7 +158,50 @@ export function EventsDashboard({
 		},
 		[]
 	)
+	const handleSortingChange = useCallback<OnChangeFn<SortingState>>(
+		(updater) => {
+			setPagination((previous) => ({ ...previous, pageIndex: 0 }))
+			setSorting((previous) =>
+				typeof updater === 'function' ? updater(previous) : updater
+			)
+		},
+		[]
+	)
 	const columnFilters = columnFiltersState
+	const eventQueryFilters = useMemo(() => {
+		const title = columnFilters.find((filter) => filter.id === 'title_de')
+		const organizer = columnFilters.find((filter) => filter.id === 'organizer')
+		const visibility = columnFilters.find(
+			(filter) => filter.id === 'visibility'
+		)
+		const dateRange = columnFilters.find(
+			(filter) => filter.id === DATE_FILTER_ID
+		)
+		const range = dateRange?.value as DateFilterValue
+		const sort = sorting[0]
+
+		return {
+			query:
+				typeof title?.value === 'string' ? title.value || undefined : undefined,
+			organizer_id: Array.isArray(organizer?.value)
+				? Number(organizer.value[0]) || undefined
+				: undefined,
+			visibility: Array.isArray(visibility?.value)
+				? (visibility.value[0] as 'public' | 'internal' | undefined)
+				: undefined,
+			starts_from: toValidDate(range?.from)?.toISOString(),
+			starts_to: toValidDate(range?.to)?.toISOString(),
+			sort: (sort?.id === 'end_date_time' || sort?.id === 'title_de'
+				? sort.id
+				: 'start_date_time') as
+				| 'start_date_time'
+				| 'end_date_time'
+				| 'title_de',
+			direction: (sort?.desc ? 'desc' : 'asc') as 'asc' | 'desc'
+		}
+	}, [columnFilters, sorting])
+	const deferredEventQueryFilters = useDeferredValue(eventQueryFilters)
+
 	const { data: meData } = useQuery({
 		queryKey: ['auth', 'me'],
 		queryFn: me
@@ -150,11 +209,32 @@ export function EventsDashboard({
 	const organizerId = meData?.organizer_id ?? undefined
 	const isAdmin = meData?.account_type === 'ADMIN'
 
-	const { data, isLoading, error, refetch } = useQuery<ApiEvent[]>({
-		queryKey: ['events'],
+	const { data, isLoading, error, refetch } = useQuery({
+		queryKey: ['events', pagination, deferredEventQueryFilters],
 		queryFn: async () => {
-			const response = await listEvents({ throwOnError: true })
-			return response.data ?? []
+			const response = await listEvents({
+				query: {
+					...deferredEventQueryFilters,
+					limit: pagination.pageSize,
+					offset: pagination.pageIndex * pagination.pageSize
+				},
+				throwOnError: true
+			})
+			return response.data
+		}
+	})
+	const { data: calendarData } = useQuery({
+		queryKey: ['events', 'calendar', deferredEventQueryFilters],
+		enabled: viewMode === 'calendar',
+		queryFn: async () => {
+			const response = await listEvents({
+				query: {
+					...deferredEventQueryFilters,
+					limit: 5000
+				},
+				throwOnError: true
+			})
+			return response.data
 		}
 	})
 
@@ -178,7 +258,8 @@ export function EventsDashboard({
 		[organizersRaw]
 	)
 
-	const events = useMemo(() => data ?? [], [data])
+	const events = data?.items ?? []
+	const calendarEvents = calendarData?.items ?? []
 
 	const organizerFilterValues = useMemo(() => {
 		const organizerFilter = columnFilters.find(
@@ -264,16 +345,6 @@ export function EventsDashboard({
 		[organizerId, setColumnFilters]
 	)
 
-	const calendarEvents = useMemo(() => {
-		if (organizerFilterValues.length === 0) {
-			return events
-		}
-
-		return events.filter((event) =>
-			organizerFilterValues.includes(event.organizer_id.toString())
-		)
-	}, [events, organizerFilterValues])
-
 	const onDelete = useCallback(
 		async (id: number) => {
 			await deleteEvent({ path: { id } })
@@ -346,6 +417,14 @@ export function EventsDashboard({
 					enableFilter
 					enablePagination
 					initialPageSize={10}
+					pagination={pagination}
+					onPaginationChange={setPagination}
+					pageCount={Math.ceil((data?.total ?? 0) / pagination.pageSize)}
+					manualPagination
+					sorting={sorting}
+					onSortingChange={handleSortingChange}
+					manualSorting
+					manualFiltering
 					columnFilters={columnFilters}
 					onColumnFiltersChange={setColumnFilters}
 					renderMobileRows={({ rows }) => (
@@ -366,6 +445,7 @@ export function EventsDashboard({
 							{
 								column: 'organizer',
 								title: 'Organisation',
+								mode: 'single',
 								options: organizerOptions
 							},
 							{

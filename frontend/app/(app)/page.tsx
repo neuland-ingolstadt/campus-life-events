@@ -57,8 +57,11 @@ export default function Dashboard() {
 	const { data: events = [], isLoading: eventsLoading } = useQuery<ApiEvent[]>({
 		queryKey: ['events'],
 		queryFn: async () => {
-			const response = await listEvents({ throwOnError: true })
-			return response.data ?? []
+			const response = await listEvents({
+				query: { limit: 5000 },
+				throwOnError: true
+			})
+			return response.data?.items ?? []
 		}
 	})
 	const { data: organizers = [] } = useQuery<ApiOrganizer[]>({

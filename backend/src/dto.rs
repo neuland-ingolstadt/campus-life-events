@@ -137,6 +137,34 @@ pub struct ListEventsQuery {
     pub limit: Option<i64>,
     pub offset: Option<i64>,
     pub organizer_kind: Option<OrganizerKind>,
+    pub query: Option<String>,
+    pub visibility: Option<EventVisibility>,
+    pub starts_from: Option<DateTime<Utc>>,
+    pub starts_to: Option<DateTime<Utc>>,
+    pub sort: Option<EventSort>,
+    pub direction: Option<SortDirection>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum EventVisibility {
+    Public,
+    Internal,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum EventSort {
+    StartDateTime,
+    EndDateTime,
+    TitleDe,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum SortDirection {
+    Asc,
+    Desc,
 }
 
 #[derive(Debug, Deserialize, ToSchema, IntoParams)]
