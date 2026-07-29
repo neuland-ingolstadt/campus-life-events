@@ -114,6 +114,10 @@ export type Event = {
     updated_at: string;
 };
 
+export type EventSort = 'start_date_time' | 'end_date_time' | 'title_de';
+
+export type EventVisibility = 'public' | 'internal';
+
 export type EventWithOrganizer = {
     created_at: string;
     description_de?: string | null;
@@ -175,11 +179,22 @@ export type ListAuditLogsQuery = {
 };
 
 export type ListEventsQuery = {
+    direction?: 'asc' | 'desc' | null;
     limit?: number | null;
     offset?: number | null;
     organizer_id?: number | null;
     organizer_kind?: null | OrganizerKind;
+    query?: string | null;
+    sort?: EventSort | null;
+    starts_from?: string | null;
+    starts_to?: string | null;
     upcoming_only?: boolean | null;
+    visibility?: EventVisibility | null;
+};
+
+export type PaginatedEventsResponse = {
+    items: Array<Event>;
+    total: number;
 };
 
 export type ListPublicOrganizersQuery = {
@@ -787,6 +802,12 @@ export type ListEventsData = {
         limit?: number;
         offset?: number;
         organizer_kind?: OrganizerKind;
+        query?: string;
+        visibility?: EventVisibility;
+        starts_from?: string;
+        starts_to?: string;
+        sort?: EventSort;
+        direction?: 'asc' | 'desc';
     };
     url: '/api/v1/events';
 };
@@ -804,7 +825,7 @@ export type ListEventsResponses = {
     /**
      * List events
      */
-    200: Array<Event>;
+    200: PaginatedEventsResponse;
 };
 
 export type ListEventsResponse = ListEventsResponses[keyof ListEventsResponses];

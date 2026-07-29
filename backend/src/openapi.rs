@@ -3,10 +3,11 @@ use utoipa::OpenApi;
 use crate::{
     dto::{
         ChangePasswordRequest, CreateApiTokenRequest, CreateEventRequest, CreateOrganizerRequest,
-        InitAccountRequest, InviteAdminRequest, ListAuditLogsQuery, ListEventsQuery,
-        ListPublicOrganizersQuery, LoginRequest, RequestPasswordResetRequest, ResetPasswordRequest,
-        SendNewsletterPreviewRequest, SetupTokenLookupRequest, UpdateAccountEmailRequest,
-        UpdateEventRequest, UpdateOrganizerPermissionsRequest, UpdateOrganizerRequest,
+        EventSort, EventVisibility, InitAccountRequest, InviteAdminRequest, ListAuditLogsQuery,
+        ListEventsQuery, ListPublicOrganizersQuery, LoginRequest, RequestPasswordResetRequest,
+        ResetPasswordRequest, SendNewsletterPreviewRequest, SetupTokenLookupRequest, SortDirection,
+        UpdateAccountEmailRequest, UpdateEventRequest, UpdateOrganizerPermissionsRequest,
+        UpdateOrganizerRequest,
     },
     models::{
         AdminWithInvite, AuditLogEntry, Event, InviteStatus, Organizer, OrganizerKind,
@@ -15,8 +16,8 @@ use crate::{
     responses::{
         AccountEmailUpdatedResponse, ApiTokenCreatedResponse, ApiTokenSummaryResponse,
         AuthUserResponse, ErrorResponse, HealthResponse, IcalEventResponse, NewsletterDataResponse,
-        OrganizerWithStatsResponse, PasswordResetRequestResponse, PublicEventResponse,
-        PublicOrganizerResponse, SetupTokenInfoResponse, SetupTokenResponse,
+        OrganizerWithStatsResponse, PaginatedEventsResponse, PasswordResetRequestResponse,
+        PublicEventResponse, PublicOrganizerResponse, SetupTokenInfoResponse, SetupTokenResponse,
     },
     routes,
 };
@@ -102,6 +103,9 @@ use crate::{
         CreateEventRequest,
         UpdateEventRequest,
         ListEventsQuery,
+        EventVisibility,
+        EventSort,
+        SortDirection,
         ListPublicOrganizersQuery,
         ListAuditLogsQuery,
         SendNewsletterPreviewRequest,
@@ -116,6 +120,7 @@ use crate::{
         AccountEmailUpdatedResponse,
         SetupTokenInfoResponse,
         NewsletterDataResponse,
+        PaginatedEventsResponse,
         PublicEventResponse, PublicOrganizerResponse, IcalEventResponse,
         InviteStatus,
         OrganizerKind

@@ -7,6 +7,7 @@ import {
 	getPaginationRowModel,
 	getSortedRowModel,
 	type OnChangeFn,
+	type PaginationState,
 	type Row,
 	type SortingState,
 	type TableState,
@@ -40,8 +41,16 @@ type DataTableProps<TData, TValue> = {
 	data: TData[]
 	onClick?: (item: TData) => void
 	initialSorting?: SortingState
+	sorting?: SortingState
+	onSortingChange?: OnChangeFn<SortingState>
 	columnFilters?: ColumnFiltersState
 	onColumnFiltersChange?: (filters: ColumnFiltersState) => void
+	pagination?: PaginationState
+	onPaginationChange?: OnChangeFn<PaginationState>
+	pageCount?: number
+	manualFiltering?: boolean
+	manualPagination?: boolean
+	manualSorting?: boolean
 	renderMobileRows?: (args: { rows: Row<TData>[] }) => ReactNode
 } & (
 	| {
@@ -91,8 +100,16 @@ export function DataTable<TData, TValue>({
 	filterOptions,
 	initialPageSize,
 	initialSorting,
+	sorting: sortingProp,
+	onSortingChange,
 	columnFilters: columnFiltersProp,
 	onColumnFiltersChange,
+	pagination: paginationProp,
+	onPaginationChange,
+	pageCount,
+	manualFiltering = false,
+	manualPagination = false,
+	manualSorting = false,
 	renderMobileRows
 }: DataTableProps<TData, TValue>) {
 	'use no memo'
@@ -103,6 +120,13 @@ export function DataTable<TData, TValue>({
 	const [hasRestoredTableState, setHasRestoredTableState] = useState(false)
 
 	const isControlled = columnFiltersProp !== undefined
+	const isSortingControlled = sortingProp !== undefined
+	const activeSorting = sortingProp ?? sorting
+	const [pagination, setPagination] = useState<PaginationState>({
+		pageIndex: 0,
+		pageSize: initialPageSize ?? 10
+	})
+	const activePagination = paginationProp ?? pagination
 	const columnFilters = isControlled
 		? (columnFiltersProp ?? [])
 		: uncontrolledColumnFilters
@@ -133,7 +157,7 @@ export function DataTable<TData, TValue>({
 
 			const savedState: Partial<TableState> = JSON.parse(serializedState)
 
-			if (isSortingState(savedState.sorting)) {
+			if (!isSortingControlled && isSortingState(savedState.sorting)) {
 				setSorting(savedState.sorting)
 			}
 
@@ -145,14 +169,14 @@ export function DataTable<TData, TValue>({
 		} finally {
 			setHasRestoredTableState(true)
 		}
-	}, [isControlled, tableStateKey])
+	}, [isControlled, isSortingControlled, tableStateKey])
 
 	useEffect(() => {
 		if (!hasRestoredTableState) {
 			return
 		}
 
-		const stateToSave: Partial<TableState> = { sorting }
+		const stateToSave: Partial<TableState> = { sorting: activeSorting }
 
 		if (!isControlled) {
 			stateToSave.columnFilters = columnFilters
@@ -160,7 +184,7 @@ export function DataTable<TData, TValue>({
 
 		localStorage.setItem(tableStateKey, JSON.stringify(stateToSave))
 	}, [
-		sorting,
+		activeSorting,
 		columnFilters,
 		tableStateKey,
 		isControlled,
@@ -171,8 +195,9 @@ export function DataTable<TData, TValue>({
 		data,
 		columns,
 		state: {
-			sorting,
-			columnFilters
+			sorting: activeSorting,
+			columnFilters,
+			pagination: activePagination
 		},
 		initialState: {
 			pagination: {
@@ -181,8 +206,13 @@ export function DataTable<TData, TValue>({
 			}
 		},
 		getCoreRowModel: getCoreRowModel(),
-		onSortingChange: setSorting,
+		onSortingChange: onSortingChange ?? setSorting,
 		onColumnFiltersChange: handleColumnFiltersChange,
+		onPaginationChange: onPaginationChange ?? setPagination,
+		manualFiltering,
+		manualPagination,
+		manualSorting,
+		pageCount,
 		getPaginationRowModel: enablePagination
 			? getPaginationRowModel()
 			: undefined,

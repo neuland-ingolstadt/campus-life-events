@@ -1,0 +1,2 @@
+DROP INDEX events_organizer_start_date_time_idx;
+DROP INDEX events_start_date_time_idx;

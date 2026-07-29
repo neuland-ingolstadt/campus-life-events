@@ -2,11 +2,17 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::models::{AccountType, EventWithOrganizer, Organizer, OrganizerKind};
+use crate::models::{AccountType, Event, EventWithOrganizer, Organizer, OrganizerKind};
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ErrorResponse {
     pub message: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct PaginatedEventsResponse {
+    pub items: Vec<Event>,
+    pub total: i64,
 }
 
 #[derive(Debug, Serialize, ToSchema)]

@@ -14,12 +14,12 @@ use tracing::{instrument, warn};
 use crate::{
     app_state::AppState,
     dto::{
-        CreateEventRequest, ListEventsQuery, NewsletterDataQuery, SendNewsletterPreviewRequest,
-        UpdateEventRequest,
+        CreateEventRequest, EventSort, EventVisibility, ListEventsQuery, NewsletterDataQuery,
+        SendNewsletterPreviewRequest, SortDirection, UpdateEventRequest,
     },
     error::AppError,
     models::{AccountType, AuditType, Event, EventWithOrganizer, Organizer, OrganizerKind},
-    responses::{ErrorResponse, NewsletterDataResponse},
+    responses::{ErrorResponse, NewsletterDataResponse, PaginatedEventsResponse},
 };
 
 use super::shared::{
@@ -514,67 +514,66 @@ pub(crate) async fn send_newsletter_preview_with_user(
     path = "/api/v1/events",
     tag = "Events",
     params(ListEventsQuery),
-    responses((status = 200, description = "List events", body = [Event]), (status = 401, description = "Unauthorized", body = ErrorResponse))
+    responses((status = 200, description = "List events", body = PaginatedEventsResponse), (status = 401, description = "Unauthorized", body = ErrorResponse))
 )]
 #[instrument(skip(state, query_params, headers))]
 pub(crate) async fn list_events(
     State(state): State<AppState>,
     Query(query_params): Query<ListEventsQuery>,
     headers: HeaderMap,
-) -> Result<Json<Vec<Event>>, AppError> {
+) -> Result<Json<PaginatedEventsResponse>, AppError> {
     let user = current_user_from_headers(&headers, &state).await?;
     let scope = session_organizer_kind_scope(&state, &user).await?;
 
     let enforced_organizer_kind = match scope {
         SessionOrganizerKindScope::All => None,
         SessionOrganizerKindScope::OnlyKind(k) => Some(k),
-        SessionOrganizerKindScope::None => return Ok(Json(vec![])),
+        SessionOrganizerKindScope::None => {
+            return Ok(Json(PaginatedEventsResponse {
+                items: vec![],
+                total: 0,
+            }));
+        }
     };
+
+    let now = Utc::now();
+    let mut count_builder = QueryBuilder::<Postgres>::new(
+        "SELECT COUNT(*) FROM events e INNER JOIN organizers o ON e.organizer_id = o.id",
+    );
+    apply_event_filters(
+        &mut count_builder,
+        &query_params,
+        user.is_admin(),
+        enforced_organizer_kind,
+        now,
+    );
+    let total = count_builder
+        .build_query_scalar::<i64>()
+        .fetch_one(&state.db)
+        .await?;
 
     let mut builder = QueryBuilder::<Postgres>::new(
         "SELECT e.id, e.organizer_id, e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location, e.publish_app, e.publish_newsletter, e.publish_in_ical, e.publish_web, e.created_at, e.updated_at FROM events e INNER JOIN organizers o ON e.organizer_id = o.id",
     );
+    apply_event_filters(
+        &mut builder,
+        &query_params,
+        user.is_admin(),
+        enforced_organizer_kind,
+        now,
+    );
 
-    let mut has_where = false;
-
-    if user.is_admin() {
-        if let Some(organizer_id) = query_params.organizer_id {
-            builder
-                .push(" WHERE e.organizer_id = ")
-                .push_bind(organizer_id);
-            has_where = true;
-        }
-
-        if let Some(organizer_kind) = query_params.organizer_kind {
-            if has_where {
-                builder
-                    .push(" AND o.organizer_kind = ")
-                    .push_bind(organizer_kind);
-            } else {
-                builder
-                    .push(" WHERE o.organizer_kind = ")
-                    .push_bind(organizer_kind);
-                has_where = true;
-            }
-        }
-    } else if let Some(kind) = enforced_organizer_kind {
-        builder.push(" WHERE o.organizer_kind = ").push_bind(kind);
-        has_where = true;
-    }
-
-    if query_params.upcoming_only.unwrap_or(false) {
-        if has_where {
-            builder
-                .push(" AND e.end_date_time >= ")
-                .push_bind(Utc::now());
-        } else {
-            builder
-                .push(" WHERE e.end_date_time >= ")
-                .push_bind(Utc::now());
-        }
-    }
-
-    builder.push(" ORDER BY e.start_date_time ASC");
+    builder.push(" ORDER BY ");
+    builder.push(match query_params.sort {
+        Some(EventSort::EndDateTime) => "e.end_date_time",
+        Some(EventSort::TitleDe) => "e.title_de",
+        Some(EventSort::StartDateTime) | None => "e.start_date_time",
+    });
+    builder.push(match query_params.direction {
+        Some(SortDirection::Desc) => " DESC",
+        Some(SortDirection::Asc) | None => " ASC",
+    });
+    builder.push(", e.id ASC");
 
     if let Some(limit) = query_params.limit {
         builder.push(" LIMIT ").push_bind(limit.max(1));
@@ -588,7 +587,82 @@ pub(crate) async fn list_events(
         .fetch_all(&state.db)
         .await?;
 
-    Ok(Json(events))
+    Ok(Json(PaginatedEventsResponse {
+        items: events,
+        total,
+    }))
+}
+
+fn apply_event_filters(
+    builder: &mut QueryBuilder<Postgres>,
+    query_params: &ListEventsQuery,
+    is_admin: bool,
+    enforced_organizer_kind: Option<OrganizerKind>,
+    now: chrono::DateTime<Utc>,
+) {
+    let mut has_where = false;
+    let mut add_condition = |builder: &mut QueryBuilder<Postgres>| {
+        builder.push(if has_where { " AND " } else { " WHERE " });
+        has_where = true;
+    };
+
+    if is_admin {
+        if let Some(organizer_id) = query_params.organizer_id {
+            add_condition(builder);
+            builder.push("e.organizer_id = ").push_bind(organizer_id);
+        }
+
+        if let Some(organizer_kind) = query_params.organizer_kind {
+            add_condition(builder);
+            builder
+                .push("o.organizer_kind = ")
+                .push_bind(organizer_kind);
+        }
+    } else if let Some(kind) = enforced_organizer_kind {
+        add_condition(builder);
+        builder.push("o.organizer_kind = ").push_bind(kind);
+    }
+
+    if query_params.upcoming_only.unwrap_or(false) {
+        add_condition(builder);
+        builder.push("e.end_date_time >= ").push_bind(now);
+    }
+
+    if let Some(starts_from) = query_params.starts_from {
+        add_condition(builder);
+        builder.push("e.start_date_time >= ").push_bind(starts_from);
+    }
+
+    if let Some(starts_to) = query_params.starts_to {
+        add_condition(builder);
+        builder.push("e.start_date_time <= ").push_bind(starts_to);
+    }
+
+    if let Some(visibility) = &query_params.visibility {
+        add_condition(builder);
+        builder.push(match visibility {
+            EventVisibility::Public => "(e.publish_app OR e.publish_newsletter)",
+            EventVisibility::Internal => "NOT (e.publish_app OR e.publish_newsletter)",
+        });
+    }
+
+    if let Some(query) = query_params
+        .query
+        .as_deref()
+        .filter(|query| !query.trim().is_empty())
+    {
+        add_condition(builder);
+        builder
+            .push("(e.title_de ILIKE ")
+            .push_bind(format!("%{query}%"))
+            .push(" OR e.title_en ILIKE ")
+            .push_bind(format!("%{query}%"))
+            .push(" OR e.description_de ILIKE ")
+            .push_bind(format!("%{query}%"))
+            .push(" OR e.description_en ILIKE ")
+            .push_bind(format!("%{query}%"))
+            .push(")");
+    }
 }
 
 #[utoipa::path(
