@@ -58,6 +58,29 @@ type DataTableProps<TData, TValue> = {
 		| { enablePagination?: false; initialPageSize?: never }
 	)
 
+function isSortingState(value: unknown): value is SortingState {
+	return (
+		Array.isArray(value) &&
+		value.every(
+			(item) =>
+				typeof item === 'object' &&
+				item !== null &&
+				typeof item.id === 'string' &&
+				typeof item.desc === 'boolean'
+		)
+	)
+}
+
+function isColumnFiltersState(value: unknown): value is ColumnFiltersState {
+	return (
+		Array.isArray(value) &&
+		value.every(
+			(item) =>
+				typeof item === 'object' && item !== null && typeof item.id === 'string'
+		)
+	)
+}
+
 export function DataTable<TData, TValue>({
 	tableId,
 	columns,
@@ -74,22 +97,10 @@ export function DataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
 	'use no memo'
 	const tableStateKey = useMemo(() => `tableState-${tableId}`, [tableId])
-	const [isClient, setIsClient] = useState(false)
-
-	useEffect(() => {
-		setIsClient(true)
-	}, [])
-
-	const initialState: Partial<TableState> = useMemo(() => {
-		if (typeof window === 'undefined') return
-
-		const tableState = localStorage.getItem(tableStateKey)
-		return tableState ? JSON.parse(tableState) : {}
-	}, [tableStateKey])
-
 	const [sorting, setSorting] = useState<SortingState>(initialSorting || [])
 	const [uncontrolledColumnFilters, setUncontrolledColumnFilters] =
-		useState<ColumnFiltersState>(initialState?.columnFilters ?? [])
+		useState<ColumnFiltersState>([])
+	const [hasRestoredTableState, setHasRestoredTableState] = useState(false)
 
 	const isControlled = columnFiltersProp !== undefined
 	const columnFilters = isControlled
@@ -113,7 +124,33 @@ export function DataTable<TData, TValue>({
 	)
 
 	useEffect(() => {
-		if (typeof window === 'undefined') return
+		try {
+			const serializedState = localStorage.getItem(tableStateKey)
+
+			if (!serializedState) {
+				return
+			}
+
+			const savedState: Partial<TableState> = JSON.parse(serializedState)
+
+			if (isSortingState(savedState.sorting)) {
+				setSorting(savedState.sorting)
+			}
+
+			if (!isControlled && isColumnFiltersState(savedState.columnFilters)) {
+				setUncontrolledColumnFilters(savedState.columnFilters)
+			}
+		} catch {
+			localStorage.removeItem(tableStateKey)
+		} finally {
+			setHasRestoredTableState(true)
+		}
+	}, [isControlled, tableStateKey])
+
+	useEffect(() => {
+		if (!hasRestoredTableState) {
+			return
+		}
 
 		const stateToSave: Partial<TableState> = { sorting }
 
@@ -122,7 +159,13 @@ export function DataTable<TData, TValue>({
 		}
 
 		localStorage.setItem(tableStateKey, JSON.stringify(stateToSave))
-	}, [sorting, columnFilters, tableStateKey, isControlled])
+	}, [
+		sorting,
+		columnFilters,
+		tableStateKey,
+		isControlled,
+		hasRestoredTableState
+	])
 
 	const table = useReactTable({
 		data,
@@ -146,8 +189,6 @@ export function DataTable<TData, TValue>({
 		getSortedRowModel: getSortedRowModel(),
 		getFilteredRowModel: enableFilter ? getFilteredRowModel() : undefined
 	})
-
-	if (!isClient) return null
 
 	return (
 		<div className="flex w-full min-w-0 max-w-full flex-col gap-3">

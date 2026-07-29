@@ -3,6 +3,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ColumnFiltersState } from '@tanstack/react-table'
 import { startOfDay } from 'date-fns'
+import dynamic from 'next/dynamic'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { deleteEvent, listEvents, listOrganizers } from '@/client'
@@ -15,10 +16,27 @@ import { EventsHeader } from '@/components/events/events-header'
 import { EventsMobileList } from '@/components/events/events-mobile-list'
 import { EventsPageShell } from '@/components/events/events-page-shell'
 import { useEventColumns } from '@/components/events/use-event-columns'
-import { EventsCalendar } from '@/components/events-calendar'
 import { me } from '@/lib/auth'
 
 const DATE_FILTER_ID = 'start_date_time'
+
+const EventsCalendar = dynamic(
+	() =>
+		import('@/components/events-calendar').then(
+			(module) => module.EventsCalendar
+		),
+	{
+		ssr: false,
+		loading: () => (
+			<div
+				className="flex h-[600px] items-center justify-center rounded-md border text-muted-foreground"
+				role="status"
+			>
+				Kalender wird geladen...
+			</div>
+		)
+	}
+)
 
 type DateFilterValue = { from?: string | Date; to?: string | Date } | undefined
 
