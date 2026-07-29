@@ -1,6 +1,10 @@
 'use client'
 
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+	keepPreviousData,
+	useQuery,
+	useQueryClient
+} from '@tanstack/react-query'
 import type {
 	ColumnFiltersState,
 	OnChangeFn,
@@ -211,6 +215,7 @@ export function EventsDashboard({
 
 	const { data, isLoading, error, refetch } = useQuery({
 		queryKey: ['events', pagination, deferredEventQueryFilters],
+		placeholderData: keepPreviousData,
 		queryFn: async () => {
 			const response = await listEvents({
 				query: {
@@ -371,15 +376,7 @@ export function EventsDashboard({
 		)
 	}, [organizersData])
 
-	if (isLoading) {
-		return (
-			<EventsPageShell title={pageTitle}>
-				<div className="text-center">Lade Events...</div>
-			</EventsPageShell>
-		)
-	}
-
-	if (error) {
+	if (error && !data) {
 		return (
 			<EventsPageShell title={pageTitle}>
 				<div className="text-center text-destructive">
@@ -414,6 +411,7 @@ export function EventsDashboard({
 					tableId={tableId}
 					columns={columns}
 					data={events}
+					isLoading={isLoading}
 					enableFilter
 					enablePagination
 					initialPageSize={10}

@@ -25,6 +25,7 @@ import {
 	type FilterOptions
 } from '@/components/data-table/filter-toolbar'
 import { DataTablePagination } from '@/components/data-table/pagination-toolbar'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
 	Table,
 	TableBody,
@@ -51,6 +52,7 @@ type DataTableProps<TData, TValue> = {
 	manualFiltering?: boolean
 	manualPagination?: boolean
 	manualSorting?: boolean
+	isLoading?: boolean
 	renderMobileRows?: (args: { rows: Row<TData>[] }) => ReactNode
 } & (
 	| {
@@ -110,6 +112,7 @@ export function DataTable<TData, TValue>({
 	manualFiltering = false,
 	manualPagination = false,
 	manualSorting = false,
+	isLoading = false,
 	renderMobileRows
 }: DataTableProps<TData, TValue>) {
 	'use no memo'
@@ -130,6 +133,18 @@ export function DataTable<TData, TValue>({
 	const columnFilters = isControlled
 		? (columnFiltersProp ?? [])
 		: uncontrolledColumnFilters
+	const loadingRowIds = useMemo(
+		() =>
+			Array.from(
+				{ length: activePagination.pageSize },
+				(_, index) => `loading-row-${index}`
+			),
+		[activePagination.pageSize]
+	)
+	const loadingColumnIds = useMemo(
+		() => columns.map((column, index) => column.id ?? `column-${index}`),
+		[columns]
+	)
 
 	const handleColumnFiltersChange = useCallback<OnChangeFn<ColumnFiltersState>>(
 		(updater) => {
@@ -271,7 +286,17 @@ export function DataTable<TData, TValue>({
 						))}
 					</TableHeader>
 					<TableBody>
-						{table.getRowModel().rows?.length ? (
+						{isLoading ? (
+							loadingRowIds.map((rowId) => (
+								<TableRow key={rowId}>
+									{loadingColumnIds.map((columnId) => (
+										<TableCell key={`${rowId}-${columnId}`}>
+											<Skeleton className="h-5 w-full" />
+										</TableCell>
+									))}
+								</TableRow>
+							))
+						) : table.getRowModel().rows?.length ? (
 							table.getRowModel().rows.map((row) => (
 								<TableRow
 									key={row.id}
