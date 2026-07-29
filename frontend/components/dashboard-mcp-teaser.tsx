@@ -58,33 +58,21 @@ export function DashboardMcpTeaser() {
 					type="button"
 					{...hoverOpenProps}
 					className={cn(
-						'group relative inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-background/85 px-2.5 py-1 shadow-sm backdrop-blur-sm transition-[box-shadow,transform,border-color] duration-200',
-						'hover:border-violet-400/35 hover:shadow-md hover:shadow-violet-500/8',
-						'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-						'active:scale-[0.98]',
-						'dark:border-violet-500/22'
+						'group inline-flex items-center gap-2 rounded-md border bg-background px-2.5 py-1 transition-colors hover:bg-muted/50',
+						'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
 					)}
 				>
-					<span
-						className="pointer-events-none absolute inset-0 rounded-full bg-linear-to-r from-violet-500/0 via-violet-500/12 to-cyan-500/0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-						aria-hidden
-					/>
-					<span className="relative flex size-7 items-center justify-center rounded-full bg-violet-500/14 text-violet-600 ring-1 ring-violet-500/15 dark:text-violet-400 dark:ring-violet-400/20">
-						<Sparkles
-							className="size-3.5 motion-safe:animate-pulse motion-reduce:animate-none"
-							aria-hidden
-						/>
+					<span className="flex size-7 items-center justify-center rounded-md bg-secondary text-secondary-foreground">
+						<Sparkles className="size-3.5" aria-hidden />
 					</span>
-					<span className="relative flex flex-col items-start leading-none">
+					<span className="flex flex-col items-start leading-none">
 						<span className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
 							Neu
 						</span>
 						<span className="text-xs font-semibold tracking-tight text-foreground/90">
 							MCP
 							<span className="font-normal text-muted-foreground"> · </span>
-							<span className="bg-linear-to-r from-violet-600 to-cyan-600 bg-clip-text text-transparent dark:from-violet-400 dark:to-cyan-400">
-								KI
-							</span>
+							<span>KI</span>
 						</span>
 					</span>
 				</button>
@@ -101,7 +89,7 @@ export function DashboardMcpTeaser() {
 					: {})}
 			>
 				<div className="flex gap-3">
-					<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/12 text-violet-600 dark:text-violet-400">
+					<div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-secondary text-secondary-foreground">
 						<Sparkles className="size-4" aria-hidden />
 					</div>
 					<div className="min-w-0 space-y-2">

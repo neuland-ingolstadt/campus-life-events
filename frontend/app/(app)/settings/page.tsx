@@ -191,7 +191,7 @@ export default function SettingsPage() {
 
 			<div className="flex-1 p-4 md:p-8 space-y-4 pt-6">
 				<h2 className="text-3xl font-bold tracking-tight">Passwort</h2>
-				<Card className="transition-all duration-300 hover:shadow-lg">
+				<Card>
 					<CardHeader>
 						<CardTitle>Passwort ändern</CardTitle>
 						<CardDescription>Aktualisiere dein Passwort</CardDescription>
@@ -253,7 +253,7 @@ export default function SettingsPage() {
 				</Card>
 
 				<h2 className="text-3xl font-bold tracking-tight">API-Token</h2>
-				<Card className="transition-all duration-300 hover:shadow-lg">
+				<Card>
 					<CardHeader>
 						<CardTitle className="flex items-center gap-2">
 							<KeyRoundIcon className="h-5 w-5" />
@@ -281,7 +281,7 @@ export default function SettingsPage() {
 										</span>
 										.
 									</p>
-									<div className="flex rounded-lg border bg-background shadow-sm overflow-hidden">
+									<div className="flex overflow-hidden rounded-lg border bg-background">
 										<div className="min-w-0 flex-1 px-3 py-2.5 font-mono text-xs leading-relaxed break-all select-all">
 											{createdToken.token}
 										</div>
@@ -395,7 +395,7 @@ export default function SettingsPage() {
 				<h2 className="text-3xl font-bold tracking-tight">Sonstiges</h2>
 
 				<div className="grid gap-6 md:grid-cols-2">
-					<Card className="transition-all duration-300 hover:shadow-lg">
+					<Card>
 						<CardHeader className="pb-3">
 							<CardTitle className="flex items-center gap-2">
 								<CircleQuestionMarkIcon className="h-5 w-5" />
@@ -424,7 +424,7 @@ export default function SettingsPage() {
 						</CardContent>
 					</Card>
 
-					<Card className="transition-all duration-300 hover:shadow-lg">
+					<Card>
 						<CardHeader className="pb-3">
 							<CardTitle className="flex items-center gap-2">
 								<InfoIcon className="h-5 w-5" />
@@ -477,7 +477,7 @@ export default function SettingsPage() {
 			<div className="flex-1 p-4 md:p-8 space-y-6 pt-2">
 				<h2 className="text-3xl font-bold tracking-tight">Über</h2>
 
-				<Card className="transition-all duration-300 hover:shadow-lg">
+				<Card>
 					<CardHeader className="pb-3">
 						<CardTitle className="flex items-center gap-2">
 							<GithubIcon className="h-5 w-5" />

@@ -100,7 +100,7 @@ export default function OrganizersPage() {
 									.map((o) => (
 										<Card
 											key={o.id}
-											className="transition-all duration-300 hover:shadow-lg"
+											className="transition-colors hover:bg-muted/50"
 										>
 											<CardHeader>
 												<div className="flex flex-row items-start justify-between gap-4">
@@ -164,7 +164,7 @@ export default function OrganizersPage() {
 																	href={o.website_url}
 																	target="_blank"
 																	rel="noreferrer"
-																	className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-blue-600"
+																	className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
 																>
 																	<svg
 																		className="h-4 w-4"
@@ -224,7 +224,7 @@ export default function OrganizersPage() {
 																	href={o.linkedin_url}
 																	target="_blank"
 																	rel="noreferrer"
-																	className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-sky-600"
+																	className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
 																>
 																	<Linkedin className="h-4 w-4" />
 																	LinkedIn
@@ -300,7 +300,7 @@ export default function OrganizersPage() {
 									.map((o) => (
 										<Card
 											key={o.id}
-											className="cursor-pointer transition-all duration-300 hover:shadow-lg"
+											className="cursor-pointer transition-colors hover:bg-muted/50"
 											onClick={() => setViewing(o)}
 										>
 											<CardHeader className="pb-3">

@@ -129,13 +129,7 @@ export default function Dashboard() {
 
 	return (
 		<div className="flex flex-col min-h-screen">
-			<header
-				className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur-sm px-4"
-				style={{
-					backdropFilter: 'blur(8px)',
-					WebkitBackdropFilter: 'blur(8px)'
-				}}
-			>
+			<header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 px-4">
 				<SidebarTrigger className="-ml-1" />
 				<div className="flex items-center gap-2">
 					<h1 className="text-lg font-semibold">Dashboard</h1>
@@ -213,7 +207,7 @@ export default function Dashboard() {
 								{stats.map((stat, _index) => (
 									<Card
 										key={stat.title}
-										className="transition-all duration-300 hover:shadow-lg"
+										className="transition-colors hover:bg-muted/50"
 									>
 										<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 											<CardTitle className="text-sm font-medium">
@@ -242,7 +236,7 @@ export default function Dashboard() {
 
 						{/* Your Events */}
 						<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-							<Card className="col-span-4 border-primary/20 hover:border-primary/40 transition-all duration-300">
+							<Card className="col-span-4 border-primary/20">
 								<CardHeader>
 									<div className="flex items-center justify-between">
 										<div>
@@ -284,7 +278,7 @@ export default function Dashboard() {
 											{userUpcomingEvents.slice(0, 5).map((event) => (
 												<HoverCard key={event.id}>
 													<HoverCardTrigger asChild>
-														<div className="flex items-center justify-between p-3 rounded-lg border transition-all duration-200 hover:shadow-sm cursor-pointer">
+														<div className="flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
 															<div className="space-y-1">
 																<div className="flex items-center gap-2">
 																	<p className="text-sm font-medium leading-none">
@@ -354,7 +348,7 @@ export default function Dashboard() {
 								</CardContent>
 							</Card>
 
-							<Card className="col-span-3 border-primary/20 hover:border-primary/40 transition-all duration-300">
+							<Card className="col-span-3 border-primary/20">
 								<CardHeader>
 									<div className="flex items-center justify-between">
 										<div>

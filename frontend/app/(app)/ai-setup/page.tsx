@@ -333,8 +333,8 @@ export default function McpSetupPage() {
 
 				<div className="rounded-xl border bg-muted/10 p-6 md:p-8">
 					<div className="flex items-start gap-4">
-						<div className="mt-0.5 rounded-lg bg-violet-500/10 p-2">
-							<Sparkles className="size-6 text-violet-500" />
+						<div className="mt-0.5 rounded-lg bg-secondary p-2">
+							<Sparkles className="size-6 text-secondary-foreground" />
 						</div>
 						<div className="space-y-2 min-w-0">
 							<h2 className="text-2xl md:text-3xl font-bold tracking-tight">

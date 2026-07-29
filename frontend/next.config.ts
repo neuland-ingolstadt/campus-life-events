@@ -2,10 +2,11 @@ import type { NextConfig } from "next";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
 const IS_DEV = process.env.NODE_ENV === "development";
+const USE_LOCAL_API_PROXY = process.env.LOCAL_API_PROXY === "true";
 
 const nextConfig: NextConfig = {
 	async rewrites() {
-		if (IS_DEV) {
+		if (IS_DEV || USE_LOCAL_API_PROXY) {
 			return [
 				{
 					source: "/api/:path*",

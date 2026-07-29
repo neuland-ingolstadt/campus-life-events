@@ -10,7 +10,7 @@ export default function NotFound() {
 			<div className="pointer-events-none absolute inset-0">
 				<div className="absolute left-1/2 top-[-14rem] h-[34rem] w-[34rem] -translate-x-1/2 rounded-full bg-gradient-radial from-primary/25 via-primary/10 to-transparent opacity-70 blur-3xl dark:from-primary/15 dark:via-primary/10" />
 				<div className="absolute bottom-[-10rem] right-[-8rem] h-[28rem] w-[28rem] rounded-full bg-gradient-to-br from-primary/20 via-primary/5 to-transparent opacity-60 blur-3xl dark:from-primary/15 dark:via-primary/5" />
-				<div className="absolute left-[-10rem] top-1/3 h-[26rem] w-[26rem] rounded-full bg-gradient-to-tr from-sky-400/25 via-primary/10 to-transparent opacity-50 blur-3xl dark:from-sky-500/15 dark:via-primary/10" />
+				<div className="absolute left-[-10rem] top-1/3 h-[26rem] w-[26rem] rounded-full bg-gradient-to-tr from-primary/25 via-primary/10 to-transparent opacity-50 blur-3xl dark:from-primary/15 dark:via-primary/10" />
 			</div>
 			<main className="relative flex flex-1 items-center justify-center px-6 py-16 sm:px-8 md:py-24">
 				<div className="w-full max-w-3xl space-y-12 text-center">

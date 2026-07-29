@@ -55,12 +55,12 @@ export function DashboardSidebar() {
 	}, [isMobile, setOpenMobile])
 
 	const handleItemClick = useCallback((itemTitle: string) => {
-		setAnimatingItems((prev) => new Set(prev).add(itemTitle))
+		setAnimatingItems((previous) => new Set(previous).add(itemTitle))
 		setTimeout(() => {
-			setAnimatingItems((prev) => {
-				const newSet = new Set(prev)
-				newSet.delete(itemTitle)
-				return newSet
+			setAnimatingItems((previous) => {
+				const next = new Set(previous)
+				next.delete(itemTitle)
+				return next
 			})
 		}, 600)
 	}, [])
@@ -137,25 +137,29 @@ export function DashboardSidebar() {
 
 	return (
 		<Sidebar variant="sidebar">
-			<SidebarHeader>
+			<SidebarHeader className="border-b border-sidebar-border px-2 py-3">
 				<div className="flex justify-center py-2 md:hidden">
 					<div className="h-1 w-8 rounded-full bg-muted-foreground/30" />
 				</div>
-				<Link href="/" className="flex items-center gap-2 px-4 py-2">
-					<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+				<Link href="/" className="flex items-center gap-3 rounded-md px-3 py-2">
+					<div className="flex h-9 w-9 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
 						<NeulandPalm className="h-6 w-6" color="currentColor" />
 					</div>
 					<div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
-						<span className="truncate font-semibold">{brandTitle}</span>
-						<span className="truncate text-xs text-muted-foreground">
+						<span className="truncate font-semibold tracking-tight">
+							{brandTitle}
+						</span>
+						<span className="truncate text-xs text-sidebar-foreground/65">
 							Event-Dashboard
 						</span>
 					</div>
 				</Link>
 			</SidebarHeader>
-			<SidebarContent>
-				<SidebarGroup>
-					<SidebarGroupLabel>Navigation</SidebarGroupLabel>
+			<SidebarContent className="px-2 py-4">
+				<SidebarGroup className="p-0">
+					<SidebarGroupLabel className="px-3 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/55">
+						Navigation
+					</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{items.map((item) => (
@@ -185,7 +189,7 @@ export function DashboardSidebar() {
 					</SidebarGroupContent>
 				</SidebarGroup>
 			</SidebarContent>
-			<SidebarFooter className="p-4 space-y-3">
+			<SidebarFooter className="space-y-3 border-t border-sidebar-border p-4">
 				<AuthStatus />
 				<div className="flex items-center justify-center">
 					<ThemeToggle />
