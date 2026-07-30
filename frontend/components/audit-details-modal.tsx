@@ -1,6 +1,5 @@
 'use client'
 
-import { format } from 'date-fns'
 import { Activity, Calendar, User } from 'lucide-react'
 import { useState } from 'react'
 import type { AuditLogEntry } from '@/client/types.gen'
@@ -13,6 +12,7 @@ import {
 	DialogTitle,
 	DialogTrigger
 } from '@/components/ui/dialog'
+import { formatInCampusTimeZone } from '@/lib/date-time'
 
 interface AuditDetailsModalProps {
 	entry: AuditLogEntry
@@ -66,7 +66,10 @@ export function AuditDetailsModal({
 							<div>
 								<p className="text-sm font-medium">Zeitpunkt</p>
 								<p className="text-sm text-muted-foreground">
-									{format(new Date(entry.at), 'dd.MM.yyyy HH:mm:ss')}
+									{formatInCampusTimeZone(
+										new Date(entry.at),
+										'dd.MM.yyyy HH:mm:ss'
+									)}
 								</p>
 							</div>
 						</div>

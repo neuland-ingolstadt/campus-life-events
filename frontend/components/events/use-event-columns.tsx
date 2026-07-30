@@ -1,11 +1,11 @@
 'use client'
 
 import type { ColumnDef } from '@tanstack/react-table'
-import { format } from 'date-fns'
 import { useMemo } from 'react'
 import type { Event as ApiEvent } from '@/client/types.gen'
 import { DataTableColumnHeader } from '@/components/data-table/column-header'
 import { dateRangeFilter } from '@/components/data-table/date-range-filter'
+import { formatInCampusTimeZone } from '@/lib/date-time'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 import { EventActionsCell } from './event-actions-cell'
 
@@ -52,10 +52,16 @@ export function useEventColumns({
 					<div className="flex items-center gap-2 text-sm">
 						<div>
 							<div className="font-medium">
-								{format(new Date(row.original.start_date_time), 'MMM dd, yyyy')}
+								{formatInCampusTimeZone(
+									new Date(row.original.start_date_time),
+									'MMM dd, yyyy'
+								)}
 							</div>
 							<div className="text-xs text-muted-foreground">
-								{format(new Date(row.original.start_date_time), 'HH:mm')}
+								{formatInCampusTimeZone(
+									new Date(row.original.start_date_time),
+									'HH:mm'
+								)}
 							</div>
 						</div>
 					</div>
@@ -75,10 +81,16 @@ export function useEventColumns({
 					<div className="flex items-center gap-2 text-sm">
 						<div>
 							<div className="font-medium">
-								{format(new Date(row.original.end_date_time), 'MMM dd, yyyy')}
+								{formatInCampusTimeZone(
+									new Date(row.original.end_date_time),
+									'MMM dd, yyyy'
+								)}
 							</div>
 							<div className="text-xs text-muted-foreground">
-								{format(new Date(row.original.end_date_time), 'HH:mm')}
+								{formatInCampusTimeZone(
+									new Date(row.original.end_date_time),
+									'HH:mm'
+								)}
 							</div>
 						</div>
 					</div>

@@ -1,7 +1,6 @@
 'use client'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { format } from 'date-fns'
 import { BookOpen, RefreshCw, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useMemo } from 'react'
@@ -18,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { me } from '@/lib/auth'
+import { formatInCampusTimeZone } from '@/lib/date-time'
 
 const AUDIT_SKELETON_KEYS = Array.from(
 	{ length: 6 },
@@ -309,7 +309,10 @@ export function AdminDashboardClient() {
 											>
 												<tr className="border-t cursor-pointer transition-colors">
 													<td className="py-2 pr-4 align-top whitespace-nowrap">
-														{format(new Date(entry.at), 'dd.MM.yyyy HH:mm')}
+														{formatInCampusTimeZone(
+															new Date(entry.at),
+															'dd.MM.yyyy HH:mm'
+														)}
 													</td>
 													<td className="py-2 pr-4 align-top">
 														{organizerMap.get(entry.organizer_id) ||

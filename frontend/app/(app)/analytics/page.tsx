@@ -1,7 +1,6 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { format } from 'date-fns'
 import { useMemo, useState } from 'react'
 import {
 	Bar,
@@ -51,6 +50,7 @@ import {
 	SelectValue
 } from '@/components/ui/select'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import { formatInCampusTimeZone } from '@/lib/date-time'
 
 const COLORS = {
 	CREATE: 'var(--chart-2)',
@@ -121,7 +121,7 @@ export default function AnalyticsPage() {
 			{ date: string; CREATE: number; UPDATE: number; DELETE: number }
 		>()
 		for (const r of filtered) {
-			const d = format(new Date(r.at), 'yyyy-MM-dd')
+			const d = formatInCampusTimeZone(new Date(r.at), 'yyyy-MM-dd')
 			if (!buckets.has(d))
 				buckets.set(d, { date: d, CREATE: 0, UPDATE: 0, DELETE: 0 })
 			const bucket = buckets.get(d)
@@ -362,7 +362,9 @@ export default function AnalyticsPage() {
 									<CartesianGrid vertical={false} />
 									<XAxis
 										dataKey="date"
-										tickFormatter={(v) => format(new Date(v), 'MM/dd')}
+										tickFormatter={(v) =>
+											formatInCampusTimeZone(new Date(v), 'MM/dd')
+										}
 										tickLine={false}
 										axisLine={false}
 									/>
@@ -507,7 +509,12 @@ export default function AnalyticsPage() {
 											/>
 										),
 										cell: ({ row }) => (
-											<span>{format(row.original.at, 'dd.MM.yyyy HH:mm')}</span>
+											<span>
+												{formatInCampusTimeZone(
+													row.original.at,
+													'dd.MM.yyyy HH:mm'
+												)}
+											</span>
 										)
 									},
 									{

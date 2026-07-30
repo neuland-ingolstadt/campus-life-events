@@ -1,7 +1,6 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { format } from 'date-fns'
 import {
 	Activity,
 	AlertTriangle,
@@ -40,6 +39,7 @@ import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { me } from '@/lib/auth'
+import { formatInCampusTimeZone } from '@/lib/date-time'
 
 const upcomingSkeletonKeys = [
 	'upcoming-skeleton-1',
@@ -295,7 +295,7 @@ export default function Dashboard() {
 																	)}
 																</div>
 																<p className="text-sm text-muted-foreground">
-																	{format(
+																	{formatInCampusTimeZone(
 																		new Date(event.start_date_time),
 																		'PPpp'
 																	)}
@@ -325,7 +325,7 @@ export default function Dashboard() {
 															<div className="flex items-center gap-2">
 																<Clock className="h-3 w-3 text-muted-foreground" />
 																<span className="text-xs">
-																	{format(
+																	{formatInCampusTimeZone(
 																		new Date(event.start_date_time),
 																		'PPpp'
 																	)}
@@ -391,7 +391,7 @@ export default function Dashboard() {
 															{event.title_de}
 														</p>
 														<p className="text-xs text-muted-foreground">
-															{format(
+															{formatInCampusTimeZone(
 																new Date(event.start_date_time),
 																'MMM d, yyyy'
 															)}

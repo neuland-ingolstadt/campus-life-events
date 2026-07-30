@@ -14,9 +14,10 @@ import {
 	Tailwind,
 	Text
 } from '@react-email/components'
-import { addDays, format } from 'date-fns'
+import { addDays } from 'date-fns'
 import { useCallback } from 'react'
 import type { NewsletterDataResponse } from '@/client'
+import { formatInCampusTimeZone } from '@/lib/date-time'
 
 // TODO: FIX SHITTY OUTLOOK PASTE BUG
 
@@ -75,7 +76,7 @@ const NewsletterMail = ({ data, customText }: NewsletterMailProps) => {
 
 	const activeWeekRangeLabel =
 		next_week_start && week_after_start
-			? `${format(next_week_start, 'dd.MM.yyyy')} – ${format(addDays(week_after_start, -1), 'dd.MM.yyyy')}`
+			? `${formatInCampusTimeZone(next_week_start, 'dd.MM.yyyy')} – ${formatInCampusTimeZone(addDays(week_after_start, -1), 'dd.MM.yyyy')}`
 			: undefined
 
 	return (

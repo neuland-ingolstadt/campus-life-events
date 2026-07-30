@@ -2,7 +2,6 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ColumnDef } from '@tanstack/react-table'
-import { format } from 'date-fns'
 import { Mail, Pencil, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useMemo } from 'react'
@@ -40,6 +39,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { me } from '@/lib/auth'
+import { formatInCampusTimeZone } from '@/lib/date-time'
 
 export default function ManageOrganizersPage() {
 	const qc = useQueryClient()
@@ -174,7 +174,10 @@ export default function ManageOrganizersPage() {
 				),
 				cell: ({ row }) => (
 					<div className="text-sm">
-						{format(new Date(row.original.created_at), 'dd.MM.yyyy HH:mm')}
+						{formatInCampusTimeZone(
+							new Date(row.original.created_at),
+							'dd.MM.yyyy HH:mm'
+						)}
 					</div>
 				),
 				sortingFn: (a, b, id) =>

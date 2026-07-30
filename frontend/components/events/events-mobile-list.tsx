@@ -1,6 +1,5 @@
 'use client'
 
-import { format } from 'date-fns'
 import Link from 'next/link'
 import type { Event as ApiEvent } from '@/client/types.gen'
 import { EventActionsCell } from '@/components/events/event-actions-cell'
@@ -16,6 +15,7 @@ import {
 	TooltipContent,
 	TooltipTrigger
 } from '@/components/ui/tooltip'
+import { formatInCampusTimeZone } from '@/lib/date-time'
 
 interface EventsMobileListProps {
 	readonly events: ApiEvent[]
@@ -70,16 +70,28 @@ export function EventsMobileList({
 								<div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
 									<div className="text-muted-foreground">Start</div>
 									<div className="font-medium text-right tabular-nums">
-										{format(new Date(event.start_date_time), 'dd.MM.yyyy')}{' '}
+										{formatInCampusTimeZone(
+											new Date(event.start_date_time),
+											'dd.MM.yyyy'
+										)}{' '}
 										<span className="text-muted-foreground font-normal">
-											{format(new Date(event.start_date_time), 'HH:mm')}
+											{formatInCampusTimeZone(
+												new Date(event.start_date_time),
+												'HH:mm'
+											)}
 										</span>
 									</div>
 									<div className="text-muted-foreground">Ende</div>
 									<div className="font-medium text-right tabular-nums">
-										{format(new Date(event.end_date_time), 'dd.MM.yyyy')}{' '}
+										{formatInCampusTimeZone(
+											new Date(event.end_date_time),
+											'dd.MM.yyyy'
+										)}{' '}
 										<span className="text-muted-foreground font-normal">
-											{format(new Date(event.end_date_time), 'HH:mm')}
+											{formatInCampusTimeZone(
+												new Date(event.end_date_time),
+												'HH:mm'
+											)}
 										</span>
 									</div>
 								</div>
