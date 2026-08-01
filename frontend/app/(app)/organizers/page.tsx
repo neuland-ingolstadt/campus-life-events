@@ -203,7 +203,7 @@ export default function OrganizersPage() {
 																	href={o.instagram_url}
 																	target="_blank"
 																	rel="noreferrer"
-																	className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-pink-600"
+																	className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground"
 																>
 																	<Instagram className="h-4 w-4" />
 																	Instagram
