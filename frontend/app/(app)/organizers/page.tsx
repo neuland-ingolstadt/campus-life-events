@@ -1,18 +1,13 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import {
-	AlertTriangle,
-	Instagram,
-	Linkedin,
-	Pencil,
-	User2Icon,
-	UsersIcon
-} from 'lucide-react'
+import { AlertTriangle, Pencil, User2Icon, UsersIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { listOrganizers } from '@/client'
 import type { Organizer } from '@/client/types.gen'
+import { Instagram } from '@/components/icons/instagram-icon'
+import { Linkedin } from '@/components/icons/linkedin-icon'
 import { OrganizerViewDialog } from '@/components/organizer-view-dialog'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'

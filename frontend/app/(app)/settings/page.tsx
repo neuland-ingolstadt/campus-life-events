@@ -5,7 +5,6 @@ import {
 	CircleQuestionMarkIcon,
 	CodeIcon,
 	CopyIcon,
-	GithubIcon,
 	GitPullRequest,
 	InfoIcon,
 	KeyRoundIcon,
@@ -23,6 +22,7 @@ import type {
 	ApiTokenCreatedResponse,
 	ApiTokenSummaryResponse
 } from '@/client/types.gen'
+import { GithubIcon } from '@/components/icons/github-icon'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
