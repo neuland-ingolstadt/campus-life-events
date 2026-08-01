@@ -41,7 +41,7 @@ export async function fetchNewsletterData(
 	}
 
 	if (!response.data) {
-		throw new Error('Failed to fetch newsletter data')
+		throw new Error('Newsletter-Daten konnten nicht geladen werden')
 	}
 
 	return response.data

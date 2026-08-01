@@ -320,7 +320,7 @@ export default function Dashboard() {
 															<p className="text-xs text-muted-foreground">
 																{event.title_en
 																	? event.title_en
-																	: 'No English title'}
+																	: 'Kein englischer Titel'}
 															</p>
 															<div className="flex items-center gap-2">
 																<Clock className="h-3 w-3 text-muted-foreground" />

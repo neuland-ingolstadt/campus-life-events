@@ -352,9 +352,9 @@ export default function AnalyticsPage() {
 						<CardContent>
 							<ChartContainer
 								config={{
-									CREATE: { label: 'Create', color: COLORS.CREATE },
-									UPDATE: { label: 'Update', color: COLORS.UPDATE },
-									DELETE: { label: 'Delete', color: COLORS.DELETE }
+									CREATE: { label: 'Erstellen', color: COLORS.CREATE },
+									UPDATE: { label: 'Bearbeiten', color: COLORS.UPDATE },
+									DELETE: { label: 'Löschen', color: COLORS.DELETE }
 								}}
 								className="h-72 aspect-square mx-auto"
 							>
@@ -449,14 +449,16 @@ export default function AnalyticsPage() {
 					<Card className="lg:col-span-1">
 						<CardHeader>
 							<CardTitle>Verteilung nach Typ</CardTitle>
-							<CardDescription>Create / Update / Delete</CardDescription>
+							<CardDescription>
+								Erstellen / Bearbeiten / Löschen
+							</CardDescription>
 						</CardHeader>
 						<CardContent>
 							<ChartContainer
 								config={{
-									CREATE: { label: 'Create', color: COLORS.CREATE },
-									UPDATE: { label: 'Update', color: COLORS.UPDATE },
-									DELETE: { label: 'Delete', color: COLORS.DELETE }
+									CREATE: { label: 'Erstellen', color: COLORS.CREATE },
+									UPDATE: { label: 'Bearbeiten', color: COLORS.UPDATE },
+									DELETE: { label: 'Löschen', color: COLORS.DELETE }
 								}}
 								className="h-72 aspect-square mx-auto"
 							>

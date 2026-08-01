@@ -198,7 +198,9 @@ export default async function PublicEventPage({
 
 									{event.description_en && (
 										<div>
-											<h3 className="font-semibold mb-2">Description</h3>
+											<h3 className="font-semibold mb-2">
+												Englische Beschreibung
+											</h3>
 											<p className="text-muted-foreground whitespace-pre-wrap">
 												{event.description_en}
 											</p>

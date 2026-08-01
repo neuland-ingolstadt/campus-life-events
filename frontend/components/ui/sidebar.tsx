@@ -190,7 +190,7 @@ function Sidebar({
 				>
 					<SheetHeader className="sr-only">
 						<SheetTitle>Navigation</SheetTitle>
-						<SheetDescription>Displays the mobile navigation menu.</SheetDescription>
+						<SheetDescription>Zeigt das mobile Navigationsmenü.</SheetDescription>
 					</SheetHeader>
 					<div className="flex h-full w-full flex-col overflow-hidden">{children}</div>
 				</SheetContent>
@@ -268,7 +268,7 @@ function SidebarTrigger({
 		>
 			<PanelLeftIcon className="hidden md:block"/>
 			<PanelBottom className="block md:hidden"/>
-			<span className="sr-only">Toggle Sidebar</span>
+			<span className="sr-only">Sidebar umschalten</span>
 		</Button>
 	);
 }

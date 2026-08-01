@@ -187,7 +187,7 @@ export function OrganizerDialog({
 										<FormLabel>Englische Beschreibung</FormLabel>
 										<FormControl>
 											<Textarea
-												placeholder="Description in English"
+												placeholder="Beschreibung auf Englisch"
 												{...field}
 											/>
 										</FormControl>

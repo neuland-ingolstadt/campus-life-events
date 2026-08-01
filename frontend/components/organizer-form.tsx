@@ -193,7 +193,7 @@ export function OrganizerForm({
 									<FormLabel>Englische Beschreibung</FormLabel>
 									<FormControl>
 										<Textarea
-											placeholder="Adding a description helps people to better understand your club and its activities."
+											placeholder="Eine Beschreibung hilft Leuten, euren Verein und eure Aktivitäten besser zu verstehen."
 											className="min-h-[120px]"
 											{...field}
 										/>

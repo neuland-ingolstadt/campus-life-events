@@ -168,10 +168,10 @@ export default function NewsletterPage() {
 				})
 
 				await navigator.clipboard.write([clipboardItem])
-				toast.success('HTML copied to clipboard!')
+				toast.success('HTML in die Zwischenablage kopiert!')
 			} catch (err) {
 				console.error('Failed to copy: ', err)
-				toast.error('Failed to copy to clipboard')
+				toast.error('Kopieren in die Zwischenablage fehlgeschlagen')
 			}
 		}
 	}
@@ -201,7 +201,7 @@ export default function NewsletterPage() {
 			<EventsPageShell title="Newsletter" stickyHeader>
 				<Alert variant="destructive">
 					<AlertDescription>
-						Failed to load permissions: {meError.message}
+						Berechtigungen konnten nicht geladen werden: {meError.message}
 					</AlertDescription>
 				</Alert>
 			</EventsPageShell>
@@ -267,7 +267,7 @@ export default function NewsletterPage() {
 			<EventsPageShell title="Newsletter" stickyHeader>
 				<Alert variant="destructive">
 					<AlertDescription>
-						Failed to load newsletter data: {error.message}
+						Newsletter-Daten konnten nicht geladen werden: {error.message}
 					</AlertDescription>
 				</Alert>
 			</EventsPageShell>
@@ -278,7 +278,7 @@ export default function NewsletterPage() {
 		return (
 			<EventsPageShell title="Newsletter" stickyHeader>
 				<Alert>
-					<AlertDescription>No newsletter data available.</AlertDescription>
+					<AlertDescription>Keine Newsletter-Daten verfügbar.</AlertDescription>
 				</Alert>
 			</EventsPageShell>
 		)
@@ -415,7 +415,7 @@ export default function NewsletterPage() {
 								srcDoc={generatedHtml}
 								className="w-full h-[1000px] border-0 rounded-b-lg"
 								style={{ minWidth: '800px' }}
-								title="Newsletter Preview"
+								title="Newsletter-Vorschau"
 							/>
 						) : (
 							<Skeleton className="h-96 w-full" />

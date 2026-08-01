@@ -166,9 +166,9 @@ export default function OrganizersPage() {
 																		fill="none"
 																		stroke="currentColor"
 																		viewBox="0 0 24 24"
-																		aria-label="External link icon"
+																		aria-label="Externer-Link-Symbol"
 																	>
-																		<title>External link icon</title>
+																		<title>Externer-Link-Symbol</title>
 																		<path
 																			strokeLinecap="round"
 																			strokeLinejoin="round"
@@ -185,9 +185,9 @@ export default function OrganizersPage() {
 																		fill="none"
 																		stroke="currentColor"
 																		viewBox="0 0 24 24"
-																		aria-label="External link icon"
+																		aria-label="Externer-Link-Symbol"
 																	>
-																		<title>External link icon</title>
+																		<title>Externer-Link-Symbol</title>
 																		<path
 																			strokeLinecap="round"
 																			strokeLinejoin="round"

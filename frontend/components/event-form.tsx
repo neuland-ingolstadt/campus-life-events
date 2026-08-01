@@ -311,7 +311,7 @@ export function EventForm({
 										Englischer Titel <RequiredLabel />
 									</FormLabel>
 									<FormControl>
-										<Input placeholder="Event title in English" {...field} />
+										<Input placeholder="Eventtitel auf Englisch" {...field} />
 									</FormControl>
 									<FormMessage />
 								</FormItem>
@@ -380,7 +380,7 @@ export function EventForm({
 									<FormLabel>Englische Beschreibung</FormLabel>
 									<FormControl>
 										<Textarea
-											placeholder="Event description in English"
+											placeholder="Eventbeschreibung auf Englisch"
 											className={DESCRIPTION_TEXTAREA_CLASSNAME}
 											{...field}
 										/>

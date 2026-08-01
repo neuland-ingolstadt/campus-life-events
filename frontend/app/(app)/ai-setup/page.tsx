@@ -241,8 +241,8 @@ function ToolTable({ tools, filter }: { tools: ToolSchema[]; filter: string }) {
 				<TableHeader>
 					<TableRow>
 						<TableHead className="w-[220px]">Tool</TableHead>
-						<TableHead>Description</TableHead>
-						<TableHead className="w-[260px]">Arguments</TableHead>
+						<TableHead>Beschreibung</TableHead>
+						<TableHead className="w-[260px]">Argumente</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
@@ -259,11 +259,11 @@ function ToolTable({ tools, filter }: { tools: ToolSchema[]; filter: string }) {
 										</code>
 										{required.length > 0 ? (
 											<Badge variant="secondary" className="w-fit">
-												required: {required.join(', ')}
+												erforderlich: {required.join(', ')}
 											</Badge>
 										) : (
 											<Badge variant="outline" className="w-fit">
-												no required args
+												keine erforderlichen Argumente
 											</Badge>
 										)}
 									</div>
@@ -299,7 +299,7 @@ function ToolTable({ tools, filter }: { tools: ToolSchema[]; filter: string }) {
 						<TableRow>
 							<TableCell colSpan={3}>
 								<div className="py-6 text-sm text-muted-foreground">
-									No tools match your search.
+									Keine Tools entsprechen deiner Suche.
 								</div>
 							</TableCell>
 						</TableRow>
@@ -505,16 +505,17 @@ export default function McpSetupPage() {
 					<CardContent className="space-y-4">
 						<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 							<div className="space-y-1">
-								<p className="text-sm font-medium">Search</p>
+								<p className="text-sm font-medium">Suchen</p>
 								<p className="text-xs text-muted-foreground">
-									Filter by tool name, description, or argument keys.
+									Nach Tool-Namen, Beschreibung oder Argument-Schlüsseln
+									filtern.
 								</p>
 							</div>
 							<div className="w-full sm:max-w-sm">
 								<Input
 									value={toolFilter}
 									onChange={(e) => setToolFilter(e.target.value)}
-									placeholder="e.g. event, newsletter, invite…"
+									placeholder="z. B. event, newsletter, invite…"
 								/>
 							</div>
 						</div>

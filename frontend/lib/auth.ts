@@ -19,7 +19,7 @@ export async function login(payload: LoginPayload) {
 	})
 	if (!res.ok) {
 		const msg = await safeError(res)
-		throw new Error(msg || 'Login failed')
+		throw new Error(msg || 'Login fehlgeschlagen')
 	}
 	return res.json()
 }
@@ -33,7 +33,7 @@ export async function initAccount(payload: InitAccountPayload) {
 	})
 	if (!res.ok) {
 		const msg = await safeError(res)
-		throw new Error(msg || 'Initialization failed')
+		throw new Error(msg || 'Initialisierung fehlgeschlagen')
 	}
 	return res.json()
 }
@@ -49,7 +49,7 @@ export async function lookupSetupToken(
 	})
 	if (!res.ok) {
 		const msg = await safeError(res)
-		throw new Error(msg || 'Invalid setup token')
+		throw new Error(msg || 'Ungültiger Einrichtungslink')
 	}
 	return res.json()
 }
@@ -57,7 +57,7 @@ export async function lookupSetupToken(
 export async function me() {
 	const res = await fetch('/api/v1/auth/me', { credentials: 'include' })
 	if (res.status === 401) return null
-	if (!res.ok) throw new Error('Failed to fetch user')
+	if (!res.ok) throw new Error('Benutzer konnte nicht geladen werden')
 	return res.json()
 }
 
@@ -66,7 +66,7 @@ export async function logout() {
 		method: 'POST',
 		credentials: 'include'
 	})
-	if (!res.ok) throw new Error('Logout failed')
+	if (!res.ok) throw new Error('Abmelden fehlgeschlagen')
 }
 
 export async function changePassword(payload: ChangePasswordPayload) {
@@ -78,7 +78,7 @@ export async function changePassword(payload: ChangePasswordPayload) {
 	})
 	if (!res.ok) {
 		const msg = await safeError(res)
-		throw new Error(msg || 'Change password failed')
+		throw new Error(msg || 'Passwortänderung fehlgeschlagen')
 	}
 }
 

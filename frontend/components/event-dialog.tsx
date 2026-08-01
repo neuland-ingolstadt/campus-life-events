@@ -228,7 +228,7 @@ export function EventDialog({
 									<FormItem>
 										<FormLabel>Englischer Titel *</FormLabel>
 										<FormControl>
-											<Input placeholder="Event title in English" {...field} />
+											<Input placeholder="Eventtitel auf Englisch" {...field} />
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -261,7 +261,7 @@ export function EventDialog({
 										<FormLabel>Englische Beschreibung</FormLabel>
 										<FormControl>
 											<Textarea
-												placeholder="Event description in English"
+												placeholder="Eventbeschreibung auf Englisch"
 												{...field}
 											/>
 										</FormControl>
