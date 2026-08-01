@@ -18,7 +18,7 @@
     {
       "groupName": "frontend major updates",
       "groupSlug": "frontend-major",
-      "matchManagers": ["npm"],
+      "matchManagers": ["bun"],
       "minimumReleaseAge": "3 days",
       "matchUpdateTypes": ["major"],
       "matchPackageNames": [
@@ -28,7 +28,7 @@
     {
       "groupName": "frontend minor and patch updates",
       "groupSlug": "frontend-minor-and-patch",
-      "matchManagers": ["npm"],
+      "matchManagers": ["bun"],
       "minimumReleaseAge": "3 days",
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "matchPackageNames": [
