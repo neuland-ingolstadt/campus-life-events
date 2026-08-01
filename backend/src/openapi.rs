@@ -34,9 +34,9 @@ use crate::{
             email = "info@neuland-ingolstadt.de"
         ),
         license(
-            name = "GNU Affero General Public License v3.0 or later",
-            identifier = "AGPL-3.0-or-later",
-            url = "https://www.gnu.org/licenses/agpl-3.0-standalone.html"
+            name = "European Union Public Licence 1.1",
+            identifier = "EUPL-1.1",
+            url = "https://joinup.ec.europa.eu/sites/default/files/custom-page/attachment/eupl1.1.-licence-en_0.pdf"
         ),
         version = "1.0.0"
     ),

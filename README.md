@@ -32,4 +32,4 @@ It's developed by Neuland Ingolstadt e.V. and actively used by all campus organi
 - Data: PostgreSQL, Redis
 
 ## Licensing
-Licensed under the AGPL-3.0. See [LICENSE](LICENSE) for details.
+Licensed under the EUPL-1.1. See [LICENSE](LICENSE) for details.
