@@ -20,7 +20,6 @@ uuid = { version = "=1.24.0", features = ["serde", "v4"] }
 thiserror = "=2.0.19"
 redis = { version = "=1.5.0", features = ["tokio-comp"] }
 utoipa = { version = "=5.5.0", features = ["chrono", "uuid"] }
-utoipa-axum = "=0.2.0"
 utoipa-swagger-ui = { version = "=9.0.2", features = ["axum", "vendored"] }
 tracing = "=0.1.44"
 tracing-subscriber = { version = "=0.3.23", features = ["env-filter", "time"] }
