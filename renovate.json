@@ -54,6 +54,14 @@
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"]
     },
     {
+      "groupName": "Rust major updates",
+      "groupSlug": "rust-major",
+      "matchManagers": ["cargo"],
+      "matchDatasources": ["crate"],
+      "matchCurrentVersion": "< 1.0.0",
+      "matchUpdateTypes": ["minor"]
+    },
+    {
       "groupName": "Docker images",
       "groupSlug": "docker-images",
       "matchManagers": ["dockerfile", "docker-compose"]
