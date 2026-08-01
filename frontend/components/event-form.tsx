@@ -467,7 +467,7 @@ export function EventForm({
 									<FormItem className="flex items-center justify-between rounded-md border p-4">
 										<div className="space-y-1">
 											<FormLabel className="text-sm font-medium">
-												THI Newsletter
+												Campus Life Newsletter
 											</FormLabel>
 											<FormDescription className="text-xs">
 												Dieses Event im Campus Life Newsletter der THI bewerben.
