@@ -1,6 +1,5 @@
 use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 use hmac::{Hmac, KeyInit, Mac};
-use rand_core::{OsRng, RngCore};
 use sha2::Sha256;
 
 use crate::{app_state::AppState, authed_user::AuthedUser, error::AppError, models::AccountType};
@@ -23,7 +22,7 @@ pub fn hash_raw_token(key: &[u8; 32], raw: &str) -> [u8; 32] {
 
 pub fn generate_raw_token() -> String {
     let mut bytes = [0u8; 32];
-    OsRng.fill_bytes(&mut bytes);
+    getrandom::fill(&mut bytes).expect("failed to generate random bytes");
     format!("cle_{}", URL_SAFE_NO_PAD.encode(bytes))
 }
 
