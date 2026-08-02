@@ -12,7 +12,7 @@ services:
       - pgdatae:/var/lib/postgresql/data
     restart: unless-stopped
   redis:
-    image: redis:8-alpine@sha256:e8eb6f2980c06c6a25c08f62cb2e00dc7d2fead9aa492cfdd8b54a42109ae0f2
+    image: redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241
     container_name: cle-redis
     ports:
       - "6379:6379"
