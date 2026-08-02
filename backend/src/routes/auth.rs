@@ -1,7 +1,4 @@
-use argon2::{
-    Argon2,
-    password_hash::rand_core::{OsRng, RngCore},
-};
+use argon2::Argon2;
 use axum::{
     Json, Router,
     extract::State,
@@ -11,7 +8,7 @@ use axum::{
 };
 use base64::{Engine as _, engine::general_purpose};
 use chrono::{DateTime, Duration, Utc};
-use password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString};
+use password_hash::{PasswordHasher, PasswordVerifier};
 use password_policy::{COMMON_PASSWORDS, HighSecurityPolicy, PasswordPolicy};
 use tracing::{error, info, instrument, warn};
 use uuid::Uuid;
@@ -92,10 +89,8 @@ pub(crate) async fn login(
         return Err(AppError::unauthorized("invalid e-mail or password"));
     };
 
-    let parsed_hash = PasswordHash::new(&stored_hash)
-        .map_err(|_| AppError::unauthorized("invalid e-mail or password"))?;
     Argon2::default()
-        .verify_password(payload.password.as_bytes(), &parsed_hash)
+        .verify_password(payload.password.as_bytes(), stored_hash.as_str())
         .map_err(|_| {
             tracing::warn!(
                 "Failed login attempt for email: {} (invalid password)",
@@ -206,9 +201,8 @@ pub(crate) async fn init_account(
 
     ensure_password_requirements(&payload.password)?;
 
-    let salt = SaltString::generate(&mut OsRng);
     let hash = Argon2::default()
-        .hash_password(payload.password.as_bytes(), &salt)
+        .hash_password(payload.password.as_bytes())
         .map_err(|_| AppError::validation("failed to hash password"))?
         .to_string();
 
@@ -406,17 +400,14 @@ pub(crate) async fn change_password(
         return Err(AppError::validation("account not initialized"));
     };
 
-    let parsed_hash = PasswordHash::new(&stored)
-        .map_err(|_| AppError::unauthorized("invalid current password"))?;
     Argon2::default()
-        .verify_password(payload.current_password.as_bytes(), &parsed_hash)
+        .verify_password(payload.current_password.as_bytes(), stored.as_str())
         .map_err(|_| AppError::unauthorized("invalid current password"))?;
 
     ensure_password_requirements(&payload.new_password)?;
 
-    let salt = SaltString::generate(&mut OsRng);
     let new_hash = Argon2::default()
-        .hash_password(payload.new_password.as_bytes(), &salt)
+        .hash_password(payload.new_password.as_bytes())
         .map_err(|_| AppError::validation("failed to hash password"))?
         .to_string();
 
@@ -603,7 +594,8 @@ pub(crate) async fn request_password_reset(
 
         // Generate a secure reset token (32 random bytes = 256 bits of entropy)
         let mut token_bytes = [0u8; 32];
-        OsRng.fill_bytes(&mut token_bytes);
+        getrandom::fill(&mut token_bytes)
+            .map_err(|_| AppError::validation("failed to generate reset token"))?;
         let reset_token = general_purpose::URL_SAFE_NO_PAD.encode(token_bytes);
 
         // Set expiry to 10 minutes from now
@@ -692,9 +684,8 @@ pub(crate) async fn reset_password(
     ensure_password_requirements(&payload.new_password)?;
 
     // Hash the new password
-    let salt = SaltString::generate(&mut OsRng);
     let new_hash = Argon2::default()
-        .hash_password(payload.new_password.as_bytes(), &salt)
+        .hash_password(payload.new_password.as_bytes())
         .map_err(|_| AppError::validation("Failed to hash password"))?
         .to_string();
 

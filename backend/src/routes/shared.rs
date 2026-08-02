@@ -138,8 +138,7 @@ pub(crate) fn session_cookie_attributes() -> String {
 
 pub(crate) fn generate_setup_token_value() -> String {
     use base64::{Engine as _, engine::general_purpose};
-    use password_hash::rand_core::{OsRng, RngCore};
     let mut bytes = [0u8; 32];
-    OsRng.fill_bytes(&mut bytes);
+    getrandom::fill(&mut bytes).expect("failed to generate random bytes");
     general_purpose::URL_SAFE_NO_PAD.encode(bytes)
 }
