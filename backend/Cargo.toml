@@ -29,7 +29,7 @@ getrandom = "=0.4.3"
 time = "=0.3.55"
 cookie = "=0.18.1"
 password_policy = "=0.1.0"
-lettre = { version = "=0.11.22", default-features = false, features = ["builder", "smtp-transport", "tokio1", "tokio1-rustls", "rustls-native-certs", "aws-lc-rs"] }
+lettre = { version = "=0.11.23", default-features = false, features = ["builder", "smtp-transport", "tokio1", "tokio1-rustls", "rustls-native-certs", "aws-lc-rs"] }
 base64 = "=0.23.0"
 hmac = "=0.13.0"
 sha2 = "=0.11.0"
