@@ -27,7 +27,7 @@ argon2 = "=0.6.0-rc.8"
 password-hash = { version = "=0.6.1", features = ["phc", "getrandom"] }
 getrandom = "=0.4.3"
 time = "=0.3.55"
-cookie = "=0.18.1"
+cookie = "=0.18.2"
 password_policy = "=0.1.0"
 lettre = { version = "=0.11.23", default-features = false, features = ["builder", "smtp-transport", "tokio1", "tokio1-rustls", "rustls-native-certs", "aws-lc-rs"] }
 base64 = "=0.23.1"
