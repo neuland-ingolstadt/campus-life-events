@@ -6,6 +6,7 @@ mod cors_config;
 mod dto;
 mod email;
 mod error;
+mod event_sort;
 mod models;
 mod openapi;
 mod responses;
