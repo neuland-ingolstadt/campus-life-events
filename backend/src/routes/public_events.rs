@@ -9,6 +9,7 @@ use crate::{
     app_state::AppState,
     dto::{ListEventsQuery, ListPublicOrganizersQuery},
     error::AppError,
+    event_sort::push_event_order_by_clause,
     models::OrganizerKind,
     responses::{PublicEventResponse, PublicOrganizerResponse},
 };
@@ -91,13 +92,19 @@ pub(crate) async fn list_public_events(
             .push_bind(organizer_kind);
     }
 
+    let now = Utc::now();
+
     if query_params.upcoming_only.unwrap_or(false) {
-        builder
-            .push(" AND e.end_date_time >= ")
-            .push_bind(Utc::now());
+        builder.push(" AND e.end_date_time >= ").push_bind(now);
     }
 
-    builder.push(" ORDER BY e.start_date_time ASC");
+    push_event_order_by_clause(
+        &mut builder,
+        query_params.sort,
+        query_params.direction,
+        now,
+        Some("e."),
+    );
 
     if let Some(limit) = query_params.limit {
         builder.push(" LIMIT ").push_bind(limit.max(1));

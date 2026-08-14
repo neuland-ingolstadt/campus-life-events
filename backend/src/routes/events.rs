@@ -14,10 +14,11 @@ use tracing::{instrument, warn};
 use crate::{
     app_state::AppState,
     dto::{
-        CreateEventRequest, EventSort, EventVisibility, ListEventsQuery, NewsletterDataQuery,
+        CreateEventRequest, EventVisibility, ListEventsQuery, NewsletterDataQuery,
         SendNewsletterPreviewRequest, SortDirection, UpdateEventRequest,
     },
     error::AppError,
+    event_sort::push_event_order_by_clause,
     models::{AccountType, AuditType, Event, EventWithOrganizer, Organizer, OrganizerKind},
     responses::{ErrorResponse, NewsletterDataResponse, PaginatedEventsResponse},
 };
@@ -370,11 +371,17 @@ pub(crate) async fn list_events_for_organizer(
         .push(" WHERE organizer_id = ")
         .push_bind(organizer_id);
 
+    let now = Utc::now();
+
     if upcoming_only.unwrap_or(false) {
-        builder.push(" AND end_date_time >= ").push_bind(Utc::now());
+        builder.push(" AND end_date_time >= ").push_bind(now);
     }
 
-    builder.push(" ORDER BY start_date_time ASC");
+    if upcoming_only.unwrap_or(false) {
+        push_event_order_by_clause(&mut builder, None, Some(SortDirection::Asc), now, None);
+    } else {
+        builder.push(" ORDER BY start_date_time ASC");
+    }
 
     if let Some(limit) = limit {
         builder.push(" LIMIT ").push_bind(limit.max(1));
@@ -563,17 +570,13 @@ pub(crate) async fn list_events(
         now,
     );
 
-    builder.push(" ORDER BY ");
-    builder.push(match query_params.sort {
-        Some(EventSort::EndDateTime) => "e.end_date_time",
-        Some(EventSort::TitleDe) => "e.title_de",
-        Some(EventSort::StartDateTime) | None => "e.start_date_time",
-    });
-    builder.push(match query_params.direction {
-        Some(SortDirection::Desc) => " DESC",
-        Some(SortDirection::Asc) | None => " ASC",
-    });
-    builder.push(", e.id ASC");
+    push_event_order_by_clause(
+        &mut builder,
+        query_params.sort,
+        query_params.direction,
+        now,
+        Some("e."),
+    );
 
     if let Some(limit) = query_params.limit {
         builder.push(" LIMIT ").push_bind(limit.max(1));

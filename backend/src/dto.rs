@@ -158,6 +158,7 @@ pub enum EventSort {
     StartDateTime,
     EndDateTime,
     TitleDe,
+    EffectiveDateTime,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
