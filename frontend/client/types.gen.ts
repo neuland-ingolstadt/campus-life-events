@@ -114,7 +114,7 @@ export type Event = {
     updated_at: string;
 };
 
-export type EventSort = 'start_date_time' | 'end_date_time' | 'title_de';
+export type EventSort = 'start_date_time' | 'end_date_time' | 'title_de' | 'effective_date_time';
 
 export type EventVisibility = 'public' | 'internal';
 
@@ -1157,6 +1157,12 @@ export type ListPublicEventsData = {
         limit?: number;
         offset?: number;
         organizer_kind?: OrganizerKind;
+        query?: string;
+        visibility?: EventVisibility;
+        starts_from?: string;
+        starts_to?: string;
+        sort?: EventSort;
+        direction?: 'asc' | 'desc';
     };
     url: '/api/v1/public/events';
 };

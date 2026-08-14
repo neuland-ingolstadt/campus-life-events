@@ -372,12 +372,10 @@ pub(crate) async fn list_events_for_organizer(
         .push_bind(organizer_id);
 
     let now = Utc::now();
+    let upcoming_only = upcoming_only.unwrap_or(false);
 
-    if upcoming_only.unwrap_or(false) {
+    if upcoming_only {
         builder.push(" AND end_date_time >= ").push_bind(now);
-    }
-
-    if upcoming_only.unwrap_or(false) {
         push_event_order_by_clause(&mut builder, None, Some(SortDirection::Asc), now, None);
     } else {
         builder.push(" ORDER BY start_date_time ASC");

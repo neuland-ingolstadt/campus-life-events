@@ -41,18 +41,18 @@ pub(crate) fn push_event_order_by_clause(
         }
     }
 
-    builder.push(match direction {
-        Some(SortDirection::Desc) => " DESC",
-        Some(SortDirection::Asc) | None => " ASC",
-    });
+    let descending = matches!(direction, Some(SortDirection::Desc));
+    builder.push(if descending { " DESC" } else { " ASC" });
 
     if use_effective_tiebreak {
         builder.push(", ");
         builder.push(prefix);
-        builder.push("start_date_time ASC");
+        builder.push("start_date_time ");
+        builder.push(if descending { "DESC" } else { "ASC" });
     }
 
     builder.push(", ");
     builder.push(prefix);
-    builder.push("id ASC");
+    builder.push("id ");
+    builder.push(if descending { "DESC" } else { "ASC" });
 }
