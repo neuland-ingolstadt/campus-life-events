@@ -147,21 +147,6 @@ export type HealthResponse = {
     status: string;
 };
 
-export type IcalEventResponse = {
-    description_de?: string | null;
-    description_en?: string | null;
-    end_date_time: string;
-    event_url?: string | null;
-    id: number;
-    is_internal: boolean;
-    location?: string | null;
-    organizer_id: number;
-    organizer_name: string;
-    start_date_time: string;
-    title_de: string;
-    title_en: string;
-};
-
 export type InitAccountRequest = {
     password: string;
     token: string;
@@ -193,6 +178,12 @@ export type ListEventsQuery = {
     starts_to?: string | null;
     upcoming_only?: boolean | null;
     visibility?: null | EventVisibility;
+};
+
+export type ListMyEventsQuery = {
+    limit?: number | null;
+    offset?: number | null;
+    upcoming_only?: boolean | null;
 };
 
 export type ListPublicOrganizersQuery = {
@@ -432,33 +423,6 @@ export type GetOrganizerEventsIcalResponses = {
      */
     200: unknown;
 };
-
-export type ListOrganizerIcalEventsData = {
-    body?: never;
-    headers: {
-        /**
-         * Bearer API token
-         */
-        Authorization: string;
-    };
-    path: {
-        /**
-         * Organizer identifier
-         */
-        organizer_id: number;
-    };
-    query?: never;
-    url: '/api/ical/{organizer_id}/events';
-};
-
-export type ListOrganizerIcalEventsResponses = {
-    /**
-     * Events for organizer that are iCal eligible
-     */
-    200: Array<IcalEventResponse>;
-};
-
-export type ListOrganizerIcalEventsResponse = ListOrganizerIcalEventsResponses[keyof ListOrganizerIcalEventsResponses];
 
 export type UpdateAccountEmailData = {
     body: UpdateAccountEmailRequest;
@@ -1004,6 +968,39 @@ export type HealthCheckResponses = {
 };
 
 export type HealthCheckResponse = HealthCheckResponses[keyof HealthCheckResponses];
+
+export type ListMyEventsData = {
+    body?: never;
+    headers: {
+        /**
+         * Bearer API token
+         */
+        Authorization: string;
+    };
+    path?: never;
+    query?: {
+        upcoming_only?: boolean;
+        limit?: number;
+        offset?: number;
+    };
+    url: '/api/v1/my-events';
+};
+
+export type ListMyEventsErrors = {
+    /**
+     * Missing or invalid API token
+     */
+    401: unknown;
+};
+
+export type ListMyEventsResponses = {
+    /**
+     * Events for the authenticated organizer club
+     */
+    200: Array<Event>;
+};
+
+export type ListMyEventsResponse = ListMyEventsResponses[keyof ListMyEventsResponses];
 
 export type ListOrganizersData = {
     body?: never;

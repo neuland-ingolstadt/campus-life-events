@@ -86,6 +86,14 @@ pub(crate) async fn current_user_from_headers(
     })
 }
 
+pub(crate) async fn api_token_user_from_headers(
+    headers: &HeaderMap,
+    state: &AppState,
+) -> Result<AuthedUser, AppError> {
+    let raw = bearer_token(headers).ok_or_else(|| AppError::unauthorized("missing API token"))?;
+    api_token::authed_user_from_bearer(raw, state).await
+}
+
 fn bearer_token(headers: &HeaderMap) -> Option<&str> {
     let hv = headers
         .get(axum::http::header::AUTHORIZATION)?
