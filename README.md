@@ -21,11 +21,6 @@ It's developed by Neuland Ingolstadt e.V. and actively used by all campus organi
 - **Data & Messaging**: PostgreSQL 16 stores authoritative data while Redis keeps cached responses; optional SMTP integration handles transactional emails
 - **Infrastructure**: Docker Compose (in `backend/`) provisions PostgreSQL and Redis locally; GitHub Actions enforce formatting, linting and docker builds for both backend and frontend
 
-## Architecture
-
-![Architecture](.github/diagram.png)
-
-
 ## Technology Stack
 - Backend: Rust 1.81+, Axum 0.8, SQLx, Redis, PostgreSQL 16, utoipa, Argon2, Lettre
 - Frontend: Next.js 15, React 19, TypeScript, Tailwind CSS v4, TanStack Query, React Hook Form, Zod

@@ -1,6 +1,13 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import {
+	Building2,
+	ChevronDown,
+	Globe2,
+	Lock,
+	SlidersHorizontal
+} from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -14,6 +21,11 @@ import type {
 	UpdateEventRequest
 } from '@/client/types.gen'
 import { Button } from '@/components/ui/button'
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger
+} from '@/components/ui/collapsible'
 import DateTimeField from '@/components/ui/datetime-field'
 import {
 	Form,
@@ -26,8 +38,15 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
+import {
+	deriveEventVisibilityMode,
+	type EventVisibilityMode,
+	eventVisibilityDescription
+} from '@/lib/event-visibility'
+import { cn } from '@/lib/utils'
 import RequiredLabel from './ui/required-label'
 
 const END_BEFORE_START_ERROR = 'Enddatum darf nicht vor dem Startdatum liegen'
@@ -53,7 +72,8 @@ const eventSchema = z
 		publish_app: z.boolean(),
 		publish_newsletter: z.boolean(),
 		publish_in_ical: z.boolean(),
-		publish_web: z.boolean()
+		publish_web: z.boolean(),
+		host_only: z.boolean()
 	})
 	.superRefine((data, ctx) => {
 		if (
@@ -93,6 +113,7 @@ export function EventForm({
 }) {
 	const [startDate, setStartDate] = useState<Date>()
 	const [endDate, setEndDate] = useState<Date>()
+	const [channelsOpen, setChannelsOpen] = useState(false)
 
 	const form = useForm<EventFormValues>({
 		resolver: zodResolver(eventSchema),
@@ -108,9 +129,54 @@ export function EventForm({
 			publish_app: true,
 			publish_newsletter: true,
 			publish_in_ical: true,
-			publish_web: true
+			publish_web: true,
+			host_only: false
 		}
 	})
+
+	const visibilityMode = deriveEventVisibilityMode({
+		host_only: form.watch('host_only'),
+		publish_app: form.watch('publish_app'),
+		publish_newsletter: form.watch('publish_newsletter')
+	})
+
+	const applyVisibilityMode = (mode: EventVisibilityMode) => {
+		if (mode === 'host_only') {
+			form.setValue('host_only', true, { shouldDirty: true })
+			form.setValue('publish_app', false, { shouldDirty: true })
+			form.setValue('publish_newsletter', false, { shouldDirty: true })
+			form.setValue('publish_in_ical', false, { shouldDirty: true })
+			form.setValue('publish_web', false, { shouldDirty: true })
+			setChannelsOpen(false)
+			return
+		}
+
+		form.setValue('host_only', false, { shouldDirty: true })
+
+		if (mode === 'internal') {
+			form.setValue('publish_app', false, { shouldDirty: true })
+			form.setValue('publish_newsletter', false, { shouldDirty: true })
+			form.setValue('publish_in_ical', true, { shouldDirty: true })
+			form.setValue('publish_web', true, { shouldDirty: true })
+			return
+		}
+
+		form.setValue('publish_app', true, { shouldDirty: true })
+		form.setValue('publish_newsletter', true, { shouldDirty: true })
+		form.setValue('publish_in_ical', true, { shouldDirty: true })
+		form.setValue('publish_web', true, { shouldDirty: true })
+	}
+
+	const publishApp = form.watch('publish_app')
+	const publishNewsletter = form.watch('publish_newsletter')
+	const publishInIcal = form.watch('publish_in_ical')
+	const publishWeb = form.watch('publish_web')
+	const activeChannelLabels = [
+		publishApp ? 'App' : null,
+		publishNewsletter ? 'Newsletter' : null,
+		publishInIcal ? 'iCal' : null,
+		publishWeb ? 'Web' : null
+	].filter(Boolean)
 
 	const validateChronology = useCallback(
 		(nextStart?: Date, nextEnd?: Date) => {
@@ -184,7 +250,8 @@ export function EventForm({
 					publish_app: event.publish_app,
 					publish_newsletter: event.publish_newsletter,
 					publish_in_ical: event.publish_in_ical,
-					publish_web: event.publish_web
+					publish_web: event.publish_web,
+					host_only: event.host_only
 				}
 			: {
 					title_de: '',
@@ -198,7 +265,8 @@ export function EventForm({
 					publish_app: true,
 					publish_newsletter: true,
 					publish_in_ical: true,
-					publish_web: true
+					publish_web: true,
+					host_only: false
 				}
 
 		const resolvedValues = {
@@ -437,102 +505,189 @@ export function EventForm({
 							)}
 						/>
 
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-							<FormField
-								control={form.control}
-								name="publish_app"
-								render={({ field }) => (
-									<FormItem className="flex items-center justify-between rounded-md border p-4">
-										<div className="space-y-1">
-											<FormLabel className="text-sm font-medium">
-												Neuland Next App
-											</FormLabel>
-											<FormDescription className="text-xs">
-												Dieses Event in der App öffentlich anzeigen.
-											</FormDescription>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
+						<div className="space-y-3">
+							<FormLabel>Sichtbarkeit</FormLabel>
+							<Tabs
+								value={visibilityMode}
+								onValueChange={(value) => {
+									if (
+										value === 'public' ||
+										value === 'internal' ||
+										value === 'host_only'
+									) {
+										applyVisibilityMode(value)
+									}
+								}}
+								className="gap-3"
+							>
+								<TabsList className="flex h-11 w-full flex-row">
+									<TabsTrigger
+										value="public"
+										className="flex-1 gap-1.5 text-xs sm:text-sm"
+									>
+										<Globe2 />
+										Öffentlich
+									</TabsTrigger>
+									<TabsTrigger
+										value="internal"
+										className="flex-1 gap-1.5 text-xs sm:text-sm"
+									>
+										<Building2 />
+										Intern
+									</TabsTrigger>
+									<TabsTrigger
+										value="host_only"
+										className="flex-1 gap-1.5 text-xs sm:text-sm"
+									>
+										<Lock />
+										Nur uns
+									</TabsTrigger>
+								</TabsList>
+							</Tabs>
+							<p className="min-h-10 text-sm text-muted-foreground">
+								{eventVisibilityDescription(visibilityMode)}
+							</p>
+
+							{visibilityMode === 'host_only' ? (
+								<div className="inline-flex w-fit items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground">
+									<Lock className="h-3.5 w-3.5" />
+									Keine Kanäle
+								</div>
+							) : (
+								<Collapsible
+									open={channelsOpen}
+									onOpenChange={setChannelsOpen}
+									className="w-fit"
+								>
+									<CollapsibleTrigger asChild>
+										<button
+											type="button"
+											className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+										>
+											<SlidersHorizontal className="h-3.5 w-3.5" />
+											Kanäle anpassen
+											<ChevronDown
+												className={cn(
+													'h-3.5 w-3.5 transition-transform',
+													channelsOpen && 'rotate-180'
+												)}
 											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="publish_newsletter"
-								render={({ field }) => (
-									<FormItem className="flex items-center justify-between rounded-md border p-4">
-										<div className="space-y-1">
-											<FormLabel className="text-sm font-medium">
-												Campus Life Newsletter
-											</FormLabel>
-											<FormDescription className="text-xs">
-												Dieses Event im Campus Life Newsletter der THI bewerben.
-											</FormDescription>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
+										</button>
+									</CollapsibleTrigger>
+									<CollapsibleContent className="mt-2 w-[min(100%,36rem)] space-y-3 rounded-md border bg-muted/20 p-3">
+										<p className="text-xs text-muted-foreground">
+											Aktiv:{' '}
+											{activeChannelLabels.length > 0
+												? activeChannelLabels.join(' · ')
+												: 'keine'}
+										</p>
+										<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+											<FormField
+												control={form.control}
+												name="publish_app"
+												render={({ field }) => (
+													<FormItem className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2">
+														<div className="space-y-0.5">
+															<FormLabel className="text-sm font-medium">
+																Neuland Next App
+															</FormLabel>
+															<FormDescription className="text-xs">
+																In der App öffentlich anzeigen.
+															</FormDescription>
+														</div>
+														<FormControl>
+															<Switch
+																checked={field.value}
+																disabled={visibilityMode !== 'public'}
+																onCheckedChange={field.onChange}
+															/>
+														</FormControl>
+													</FormItem>
+												)}
 											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="publish_in_ical"
-								render={({ field }) => (
-									<FormItem className="flex items-center justify-between rounded-md border p-4">
-										<div className="space-y-1">
-											<FormLabel className="text-sm font-medium">
-												iCal-Kalender
-											</FormLabel>
-											<FormDescription className="text-xs">
-												Dieses Event im eigenen Organisations-iCal-Kalender
-												aufführen.
-											</FormDescription>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
+											<FormField
+												control={form.control}
+												name="publish_newsletter"
+												render={({ field }) => (
+													<FormItem className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2">
+														<div className="space-y-0.5">
+															<FormLabel className="text-sm font-medium">
+																Campus Life Newsletter
+															</FormLabel>
+															<FormDescription className="text-xs">
+																Im Newsletter der THI bewerben.
+															</FormDescription>
+														</div>
+														<FormControl>
+															<Switch
+																checked={field.value}
+																disabled={visibilityMode !== 'public'}
+																onCheckedChange={field.onChange}
+															/>
+														</FormControl>
+													</FormItem>
+												)}
 											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="publish_web"
-								render={({ field }) => (
-									<FormItem className="flex items-center justify-between rounded-md border p-4">
-										<div className="space-y-1">
-											<FormLabel className="text-sm font-medium">
-												Öffentliche Event-Seite
-											</FormLabel>
-											<FormDescription className="text-xs">
-												Eigene öffentliche Event-Seite zum Teilen erstellen.
-											</FormDescription>
-										</div>
-										<FormControl>
-											<Switch
-												checked={field.value}
-												onCheckedChange={field.onChange}
+											<FormField
+												control={form.control}
+												name="publish_in_ical"
+												render={({ field }) => (
+													<FormItem className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2">
+														<div className="space-y-0.5">
+															<FormLabel className="text-sm font-medium">
+																iCal-Kalender
+															</FormLabel>
+															<FormDescription className="text-xs">
+																Im Organisations-iCal aufführen.
+															</FormDescription>
+														</div>
+														<FormControl>
+															<Switch
+																checked={field.value}
+																onCheckedChange={field.onChange}
+															/>
+														</FormControl>
+													</FormItem>
+												)}
 											/>
-										</FormControl>
-									</FormItem>
-								)}
-							/>
+											<FormField
+												control={form.control}
+												name="publish_web"
+												render={({ field }) => (
+													<FormItem className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2">
+														<div className="space-y-0.5">
+															<FormLabel className="text-sm font-medium">
+																Öffentliche Event-Seite
+															</FormLabel>
+															<FormDescription className="text-xs">
+																Teilbare Event-Seite erstellen.
+															</FormDescription>
+														</div>
+														<FormControl>
+															<Switch
+																checked={field.value}
+																onCheckedChange={field.onChange}
+															/>
+														</FormControl>
+													</FormItem>
+												)}
+											/>
+										</div>
+										{visibilityMode === 'public' ? (
+											<p className="text-xs text-muted-foreground">
+												Die gemeinsame iCal-Ansicht aller Organisationen zeigt
+												das Event nur, wenn iCal und App aktiviert sind.
+											</p>
+										) : (
+											<p className="text-xs text-muted-foreground">
+												App und Newsletter sind bei internen Events fest
+												deaktiviert.
+											</p>
+										)}
+									</CollapsibleContent>
+								</Collapsible>
+							)}
 						</div>
-						<p className="text-xs text-muted-foreground -mt-3">
-							Das Event wird nur in der gemeinsamen iCal-Kalenderansicht aller
-							Organisationen angezeigt, wenn „iCal-Kalender" und gleichzeitig
-							„Neuland Next App" aktiviert sind.
-						</p>
 					</div>
 				</div>
 

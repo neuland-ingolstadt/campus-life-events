@@ -136,38 +136,54 @@ export function DashboardSidebar() {
 	}, [canAccessNewsletter, isAdmin])
 
 	return (
-		<Sidebar variant="sidebar">
-			<SidebarHeader className="border-b border-sidebar-border px-2 py-3">
+		<Sidebar variant="sidebar" collapsible="icon">
+			<SidebarHeader className="border-b border-sidebar-border px-2 py-3 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-0! group-data-[collapsible=icon]:py-2">
 				<div className="flex justify-center py-2 md:hidden">
 					<div className="h-1 w-8 rounded-full bg-muted-foreground/30" />
 				</div>
-				<Link href="/" className="flex items-center gap-3 rounded-md px-3 py-2">
-					<div className="flex h-9 w-9 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-						<NeulandPalm className="h-6 w-6" color="currentColor" />
-					</div>
-					<div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
-						<span className="truncate font-semibold tracking-tight">
-							{brandTitle}
-						</span>
-						<span className="truncate text-xs text-sidebar-foreground/65">
-							Event-Dashboard
-						</span>
-					</div>
-				</Link>
+				<SidebarMenu className="group-data-[collapsible=icon]:items-center">
+					<SidebarMenuItem>
+						<SidebarMenuButton
+							size="lg"
+							asChild
+							tooltip={brandTitle}
+							className="group-data-[collapsible=icon]:justify-center"
+						>
+							<Link href="/">
+								<div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
+									<NeulandPalm className="h-5 w-5" color="currentColor" />
+								</div>
+								<div className="grid min-w-0 flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+									<span className="truncate font-semibold tracking-tight">
+										{brandTitle}
+									</span>
+									<span className="truncate text-xs text-sidebar-foreground/65">
+										Event-Dashboard
+									</span>
+								</div>
+							</Link>
+						</SidebarMenuButton>
+					</SidebarMenuItem>
+				</SidebarMenu>
 			</SidebarHeader>
-			<SidebarContent className="px-2 py-4">
-				<SidebarGroup className="p-0">
+			<SidebarContent className="px-2 py-4 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-0! group-data-[collapsible=icon]:py-2">
+				<SidebarGroup className="p-0 group-data-[collapsible=icon]:items-center">
 					<SidebarGroupLabel className="px-3 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/55">
 						Navigation
 					</SidebarGroupLabel>
-					<SidebarGroupContent>
-						<SidebarMenu>
+					<SidebarGroupContent className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
+						<SidebarMenu className="group-data-[collapsible=icon]:items-center">
 							{items.map((item) => (
-								<SidebarMenuItem key={item.title}>
+								<SidebarMenuItem
+									key={item.title}
+									className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center"
+								>
 									<SidebarMenuButton
 										asChild
 										isActive={item.isActive(pathname)}
 										size="lg"
+										tooltip={item.title}
+										className="group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0!"
 									>
 										<Link
 											href={item.url}
@@ -180,7 +196,9 @@ export function DashboardSidebar() {
 												className="h-5 w-5"
 												animate={animatingItems.has(item.title)}
 											/>
-											<span>{item.title}</span>
+											<span className="group-data-[collapsible=icon]:hidden">
+												{item.title}
+											</span>
 										</Link>
 									</SidebarMenuButton>
 								</SidebarMenuItem>
@@ -189,10 +207,10 @@ export function DashboardSidebar() {
 					</SidebarGroupContent>
 				</SidebarGroup>
 			</SidebarContent>
-			<SidebarFooter className="space-y-3 border-t border-sidebar-border p-4">
+			<SidebarFooter className="space-y-3 border-t border-sidebar-border p-4 group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:space-y-2 group-data-[collapsible=icon]:px-0! group-data-[collapsible=icon]:py-2">
 				<AuthStatus />
 				<div className="flex items-center justify-center">
-					<ThemeToggle />
+					<ThemeToggle menuSide="right" />
 				</div>
 			</SidebarFooter>
 		</Sidebar>

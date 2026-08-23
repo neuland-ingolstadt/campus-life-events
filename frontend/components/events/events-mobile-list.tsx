@@ -16,6 +16,11 @@ import {
 	TooltipTrigger
 } from '@/components/ui/tooltip'
 import { formatInCampusTimeZone } from '@/lib/date-time'
+import {
+	deriveEventVisibilityMode,
+	eventVisibilityLabel,
+	eventVisibilityTooltip
+} from '@/lib/event-visibility'
 
 interface EventsMobileListProps {
 	readonly events: ApiEvent[]
@@ -46,7 +51,7 @@ export function EventsMobileList({
 				const canManage =
 					isAdmin ||
 					(organizerId !== undefined && organizerId === event.organizer_id)
-				const isPublic = event.publish_app || event.publish_newsletter
+				const visibility = deriveEventVisibilityMode(event)
 
 				return (
 					<li key={event.id}>
@@ -101,20 +106,12 @@ export function EventsMobileList({
 									</div>
 									<Tooltip>
 										<TooltipTrigger asChild>
-											<div
-												className={`border border-primary/20 rounded-full px-2 py-1 text-xs shrink-0 ${
-													isPublic
-														? 'border-border bg-muted text-foreground'
-														: 'border-border bg-muted text-foreground'
-												}`}
-											>
-												{isPublic ? 'Extern' : 'Intern'}
+											<div className="border border-border bg-muted text-foreground rounded-full px-2 py-1 text-xs shrink-0">
+												{eventVisibilityLabel(visibility)}
 											</div>
 										</TooltipTrigger>
 										<TooltipContent>
-											{isPublic
-												? 'Öffentliches Event: Beworben in Newsletter / App'
-												: 'Internes Event: Nicht im Newsletter / App'}
+											{eventVisibilityTooltip(visibility)}
 										</TooltipContent>
 									</Tooltip>
 								</div>

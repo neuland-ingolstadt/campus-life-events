@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT e.id, e.organizer_id, o.name AS organizer_name, o.organizer_kind as \"organizer_kind: OrganizerKind\", e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location, e.publish_web\n        FROM events e\n        INNER JOIN organizers o ON e.organizer_id = o.id\n        WHERE e.id = $1 AND e.publish_app = true\n        ",
+  "query": "\n        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, host_only, created_at, updated_at\n        FROM events\n        WHERE id = $1\n        ",
   "describe": {
     "columns": [
       {
@@ -27,38 +27,6 @@
       },
       {
         "ordinal": 2,
-        "name": "organizer_name",
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "organizers",
-            "name": "name"
-          }
-        }
-      },
-      {
-        "ordinal": 3,
-        "name": "organizer_kind: OrganizerKind",
-        "type_info": {
-          "Custom": {
-            "name": "organizer_kind",
-            "kind": {
-              "Enum": [
-                "STUDENT_ASSOCIATION",
-                "THI_DEPARTMENT"
-              ]
-            }
-          }
-        },
-        "origin": {
-          "Table": {
-            "table": "organizers",
-            "name": "organizer_kind"
-          }
-        }
-      },
-      {
-        "ordinal": 4,
         "name": "title_de",
         "type_info": "Text",
         "origin": {
@@ -69,7 +37,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 3,
         "name": "title_en",
         "type_info": "Text",
         "origin": {
@@ -80,7 +48,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 4,
         "name": "description_de",
         "type_info": "Text",
         "origin": {
@@ -91,7 +59,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 5,
         "name": "description_en",
         "type_info": "Text",
         "origin": {
@@ -102,7 +70,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 6,
         "name": "start_date_time",
         "type_info": "Timestamptz",
         "origin": {
@@ -113,7 +81,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 7,
         "name": "end_date_time",
         "type_info": "Timestamptz",
         "origin": {
@@ -124,7 +92,7 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 8,
         "name": "event_url",
         "type_info": "Text",
         "origin": {
@@ -135,7 +103,7 @@
         }
       },
       {
-        "ordinal": 11,
+        "ordinal": 9,
         "name": "location",
         "type_info": "Text",
         "origin": {
@@ -146,13 +114,79 @@
         }
       },
       {
+        "ordinal": 10,
+        "name": "publish_app",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "publish_app"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "publish_newsletter",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "publish_newsletter"
+          }
+        }
+      },
+      {
         "ordinal": 12,
+        "name": "publish_in_ical",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "publish_in_ical"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
         "name": "publish_web",
         "type_info": "Bool",
         "origin": {
           "Table": {
             "table": "events",
             "name": "publish_web"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "host_only",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "host_only"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "updated_at"
           }
         }
       }
@@ -167,16 +201,20 @@
       false,
       false,
       false,
-      false,
-      false,
       true,
       true,
       false,
       false,
       true,
       true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
       false
     ]
   },
-  "hash": "ed907168a34aba443650a63fe980e2fb9aaadb82babac532b012abbfec0b882e"
+  "hash": "d2915400c2ea938ff39c04fdf056769942af7a4f1a5e1544ab95be79f893dfc2"
 }

@@ -82,7 +82,8 @@ const ORGANIZER_TOOLS: ToolSchema[] = [
 				publish_app: { type: 'boolean' },
 				publish_newsletter: { type: 'boolean' },
 				publish_in_ical: { type: 'boolean' },
-				publish_web: { type: 'boolean' }
+				publish_web: { type: 'boolean' },
+				host_only: { type: 'boolean' }
 			},
 			additionalProperties: false
 		}
@@ -117,7 +118,8 @@ const ORGANIZER_TOOLS: ToolSchema[] = [
 				publish_app: { type: 'boolean' },
 				publish_newsletter: { type: 'boolean' },
 				publish_in_ical: { type: 'boolean' },
-				publish_web: { type: 'boolean' }
+				publish_web: { type: 'boolean' },
+				host_only: { type: 'boolean' }
 			},
 			additionalProperties: false
 		}
@@ -288,7 +290,7 @@ function ToolTable({ tools, filter }: { tools: ToolSchema[]; filter: string }) {
 											) : null}
 										</div>
 									) : (
-										<span className="text-sm text-muted-foreground">—</span>
+										<span className="text-sm text-muted-foreground">-</span>
 									)}
 								</TableCell>
 							</TableRow>

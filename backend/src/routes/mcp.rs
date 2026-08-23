@@ -318,7 +318,7 @@ async fn fetch_clubs_with_invites(state: &AppState) -> Result<Vec<OrganizerWithI
 
 async fn fetch_my_events(state: &AppState, organizer_id: i64) -> Result<Vec<Event>, AppError> {
     let rows = sqlx::query_as::<_, Event>(
-		"SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at FROM events WHERE organizer_id = $1 ORDER BY start_date_time ASC",
+		"SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, host_only, created_at, updated_at FROM events WHERE organizer_id = $1 ORDER BY start_date_time ASC",
 	)
 	.bind(organizer_id)
 	.fetch_all(&state.db)
@@ -401,7 +401,8 @@ fn tool_schema_create_my_event() -> Value {
                 "publish_app": { "type": "boolean" },
                 "publish_newsletter": { "type": "boolean" },
                 "publish_in_ical": { "type": "boolean" },
-                "publish_web": { "type": "boolean" }
+                "publish_web": { "type": "boolean" },
+                "host_only": { "type": "boolean" }
             },
             "additionalProperties": false
         }
@@ -441,7 +442,8 @@ fn tool_schema_update_my_event() -> Value {
                 "publish_app": { "type": "boolean" },
                 "publish_newsletter": { "type": "boolean" },
                 "publish_in_ical": { "type": "boolean" },
-                "publish_web": { "type": "boolean" }
+                "publish_web": { "type": "boolean" },
+                "host_only": { "type": "boolean" }
             },
             "additionalProperties": false
         }

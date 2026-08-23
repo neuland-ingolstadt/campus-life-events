@@ -93,6 +93,8 @@ pub struct CreateEventRequest {
     pub publish_in_ical: bool,
     #[serde(default = "default_true")]
     pub publish_web: bool,
+    #[serde(default)]
+    pub host_only: bool,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -110,6 +112,7 @@ pub struct UpdateEventRequest {
     pub publish_newsletter: Option<bool>,
     pub publish_in_ical: Option<bool>,
     pub publish_web: Option<bool>,
+    pub host_only: Option<bool>,
 }
 
 impl UpdateEventRequest {
@@ -126,6 +129,7 @@ impl UpdateEventRequest {
             || self.publish_newsletter.is_some()
             || self.publish_in_ical.is_some()
             || self.publish_web.is_some()
+            || self.host_only.is_some()
     }
 }
 
@@ -150,6 +154,7 @@ pub struct ListEventsQuery {
 pub enum EventVisibility {
     Public,
     Internal,
+    HostOnly,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]

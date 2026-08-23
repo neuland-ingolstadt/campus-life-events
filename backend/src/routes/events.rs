@@ -28,6 +28,26 @@ use super::shared::{
     refresh_organizer_activity_stats, session_organizer_kind_scope,
 };
 
+fn apply_host_only_invariants(
+    host_only: bool,
+    publish_app: bool,
+    publish_newsletter: bool,
+    publish_in_ical: bool,
+    publish_web: bool,
+) -> (bool, bool, bool, bool, bool) {
+    if host_only {
+        (true, false, false, false, false)
+    } else {
+        (
+            false,
+            publish_app,
+            publish_newsletter,
+            publish_in_ical,
+            publish_web,
+        )
+    }
+}
+
 pub(crate) async fn create_event_with_user(
     state: &AppState,
     user: &AuthedUser,
@@ -49,6 +69,7 @@ pub(crate) async fn create_event_with_user(
         publish_newsletter,
         publish_in_ical,
         publish_web,
+        host_only,
     } = payload;
 
     if end_date_time < start_date_time {
@@ -57,14 +78,23 @@ pub(crate) async fn create_event_with_user(
         ));
     }
 
+    let (host_only, publish_app, publish_newsletter, publish_in_ical, publish_web) =
+        apply_host_only_invariants(
+            host_only,
+            publish_app,
+            publish_newsletter,
+            publish_in_ical,
+            publish_web,
+        );
+
     let mut transaction = state.db.begin().await?;
 
     let event = sqlx::query_as!(
         Event,
         r#"
-        INSERT INTO events (organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-        RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
+        INSERT INTO events (organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, host_only)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, host_only, created_at, updated_at
         "#,
         organizer_id,
         title_de,
@@ -78,7 +108,8 @@ pub(crate) async fn create_event_with_user(
         publish_app,
         publish_newsletter,
         publish_in_ical,
-        publish_web
+        publish_web,
+        host_only
     )
     .fetch_one(&mut *transaction)
     .await?;
@@ -109,7 +140,7 @@ pub(crate) async fn get_event_with_user(
     let event = sqlx::query_as!(
         Event,
         r#"
-        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
+        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, host_only, created_at, updated_at
         FROM events
         WHERE id = $1
         "#,
@@ -124,6 +155,10 @@ pub(crate) async fn get_event_with_user(
 
     if user.is_admin() || user.organizer_id() == Some(event.organizer_id) {
         return Ok(event);
+    }
+
+    if event.host_only {
+        return Err(AppError::not_found("event not found"));
     }
 
     if matches!(user.account_type, AccountType::Organizer) && event.publish_app {
@@ -184,6 +219,7 @@ pub(crate) async fn update_event_with_user(
         publish_newsletter,
         publish_in_ical,
         publish_web,
+        host_only,
     } = payload;
 
     if !has_updates {
@@ -195,7 +231,7 @@ pub(crate) async fn update_event_with_user(
     let existing_event = sqlx::query_as!(
         Event,
         r#"
-        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
+        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, host_only, created_at, updated_at
         FROM events
         WHERE id = $1
         "#,
@@ -220,6 +256,21 @@ pub(crate) async fn update_event_with_user(
             "end date time must not be before start date time",
         ));
     }
+
+    let effective_host_only = host_only.unwrap_or(existing_event.host_only);
+    let (
+        effective_host_only,
+        effective_publish_app,
+        effective_publish_newsletter,
+        effective_publish_in_ical,
+        effective_publish_web,
+    ) = apply_host_only_invariants(
+        effective_host_only,
+        publish_app.unwrap_or(existing_event.publish_app),
+        publish_newsletter.unwrap_or(existing_event.publish_newsletter),
+        publish_in_ical.unwrap_or(existing_event.publish_in_ical),
+        publish_web.unwrap_or(existing_event.publish_web),
+    );
 
     let mut builder = QueryBuilder::<Postgres>::new("UPDATE events SET updated_at = NOW()");
     if let Some(title_de) = title_de {
@@ -252,25 +303,38 @@ pub(crate) async fn update_event_with_user(
     if let Some(location) = location {
         builder.push(", location = ").push_bind(location);
     }
-    if let Some(publish_app) = publish_app {
-        builder.push(", publish_app = ").push_bind(publish_app);
-    }
-    if let Some(publish_newsletter) = publish_newsletter {
+
+    let visibility_touched = host_only.is_some()
+        || publish_app.is_some()
+        || publish_newsletter.is_some()
+        || publish_in_ical.is_some()
+        || publish_web.is_some()
+        || effective_host_only != existing_event.host_only
+        || effective_publish_app != existing_event.publish_app
+        || effective_publish_newsletter != existing_event.publish_newsletter
+        || effective_publish_in_ical != existing_event.publish_in_ical
+        || effective_publish_web != existing_event.publish_web;
+
+    if visibility_touched {
+        builder
+            .push(", host_only = ")
+            .push_bind(effective_host_only);
+        builder
+            .push(", publish_app = ")
+            .push_bind(effective_publish_app);
         builder
             .push(", publish_newsletter = ")
-            .push_bind(publish_newsletter);
-    }
-    if let Some(publish_in_ical) = publish_in_ical {
+            .push_bind(effective_publish_newsletter);
         builder
             .push(", publish_in_ical = ")
-            .push_bind(publish_in_ical);
-    }
-    if let Some(publish_web) = publish_web {
-        builder.push(", publish_web = ").push_bind(publish_web);
+            .push_bind(effective_publish_in_ical);
+        builder
+            .push(", publish_web = ")
+            .push_bind(effective_publish_web);
     }
 
     builder.push(" WHERE id = ").push_bind(id);
-    builder.push(" RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at");
+    builder.push(" RETURNING id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, host_only, created_at, updated_at");
 
     let updated_event = builder
         .build_query_as::<Event>()
@@ -313,7 +377,7 @@ pub(crate) async fn delete_event_with_user(
     let existing_event = sqlx::query_as!(
         Event,
         r#"
-        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at
+        SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, host_only, created_at, updated_at
         FROM events
         WHERE id = $1
         "#,
@@ -364,7 +428,7 @@ pub(crate) async fn list_events_for_organizer(
     offset: Option<i64>,
 ) -> Result<Vec<Event>, AppError> {
     let mut builder = QueryBuilder::<Postgres>::new(
-        "SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, created_at, updated_at FROM events",
+        "SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, host_only, created_at, updated_at FROM events",
     );
 
     builder
@@ -427,7 +491,7 @@ pub(crate) async fn newsletter_data_with_user(
         r#"
         SELECT e.id, e.organizer_id, e.title_de, e.title_en, e.description_de, e.description_en,
                e.start_date_time, e.end_date_time, e.event_url, e.location, e.publish_app,
-               e.publish_newsletter, e.publish_in_ical, e.publish_web, e.created_at, e.updated_at,
+               e.publish_newsletter, e.publish_in_ical, e.publish_web, e.host_only, e.created_at, e.updated_at,
                o.name as organizer_name, o.website_url as organizer_website
         FROM events e
         JOIN organizers o ON e.organizer_id = o.id
@@ -549,6 +613,7 @@ pub(crate) async fn list_events(
         &mut count_builder,
         &query_params,
         user.is_admin(),
+        user.organizer_id(),
         enforced_organizer_kind,
         now,
     );
@@ -558,12 +623,13 @@ pub(crate) async fn list_events(
         .await?;
 
     let mut builder = QueryBuilder::<Postgres>::new(
-        "SELECT e.id, e.organizer_id, e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location, e.publish_app, e.publish_newsletter, e.publish_in_ical, e.publish_web, e.created_at, e.updated_at FROM events e INNER JOIN organizers o ON e.organizer_id = o.id",
+        "SELECT e.id, e.organizer_id, e.title_de, e.title_en, e.description_de, e.description_en, e.start_date_time, e.end_date_time, e.event_url, e.location, e.publish_app, e.publish_newsletter, e.publish_in_ical, e.publish_web, e.host_only, e.created_at, e.updated_at FROM events e INNER JOIN organizers o ON e.organizer_id = o.id",
     );
     apply_event_filters(
         &mut builder,
         &query_params,
         user.is_admin(),
+        user.organizer_id(),
         enforced_organizer_kind,
         now,
     );
@@ -598,6 +664,7 @@ fn apply_event_filters(
     builder: &mut QueryBuilder<Postgres>,
     query_params: &ListEventsQuery,
     is_admin: bool,
+    viewer_organizer_id: Option<i64>,
     enforced_organizer_kind: Option<OrganizerKind>,
     now: chrono::DateTime<Utc>,
 ) {
@@ -622,6 +689,17 @@ fn apply_event_filters(
     } else if let Some(kind) = enforced_organizer_kind {
         add_condition(builder);
         builder.push("o.organizer_kind = ").push_bind(kind);
+
+        if let Some(viewer_organizer_id) = viewer_organizer_id {
+            add_condition(builder);
+            builder
+                .push("(NOT e.host_only OR e.organizer_id = ")
+                .push_bind(viewer_organizer_id)
+                .push(")");
+        } else {
+            add_condition(builder);
+            builder.push("NOT e.host_only");
+        }
     }
 
     if query_params.upcoming_only.unwrap_or(false) {
@@ -642,8 +720,13 @@ fn apply_event_filters(
     if let Some(visibility) = &query_params.visibility {
         add_condition(builder);
         builder.push(match visibility {
-            EventVisibility::Public => "(e.publish_app OR e.publish_newsletter)",
-            EventVisibility::Internal => "NOT (e.publish_app OR e.publish_newsletter)",
+            EventVisibility::Public => {
+                "(e.publish_app OR e.publish_newsletter) AND NOT e.host_only"
+            }
+            EventVisibility::Internal => {
+                "NOT (e.publish_app OR e.publish_newsletter) AND NOT e.host_only"
+            }
+            EventVisibility::HostOnly => "e.host_only",
         });
     }
 

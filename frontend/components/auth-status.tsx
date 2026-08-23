@@ -9,19 +9,28 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
+import { useSidebar } from '@/components/ui/sidebar'
+import {
 	Tooltip,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger
 } from '@/components/ui/tooltip'
-import { useIsMobile } from '@/hooks/use-mobile'
 import { logout, me } from '@/lib/auth'
 import { LogOut } from './animate-ui/icons/log-out'
 
 export function AuthStatus() {
 	const router = useRouter()
 	const queryClient = useQueryClient()
-	const isMobile = useIsMobile()
+	const { state, isMobile } = useSidebar()
+	const isIconCollapsed = !isMobile && state === 'collapsed'
 	const { data: user } = useQuery({
 		queryKey: ['auth', 'me'],
 		queryFn: me
@@ -34,6 +43,20 @@ export function AuthStatus() {
 	}
 
 	if (!user) {
+		if (isIconCollapsed) {
+			return (
+				<Button
+					size="icon"
+					variant="ghost"
+					onClick={() => router.push('/login')}
+					className="mx-auto size-8"
+					aria-label="Anmelden"
+				>
+					<User className="h-4 w-4" />
+				</Button>
+			)
+		}
+
 		return (
 			<Card className="border-dashed">
 				<CardContent className="p-4">
@@ -74,6 +97,65 @@ export function AuthStatus() {
 		.join('')
 		.toUpperCase()
 		.slice(0, 2)
+
+	if (isIconCollapsed) {
+		return (
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild>
+					<Button
+						variant="ghost"
+						size="icon"
+						className="mx-auto size-8 rounded-md p-0"
+						aria-label={user.display_name}
+					>
+						<Avatar className="h-8 w-8">
+							<AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold">
+								{initials}
+							</AvatarFallback>
+						</Avatar>
+					</Button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent side="right" align="end" className="w-56">
+					<DropdownMenuLabel className="space-y-1 font-normal">
+						<p className="truncate text-sm font-semibold">
+							{user.display_name}
+						</p>
+						{isAdmin ? (
+							<Badge
+								variant="secondary"
+								className="border-sidebar-border bg-sidebar-accent text-sidebar-accent-foreground px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+							>
+								<Shield className="mr-1 h-3 w-3" />
+								Admin
+							</Badge>
+						) : user.organizer_id ? (
+							<OrganizerKindBadge
+								kind={user.organizer_kind ?? 'STUDENT_ASSOCIATION'}
+								showIcon
+								className="border-sidebar-border bg-sidebar-accent text-sidebar-accent-foreground"
+							/>
+						) : (
+							<Badge
+								variant="outline"
+								className="border-sidebar-border bg-sidebar-accent text-sidebar-accent-foreground px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+							>
+								<User className="mr-1 h-3 w-3" />
+								Benutzer
+							</Badge>
+						)}
+					</DropdownMenuLabel>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem
+						onClick={onLogout}
+						className="cursor-pointer text-destructive focus:text-destructive"
+					>
+						<LogOut className="h-4 w-4" />
+						Abmelden
+					</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenu>
+		)
+	}
 
 	return (
 		<TooltipProvider>

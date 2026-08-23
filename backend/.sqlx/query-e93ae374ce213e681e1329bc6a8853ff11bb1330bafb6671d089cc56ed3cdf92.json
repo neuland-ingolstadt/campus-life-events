@@ -6,27 +6,57 @@
       {
         "ordinal": 0,
         "name": "organizer_id",
-        "type_info": "Int8"
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "id"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "organizer_name",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "name"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "account_id",
-        "type_info": "Int8"
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "accounts",
+            "name": "id"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "account_email",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "accounts",
+            "name": "email"
+          }
+        }
       },
       {
         "ordinal": 4,
         "name": "newsletter",
-        "type_info": "Bool"
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "newsletter"
+          }
+        }
       },
       {
         "ordinal": 5,
@@ -41,32 +71,68 @@
               ]
             }
           }
+        },
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "organizer_kind"
+          }
         }
       },
       {
         "ordinal": 6,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "created_at"
+          }
+        }
       },
       {
         "ordinal": 7,
         "name": "updated_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "updated_at"
+          }
+        }
       },
       {
         "ordinal": 8,
         "name": "password_hash",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "accounts",
+            "name": "password_hash"
+          }
+        }
       },
       {
         "ordinal": 9,
         "name": "setup_token",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "accounts",
+            "name": "setup_token"
+          }
+        }
       },
       {
         "ordinal": 10,
         "name": "setup_token_expires_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "accounts",
+            "name": "setup_token_expires_at"
+          }
+        }
       }
     ],
     "parameters": {

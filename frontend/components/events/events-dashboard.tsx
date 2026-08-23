@@ -191,7 +191,11 @@ export function EventsDashboard({
 				? Number(organizer.value[0]) || undefined
 				: undefined,
 			visibility: Array.isArray(visibility?.value)
-				? (visibility.value[0] as 'public' | 'internal' | undefined)
+				? (visibility.value[0] as
+						| 'public'
+						| 'internal'
+						| 'host_only'
+						| undefined)
 				: undefined,
 			starts_from: toValidDate(range?.from)?.toISOString(),
 			starts_to: toValidDate(range?.to)?.toISOString(),
@@ -451,7 +455,8 @@ export function EventsDashboard({
 								title: 'Sichtbarkeit',
 								options: [
 									{ label: 'Öffentlich', value: 'public' },
-									{ label: 'Intern', value: 'internal' }
+									{ label: 'Intern', value: 'internal' },
+									{ label: 'Nur uns', value: 'host_only' }
 								]
 							}
 						],

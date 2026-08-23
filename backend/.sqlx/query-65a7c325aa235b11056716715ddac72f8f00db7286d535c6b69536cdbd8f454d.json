@@ -16,6 +16,12 @@
               ]
             }
           }
+        },
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "organizer_kind"
+          }
         }
       },
       {
@@ -30,6 +36,12 @@
                 "THI_DEPARTMENT"
               ]
             }
+          }
+        },
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "organizer_kind"
           }
         }
       }

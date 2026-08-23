@@ -27,26 +27,6 @@ docker compose up -d
 
 It exposes the database on `postgres://cle:cle_password@localhost:5422/cle_db` and a Redis instance on `redis://localhost:6379/0`.
 
-### Environment variables
-
-Create an `.env.local` file to mirror the values expected by `dotenvy` when the server boots:
-
-```bash
-DATABASE_URL=postgres://cle:cle_password@localhost:5422/cle_db
-ALLOWED_ORIGINS=http://localhost:3000
-REDIS_URL=redis://localhost:6380/0
-CACHE_TTL_SECONDS=60
-# Optional SMTP configuration
-SMTP_HOST=smtp.example.com
-SMTP_USERNAME=apikey
-SMTP_PASSWORD=secret
-SMTP_FROM_EMAIL=events@example.com
-SMTP_FROM_NAME=Campus Life Events
-BASE_URL=http://localhost:3000
-```
-
-Any missing SMTP variables will disable email sending and log invite/reset URLs to the console. If `REDIS_URL` is omitted the API will continue running without caching.
-
 ### Running the API
 
 ```bash
@@ -89,12 +69,3 @@ SQLX_OFFLINE=true cargo check
 ```
 
 The generated files live in the `.sqlx/` directory and are committed to version control.
-
-## Operational notes
-
-- CORS origins are controlled via the `ALLOWED_ORIGINS` variable (comma-separated list). Defaults cover local dashboard development.
-- Use `ALLOWED_ORIGIN_SUFFIXES` (comma-separated host suffixes such as `.expo.app`) to allow any `http://` or `https://` origin whose host matches a suffix. Exact origins from `ALLOWED_ORIGINS` are always allowed as well.
-- Security headers (`X-Frame-Options`, `X-Content-Type-Options`, and HSTS) are injected globally through `tower-http` middleware.
-- iCal feeds are available under `/api/ical/...` and are used by the frontend to export event calendars.
-
-Refer to `src/routes/` for the full list of endpoints and payloads; each module documents its handlers inline and is represented in the generated OpenAPI schema.

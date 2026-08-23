@@ -75,8 +75,8 @@ EVENT_TEMPLATES: list[tuple[str, str, str, str, str | None, str | None, int]] = 
     (
         "Open Mic Night",
         "Open mic night",
-        "Musik, Comedy, Spoken Word — Anmeldung am Abend.",
-        "Music, comedy, spoken word — sign-up on the night.",
+        "Musik, Comedy, Spoken Word - Anmeldung am Abend.",
+        "Music, comedy, spoken word - sign-up on the night.",
         "https://example.edu/culture/openmic",
         "Studentenkeller",
         3,
@@ -102,8 +102,8 @@ EVENT_TEMPLATES: list[tuple[str, str, str, str, str | None, str | None, int]] = 
     (
         "Basketball Pickup",
         "Basketball pickup",
-        "Offenes Spiel — bitte Hallenschuhe mitbringen.",
-        "Open run — indoor shoes required.",
+        "Offenes Spiel - bitte Hallenschuhe mitbringen.",
+        "Open run - indoor shoes required.",
         None,
         "Sporthalle West",
         2,
@@ -129,8 +129,8 @@ EVENT_TEMPLATES: list[tuple[str, str, str, str, str | None, str | None, int]] = 
     (
         "Nachhaltige Mobilität",
         "Sustainable mobility",
-        "Rad, ÖPNV, Carsharing — was lohnt sich wirklich?",
-        "Bike, public transport, carsharing — what actually pays off?",
+        "Rad, ÖPNV, Carsharing - was lohnt sich wirklich?",
+        "Bike, public transport, carsharing - what actually pays off?",
         "https://example.edu/green/mobility",
         "Audimax Foyer",
         2,
@@ -183,8 +183,8 @@ EVENT_TEMPLATES: list[tuple[str, str, str, str, str | None, str | None, int]] = 
     (
         "Repair Café",
         "Repair café",
-        "Elektronik und Textilien — Expert*innen helfen beim Fixen.",
-        "Electronics and textiles — experts help you fix things.",
+        "Elektronik und Textilien - Expert*innen helfen beim Fixen.",
+        "Electronics and textiles - experts help you fix things.",
         "https://example.edu/green/repair",
         "Werkstatt Mitte",
         3,

@@ -66,6 +66,7 @@ pub struct Event {
     pub publish_newsletter: bool,
     pub publish_in_ical: bool,
     pub publish_web: bool,
+    pub host_only: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -86,6 +87,7 @@ pub struct EventWithOrganizer {
     pub publish_newsletter: bool,
     pub publish_in_ical: bool,
     pub publish_web: bool,
+    pub host_only: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub organizer_name: String,

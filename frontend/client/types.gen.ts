@@ -75,6 +75,7 @@ export type CreateEventRequest = {
     description_en?: string | null;
     end_date_time: string;
     event_url?: string | null;
+    host_only?: boolean;
     location?: string | null;
     publish_app?: boolean;
     publish_in_ical?: boolean;
@@ -101,6 +102,7 @@ export type Event = {
     description_en?: string | null;
     end_date_time: string;
     event_url?: string | null;
+    host_only: boolean;
     id: number;
     location?: string | null;
     organizer_id: number;
@@ -116,7 +118,7 @@ export type Event = {
 
 export type EventSort = 'start_date_time' | 'end_date_time' | 'title_de' | 'effective_date_time';
 
-export type EventVisibility = 'public' | 'internal';
+export type EventVisibility = 'public' | 'internal' | 'host_only';
 
 export type EventWithOrganizer = {
     created_at: string;
@@ -124,6 +126,7 @@ export type EventWithOrganizer = {
     description_en?: string | null;
     end_date_time: string;
     event_url?: string | null;
+    host_only: boolean;
     id: number;
     location?: string | null;
     organizer_id: number;
@@ -179,22 +182,17 @@ export type ListAuditLogsQuery = {
 };
 
 export type ListEventsQuery = {
-    direction?: 'asc' | 'desc' | null;
+    direction?: null | SortDirection;
     limit?: number | null;
     offset?: number | null;
     organizer_id?: number | null;
     organizer_kind?: null | OrganizerKind;
     query?: string | null;
-    sort?: EventSort | null;
+    sort?: null | EventSort;
     starts_from?: string | null;
     starts_to?: string | null;
     upcoming_only?: boolean | null;
-    visibility?: EventVisibility | null;
-};
-
-export type PaginatedEventsResponse = {
-    items: Array<Event>;
-    total: number;
+    visibility?: null | EventVisibility;
 };
 
 export type ListPublicOrganizersQuery = {
@@ -266,6 +264,11 @@ export type OrganizerWithStatsResponse = {
     website_url?: string | null;
 };
 
+export type PaginatedEventsResponse = {
+    items: Array<Event>;
+    total: number;
+};
+
 export type PasswordResetRequestResponse = {
     message: string;
 };
@@ -280,6 +283,7 @@ export type PublicEventResponse = {
     organizer_id: number;
     organizer_kind: OrganizerKind;
     organizer_name: string;
+    publish_web: boolean;
     start_date_time: string;
     title_de: string;
     title_en: string;
@@ -329,6 +333,8 @@ export type SetupTokenResponse = {
     setup_token: string;
 };
 
+export type SortDirection = 'asc' | 'desc';
+
 export type UpdateAccountEmailRequest = {
     email: string;
 };
@@ -338,6 +344,7 @@ export type UpdateEventRequest = {
     description_en?: string | null;
     end_date_time?: string | null;
     event_url?: string | null;
+    host_only?: boolean | null;
     location?: string | null;
     publish_app?: boolean | null;
     publish_in_ical?: boolean | null;
@@ -807,7 +814,7 @@ export type ListEventsData = {
         starts_from?: string;
         starts_to?: string;
         sort?: EventSort;
-        direction?: 'asc' | 'desc';
+        direction?: SortDirection;
     };
     url: '/api/v1/events';
 };
@@ -1162,7 +1169,7 @@ export type ListPublicEventsData = {
         starts_from?: string;
         starts_to?: string;
         sort?: EventSort;
-        direction?: 'asc' | 'desc';
+        direction?: SortDirection;
     };
     url: '/api/v1/public/events';
 };

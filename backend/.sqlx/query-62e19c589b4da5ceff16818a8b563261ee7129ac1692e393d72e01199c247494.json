@@ -6,57 +6,123 @@
       {
         "ordinal": 0,
         "name": "id",
-        "type_info": "Int8"
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "id"
+          }
+        }
       },
       {
         "ordinal": 1,
         "name": "name",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "name"
+          }
+        }
       },
       {
         "ordinal": 2,
         "name": "description_de",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "description_de"
+          }
+        }
       },
       {
         "ordinal": 3,
         "name": "description_en",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "description_en"
+          }
+        }
       },
       {
         "ordinal": 4,
         "name": "website_url",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "website_url"
+          }
+        }
       },
       {
         "ordinal": 5,
         "name": "instagram_url",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "instagram_url"
+          }
+        }
       },
       {
         "ordinal": 6,
         "name": "location",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "location"
+          }
+        }
       },
       {
         "ordinal": 7,
         "name": "linkedin_url",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "linkedin_url"
+          }
+        }
       },
       {
         "ordinal": 8,
         "name": "registration_number",
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "registration_number"
+          }
+        }
       },
       {
         "ordinal": 9,
         "name": "non_profit",
-        "type_info": "Bool"
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "non_profit"
+          }
+        }
       },
       {
         "ordinal": 10,
         "name": "newsletter",
-        "type_info": "Bool"
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "newsletter"
+          }
+        }
       },
       {
         "ordinal": 11,
@@ -71,17 +137,35 @@
               ]
             }
           }
+        },
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "organizer_kind"
+          }
         }
       },
       {
         "ordinal": 12,
         "name": "created_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "created_at"
+          }
+        }
       },
       {
         "ordinal": 13,
         "name": "updated_at",
-        "type_info": "Timestamptz"
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "updated_at"
+          }
+        }
       }
     ],
     "parameters": {

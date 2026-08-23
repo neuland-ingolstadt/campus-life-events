@@ -16,6 +16,12 @@
               ]
             }
           }
+        },
+        "origin": {
+          "Table": {
+            "table": "organizers",
+            "name": "organizer_kind"
+          }
         }
       }
     ],

@@ -14,7 +14,11 @@ import { Moon } from './animate-ui/icons/moon'
 import { Sun } from './animate-ui/icons/sun'
 import { SunMoon } from './animate-ui/icons/sun-moon'
 
-export function ThemeToggle() {
+export function ThemeToggle({
+	menuSide = 'bottom'
+}: {
+	menuSide?: 'top' | 'right' | 'bottom' | 'left'
+}) {
 	const { theme, setTheme } = useTheme()
 	const [mounted, setMounted] = useState(false)
 
@@ -32,11 +36,11 @@ export function ThemeToggle() {
 
 	const renderIcon = () => {
 		if (theme === 'dark') {
-			return <Moon className="mr-2 h-4 w-4" animation="balancing" />
+			return <Moon className="h-4 w-4" animation="balancing" />
 		} else if (theme === 'light') {
-			return <Sun className="mr-2 h-4 w-4" />
+			return <Sun className="h-4 w-4" />
 		} else {
-			return <SunMoon className="mr-2 h-4 w-4" />
+			return <SunMoon className="h-4 w-4" />
 		}
 	}
 
@@ -45,19 +49,21 @@ export function ThemeToggle() {
 			<DropdownMenuTrigger asChild>
 				<AnimateIcon
 					animateOnHover
-					className="w-full justify-start hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md"
+					className="w-full justify-start hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:justify-center"
 				>
 					<Button
 						variant="ghost"
 						size="sm"
-						className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+						className="gap-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:p-0"
 					>
 						{renderIcon()}
-						<span className="truncate">Design: {activeLabel}</span>
+						<span className="truncate group-data-[collapsible=icon]:hidden">
+							Design: {activeLabel}
+						</span>
 					</Button>
 				</AnimateIcon>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align="start" className="w-40">
+			<DropdownMenuContent align="start" side={menuSide} className="w-40">
 				<DropdownMenuItem
 					onClick={() => setTheme('light')}
 					className="cursor-pointer focus:bg-accent focus:text-accent-foreground"
