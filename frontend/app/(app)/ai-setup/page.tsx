@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-const MCP_URL = 'https://cl.neuland.ing/mcp'
+const MCP_URL = 'https://cl.neuland-ingolstadt.de/mcp'
 
 type ToolSchema = {
 	name: string
