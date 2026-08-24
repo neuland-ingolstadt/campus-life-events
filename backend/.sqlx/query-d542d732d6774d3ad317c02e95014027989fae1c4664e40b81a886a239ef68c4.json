@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE oauth_pending_requests\n        SET consumed_at = NOW()\n        WHERE id = $1 AND consumed_at IS NULL\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d542d732d6774d3ad317c02e95014027989fae1c4664e40b81a886a239ef68c4"
+}

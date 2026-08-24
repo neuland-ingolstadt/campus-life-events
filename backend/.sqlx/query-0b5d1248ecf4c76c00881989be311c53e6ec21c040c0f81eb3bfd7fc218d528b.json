@@ -1,0 +1,88 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                UPDATE oauth_authorization_codes\n                SET used_at = NOW()\n                WHERE code_hmac = $1 AND used_at IS NULL AND expires_at > NOW()\n                RETURNING client_id, account_id, redirect_uri, code_challenge,\n                          code_challenge_method, resource\n                ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "client_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "oauth_authorization_codes",
+            "name": "client_id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "account_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "oauth_authorization_codes",
+            "name": "account_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "redirect_uri",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "oauth_authorization_codes",
+            "name": "redirect_uri"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "code_challenge",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "oauth_authorization_codes",
+            "name": "code_challenge"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "code_challenge_method",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "oauth_authorization_codes",
+            "name": "code_challenge_method"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "resource",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "oauth_authorization_codes",
+            "name": "resource"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "0b5d1248ecf4c76c00881989be311c53e6ec21c040c0f81eb3bfd7fc218d528b"
+}

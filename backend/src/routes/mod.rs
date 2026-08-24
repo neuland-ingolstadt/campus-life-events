@@ -7,6 +7,8 @@ pub(crate) mod health;
 pub(crate) mod ical;
 pub(crate) mod mcp;
 pub(crate) mod my_events;
+pub(crate) mod oauth;
+pub(crate) mod oauth_sessions;
 pub(crate) mod organizers;
 pub(crate) mod public_events;
 mod shared;
@@ -25,4 +27,5 @@ pub fn api_router() -> Router<AppState> {
         .nest("/audit-logs", audit::router())
         .nest("/public", public_events::router())
         .nest("/my-events", my_events::router())
+        .nest("/oauth", oauth::api_router())
 }

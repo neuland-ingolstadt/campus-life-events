@@ -1,14 +1,21 @@
 'use client'
 
-import { ArrowLeft, KeyRound, Sparkles, Terminal } from 'lucide-react'
-import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-	Accordion,
-	AccordionContent,
-	AccordionItem,
-	AccordionTrigger
-} from '@/components/ui/accordion'
+	Laptop,
+	MonitorSmartphone,
+	Sparkles,
+	Terminal,
+	Trash2
+} from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { toast } from 'sonner'
+import {
+	listOauthSessions,
+	revokeAllOauthSessions,
+	revokeOauthSession
+} from '@/client'
+import type { OAuthSessionSummaryResponse } from '@/client/types.gen'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -30,7 +37,7 @@ import {
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-const MCP_URL = 'https://cl.neuland.ing/mcp'
+const MCP_URL = 'https://cl.neuland-ingolstadt.de/mcp'
 
 type ToolSchema = {
 	name: string
@@ -224,6 +231,29 @@ const ADMIN_TOOLS: ToolSchema[] = [
 	}
 ]
 
+function formatDeDate(iso: string) {
+	return new Date(iso).toLocaleString('de-DE')
+}
+
+function sessionLabel(session: OAuthSessionSummaryResponse) {
+	const name = session.client_name?.trim()
+	if (name) return name
+	return `Gerät ${session.client_id.slice(0, 8)}…`
+}
+
+function errorMessage(err: unknown, fallback: string): string {
+	if (err instanceof Error) return err.message
+	if (
+		typeof err === 'object' &&
+		err !== null &&
+		'message' in err &&
+		typeof (err as { message: unknown }).message === 'string'
+	) {
+		return (err as { message: string }).message
+	}
+	return fallback
+}
+
 function ToolTable({ tools, filter }: { tools: ToolSchema[]; filter: string }) {
 	const normalized = filter.trim().toLowerCase()
 
@@ -312,6 +342,157 @@ function ToolTable({ tools, filter }: { tools: ToolSchema[]; filter: string }) {
 	)
 }
 
+function OAuthSessionsCard() {
+	const qc = useQueryClient()
+	const sessionsQuery = useQuery({
+		queryKey: ['auth', 'oauth-sessions'],
+		queryFn: async () => {
+			const response = await listOauthSessions({ throwOnError: true })
+			return (response.data ?? []) as OAuthSessionSummaryResponse[]
+		}
+	})
+
+	const revokeMutation = useMutation({
+		mutationFn: (id: number) =>
+			revokeOauthSession({ path: { id }, throwOnError: true }),
+		onSuccess: () => {
+			toast.success('Gerät entfernt')
+			void qc.invalidateQueries({ queryKey: ['auth', 'oauth-sessions'] })
+		},
+		onError: (err) => {
+			toast.error(errorMessage(err, 'Gerät konnte nicht entfernt werden'))
+		}
+	})
+
+	const revokeAllMutation = useMutation({
+		mutationFn: () => revokeAllOauthSessions({ throwOnError: true }),
+		onSuccess: () => {
+			toast.success('Alle Anmeldungen entfernt')
+			void qc.invalidateQueries({ queryKey: ['auth', 'oauth-sessions'] })
+		},
+		onError: (err) => {
+			toast.error(
+				errorMessage(err, 'Sitzungen konnten nicht widerrufen werden')
+			)
+		}
+	})
+
+	const sessions = sessionsQuery.data ?? []
+
+	return (
+		<Card>
+			<CardHeader>
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+					<div className="space-y-1.5">
+						<CardTitle className="text-xl flex items-center gap-2">
+							<MonitorSmartphone className="size-5" />
+							Aktive Anmeldungen
+						</CardTitle>
+						<CardDescription>
+							Mehrere Personen können dasselbe Club-Konto parallel nutzen. Jede
+							MCP-Verbindung (z. B. Cursor auf einem Laptop) erscheint hier als
+							eigene Anmeldung und lässt sich einzeln beenden.
+						</CardDescription>
+					</div>
+					{sessions.length > 0 ? (
+						<Button
+							type="button"
+							variant="outline"
+							size="sm"
+							className="shrink-0 text-destructive border-destructive/50 hover:bg-destructive/10"
+							disabled={revokeAllMutation.isPending}
+							onClick={() => {
+								if (
+									window.confirm(
+										'Alle MCP-Anmeldungen für dieses Konto wirklich beenden?'
+									)
+								) {
+									revokeAllMutation.mutate()
+								}
+							}}
+						>
+							{revokeAllMutation.isPending ? 'Entferne…' : 'Alle entfernen'}
+						</Button>
+					) : null}
+				</div>
+			</CardHeader>
+			<CardContent>
+				{sessionsQuery.isLoading ? (
+					<p className="text-sm text-muted-foreground">Lade Anmeldungen…</p>
+				) : sessionsQuery.isError ? (
+					<p className="text-sm text-destructive">
+						{errorMessage(
+							sessionsQuery.error,
+							'Sitzungen konnten nicht geladen werden'
+						)}
+					</p>
+				) : sessions.length === 0 ? (
+					<div className="rounded-lg border border-dashed p-6 text-center space-y-2">
+						<Laptop className="mx-auto size-8 text-muted-foreground" />
+						<p className="text-sm font-medium">
+							Noch keine aktiven Anmeldungen
+						</p>
+						<p className="text-sm text-muted-foreground text-pretty">
+							Sobald jemand MCP über OAuth verbindet, erscheint das Gerät hier.
+						</p>
+					</div>
+				) : (
+					<ul className="divide-y rounded-md border">
+						{sessions.map((session) => (
+							<li
+								key={session.id}
+								className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between"
+							>
+								<div className="min-w-0 space-y-1">
+									<p className="font-medium truncate">
+										{sessionLabel(session)}
+									</p>
+									<p className="text-xs text-muted-foreground">
+										verbunden {formatDeDate(session.created_at)}
+										{session.last_used_at
+											? ` · zuletzt ${formatDeDate(session.last_used_at)}`
+											: ' · noch nicht verwendet'}
+										{' · gültig bis '}
+										{formatDeDate(session.refresh_expires_at)}
+									</p>
+									<p className="text-[11px] font-mono text-muted-foreground truncate">
+										{session.client_id}
+									</p>
+								</div>
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									className="text-destructive border-destructive/50 hover:bg-destructive/10 shrink-0"
+									disabled={
+										revokeMutation.isPending &&
+										revokeMutation.variables === session.id
+									}
+									onClick={() => {
+										if (
+											window.confirm(
+												`Anmeldung „${sessionLabel(session)}“ wirklich entfernen?`
+											)
+										) {
+											revokeMutation.mutate(session.id)
+										}
+									}}
+								>
+									<Trash2 className="size-3.5 mr-1.5" />
+									{revokeMutation.isPending &&
+									revokeMutation.variables === session.id
+										? 'Entferne…'
+										: 'Entfernen'}
+								</Button>
+							</li>
+						))}
+					</ul>
+				)}
+			</CardContent>
+		</Card>
+	)
+}
+
 export default function McpSetupPage() {
 	const [toolFilter, setToolFilter] = useState('')
 
@@ -320,19 +501,11 @@ export default function McpSetupPage() {
 			<header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur-sm px-4">
 				<SidebarTrigger className="-ml-1" />
 				<div className="flex items-center gap-2 min-w-0">
-					<h1 className="text-lg font-semibold truncate">MCP Setup</h1>
+					<h1 className="text-lg font-semibold truncate">KI &amp; MCP</h1>
 				</div>
 			</header>
 
 			<div className="flex-1 space-y-8 p-4 md:p-8 pt-6 mb-12 max-w-4xl">
-				<Link
-					href="/"
-					className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-				>
-					<ArrowLeft className="size-4" />
-					Dashboard
-				</Link>
-
 				<div className="rounded-xl border bg-muted/10 p-6 md:p-8">
 					<div className="flex items-start gap-4">
 						<div className="mt-0.5 rounded-lg bg-secondary p-2">
@@ -353,142 +526,43 @@ export default function McpSetupPage() {
 									Model Context Protocol (MCP)
 								</a>{' '}
 								kannst du in Clients wie Cursor oder Claude direkt Tools nutzen,
-								um Events zu verwalten, Profilfelder zu pflegen und (falls
-								erlaubt) Newsletter-Daten abzurufen.
+								um Events zu verwalten, Profilfelder zu pflegen und
+								Newsletter-Daten abzurufen. Mehrere Geräte und Personen können
+								parallel angemeldet sein.
 							</p>
-							<div className="flex flex-wrap gap-2 pt-1">
-								<Badge variant="outline">JSON-RPC over HTTPS</Badge>
-								<Badge variant="outline">Bearer Token</Badge>
-								<Badge variant="outline">Protocol: 2025-03-26</Badge>
-							</div>
 						</div>
 					</div>
 				</div>
+
+				<OAuthSessionsCard />
 
 				<Card>
 					<CardHeader>
 						<CardTitle className="text-xl">Setup</CardTitle>
 						<CardDescription>
-							Kurz &amp; bündig: Token holen, Endpunkt eintragen, loslegen.
+							Endpunkt eintragen, im Browser anmelden, loslegen.
 						</CardDescription>
 					</CardHeader>
-					<CardContent className="text-sm">
-						<Accordion type="multiple" defaultValue={['token', 'cursor']}>
-							<AccordionItem value="token">
-								<AccordionTrigger>
-									<div className="flex items-center gap-2">
-										<KeyRound className="size-4 text-muted-foreground" />
-										<span>API-Token erzeugen</span>
-									</div>
-								</AccordionTrigger>
-								<AccordionContent className="space-y-3 text-muted-foreground text-pretty">
-									<ul className="list-disc pl-5 space-y-1">
-										<li>
-											Unter{' '}
-											<Link
-												href="/settings"
-												className="font-medium text-primary underline underline-offset-4"
-											>
-												Einstellungen
-											</Link>{' '}
-											→ <strong className="text-foreground">API-Token</strong>{' '}
-											ein neues Token erstellen.
-										</li>
-										<li>
-											Den Klartext{' '}
-											<strong className="text-foreground">
-												sofort kopieren
-											</strong>{' '}
-											(wird nur einmal angezeigt).
-										</li>
-										<li>
-											Token gilt 30 Tage und kann in derselben Ansicht
-											widerrufen werden.
-										</li>
-									</ul>
-									<div className="rounded-lg border bg-muted/30 p-3">
-										<code className="text-xs break-all">
-											Authorization: Bearer DEIN_TOKEN
-										</code>
-									</div>
-								</AccordionContent>
-							</AccordionItem>
-
-							<AccordionItem value="endpoint">
-								<AccordionTrigger>
-									<div className="flex items-center gap-2">
-										<Terminal className="size-4 text-muted-foreground" />
-										<span>MCP-Endpunkt</span>
-									</div>
-								</AccordionTrigger>
-								<AccordionContent className="space-y-3 text-muted-foreground text-pretty">
-									<p>
-										JSON-RPC über HTTPS POST. Der Endpunkt ist fix und lautet{' '}
-										<code className="text-xs bg-muted px-1 rounded">/mcp</code>.
-									</p>
-									<div className="rounded-lg border bg-muted/30 p-3">
-										<code className="text-xs sm:text-sm bg-muted px-2 py-1 rounded break-all">
-											{MCP_URL}
-										</code>
-									</div>
-								</AccordionContent>
-							</AccordionItem>
-
-							<AccordionItem value="cursor">
-								<AccordionTrigger>
-									<span>Cursor konfigurieren</span>
-								</AccordionTrigger>
-								<AccordionContent className="space-y-3 text-muted-foreground text-pretty">
-									<p>
-										Du kannst die Konfiguration in{' '}
-										<code className="text-xs bg-muted px-1 rounded">
-											.cursor/mcp.json
-										</code>{' '}
-										ablegen oder in den Cursor Settings eintragen.
-									</p>
-									<div className="rounded-lg border bg-muted/30 p-3 overflow-x-auto">
-										<pre className="text-xs leading-relaxed">
-											{`{
-  "mcpServers": {
-    "campus-life-events": {
-      "url": "${MCP_URL}",
-      "headers": {
-        "Authorization": "Bearer DEIN_API_TOKEN",
-        "Accept": "application/json, text/event-stream",
-        "MCP-Protocol-Version": "2025-03-26"
-      }
-    }
-  }
-}`}
-										</pre>
-									</div>
-									<p className="text-xs">
-										Wichtig: Token nicht committen. Wenn die Datei Secrets
-										enthält, sollte sie in der{' '}
-										<code className="text-xs bg-muted px-1 rounded">
-											.gitignore
-										</code>{' '}
-										stehen.
-									</p>
-								</AccordionContent>
-							</AccordionItem>
-
-							<AccordionItem value="other">
-								<AccordionTrigger>Claude &amp; andere Clients</AccordionTrigger>
-								<AccordionContent className="space-y-2 text-muted-foreground text-pretty">
-									<p>
-										Wenn dein Setup HTTP-basierte MCP-Server unterstützt,
-										verwende dieselbe{' '}
-										<code className="text-xs bg-muted px-1 rounded">url</code>{' '}
-										und dieselben{' '}
-										<code className="text-xs bg-muted px-1 rounded">
-											headers
-										</code>
-										.
-									</p>
-								</AccordionContent>
-							</AccordionItem>
-						</Accordion>
+					<CardContent className="space-y-4 text-sm text-muted-foreground text-pretty">
+						<p>
+							Trage in deinem MCP-Client (z. B. Cursor, Claude, OpenCode) nur
+							die URL ein. Beim ersten Verbindungsversuch öffnet sich der Login;
+							melde dich mit deinem Campus-Life-Events-Konto an und erlaube den
+							Zugriff. Jede Verbindung legt eine eigene Anmeldung an – andere
+							Geräte bleiben aktiv. Ein API-Token ist nicht nötig und wird am
+							Endpunkt nicht akzeptiert.
+						</p>
+						<div className="rounded-lg border bg-muted/30 p-3">
+							<div className="flex items-center gap-2 mb-2">
+								<Terminal className="size-4 shrink-0" />
+								<span className="text-xs font-medium text-foreground">
+									MCP-Endpunkt
+								</span>
+							</div>
+							<code className="text-xs sm:text-sm bg-muted px-2 py-1 rounded break-all text-foreground">
+								{MCP_URL}
+							</code>
+						</div>
 					</CardContent>
 				</Card>
 
@@ -496,12 +570,8 @@ export default function McpSetupPage() {
 					<CardHeader>
 						<CardTitle className="text-xl">Available tools</CardTitle>
 						<CardDescription>
-							Die Tool-Liste entspricht dem Backend (siehe{' '}
-							<code className="text-xs bg-muted px-1 rounded">
-								backend/src/routes/mcp.rs
-							</code>
-							). Welche Tools du siehst, hängt vom Account-Typ ab (Organizer vs
-							Admin).
+							Die Tool-Liste entspricht dem Backend. Welche Tools du siehst,
+							hängt vom Account-Typ ab (Organizer vs Admin).
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-4">
@@ -539,15 +609,6 @@ export default function McpSetupPage() {
 						</Tabs>
 					</CardContent>
 				</Card>
-
-				<div className="flex flex-wrap gap-3">
-					<Button asChild>
-						<Link href="/settings">API-Token</Link>
-					</Button>
-					<Button variant="outline" asChild>
-						<Link href="/">Dashboard</Link>
-					</Button>
-				</div>
 			</div>
 		</div>
 	)

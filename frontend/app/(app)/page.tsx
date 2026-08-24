@@ -20,6 +20,7 @@ import type {
 import { ExternalLink } from '@/components/animate-ui/icons/external-link'
 import { AnimateIcon } from '@/components/animate-ui/icons/icon'
 import { DashboardMcpTeaser } from '@/components/dashboard-mcp-teaser'
+import { McpAnnounceDialog } from '@/components/mcp-announce-dialog'
 import QuickActions from '@/components/quick-actions'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -129,6 +130,7 @@ export default function Dashboard() {
 
 	return (
 		<div className="flex flex-col min-h-screen">
+			<McpAnnounceDialog />
 			<header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 px-4">
 				<SidebarTrigger className="-ml-1" />
 				<div className="flex items-center gap-2">

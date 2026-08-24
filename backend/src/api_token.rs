@@ -44,7 +44,11 @@ pub async fn authed_user_from_bearer(
         return Err(AppError::unauthorized("invalid token"));
     };
 
-    if !raw_token.starts_with("cle_") {
+    if !raw_token.starts_with("cle_")
+        || raw_token.starts_with("cle_at_")
+        || raw_token.starts_with("cle_rt_")
+        || raw_token.starts_with("cle_ac_")
+    {
         return Err(AppError::unauthorized("invalid token"));
     }
 

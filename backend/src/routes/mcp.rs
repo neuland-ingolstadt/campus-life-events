@@ -2,6 +2,7 @@ use axum::{
     Json, Router,
     extract::State,
     http::{HeaderMap, StatusCode},
+    response::{IntoResponse, Response},
     routing::post,
 };
 use serde::{Deserialize, Serialize};
@@ -10,7 +11,6 @@ use tracing::{instrument, warn};
 use uuid::Uuid;
 
 use crate::{
-    api_token,
     app_state::AppState,
     dto::{
         CreateEventRequest, CreateOrganizerRequest, NewsletterDataQuery, UpdateEventRequest,
@@ -21,6 +21,8 @@ use crate::{
         AccountType, AdminInviteRow, AdminWithInvite, Event, Organizer, OrganizerInviteRow,
         OrganizerKind, OrganizerWithInvite,
     },
+    oauth,
+    routes::oauth::mcp_unauthorized_response,
 };
 
 use super::events::{
@@ -186,16 +188,16 @@ fn mcp_from_app_error(id: Value, err: AppError) -> (StatusCode, Json<JsonRpcResp
 fn bearer_token(headers: &HeaderMap) -> Result<&str, AppError> {
     let hv = headers
         .get(axum::http::header::AUTHORIZATION)
-        .ok_or_else(|| AppError::unauthorized("missing API token"))?
+        .ok_or_else(|| AppError::unauthorized("missing access token"))?
         .to_str()
-        .map_err(|_| AppError::unauthorized("invalid API token"))?;
+        .map_err(|_| AppError::unauthorized("invalid access token"))?;
     let rest = hv
         .strip_prefix("Bearer ")
         .or_else(|| hv.strip_prefix("bearer "))
-        .ok_or_else(|| AppError::unauthorized("invalid API token"))?;
+        .ok_or_else(|| AppError::unauthorized("invalid access token"))?;
     let t = rest.trim();
     if t.is_empty() {
-        return Err(AppError::unauthorized("invalid API token"));
+        return Err(AppError::unauthorized("invalid access token"));
     }
     Ok(t)
 }
@@ -205,7 +207,12 @@ async fn organizer_or_admin_authed_from_bearer(
     state: &AppState,
 ) -> Result<AuthedUser, AppError> {
     let raw = bearer_token(headers)?;
-    let user = api_token::authed_user_from_bearer(raw, state).await?;
+    if raw.starts_with("cle_") && !raw.starts_with("cle_at_") {
+        return Err(AppError::unauthorized(
+            "API tokens are no longer accepted on MCP; reconnect with OAuth",
+        ));
+    }
+    let user = oauth::authed_user_from_access_token(raw, state).await?;
     match user.account_type {
         AccountType::Admin => Ok(user),
         AccountType::Organizer if user.organizer_id.is_some() => Ok(user),
@@ -582,6 +589,24 @@ async fn handle_post(
     State(state): State<AppState>,
     headers: HeaderMap,
     Json(req): Json<JsonRpcRequest>,
+) -> Response {
+    match handle_post_inner(state, &headers, req).await {
+        Ok(ok) => ok.into_response(),
+        Err((status, body)) => {
+            if status == StatusCode::UNAUTHORIZED {
+                mcp_unauthorized_response(&headers, body)
+            } else {
+                (status, body).into_response()
+            }
+        }
+    }
+}
+
+#[allow(clippy::result_large_err)]
+async fn handle_post_inner(
+    state: AppState,
+    headers: &HeaderMap,
+    req: JsonRpcRequest,
 ) -> Result<(StatusCode, Json<JsonRpcResponse>), (StatusCode, Json<JsonRpcResponse>)> {
     let id = req
         .id
@@ -592,7 +617,7 @@ async fn handle_post(
         return Err(invalid_request(id, "jsonrpc must be '2.0'"));
     }
 
-    let user = organizer_or_admin_authed_from_bearer(&headers, &state)
+    let user = organizer_or_admin_authed_from_bearer(headers, &state)
         .await
         .map_err(|err| mcp_from_app_error(id.clone(), err))?;
 

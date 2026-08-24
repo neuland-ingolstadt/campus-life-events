@@ -292,9 +292,18 @@ pub(crate) async fn logout(
     if let Some(session_id) = get_cookie(&headers, "session_id") {
         if let Ok(uuid) = Uuid::parse_str(&session_id) {
             tracing::info!("User logout for session: {}", session_id);
-            let _ = sqlx::query!("DELETE FROM sessions WHERE id = $1", uuid)
-                .execute(&state.db)
+            let mut tx = state.db.begin().await?;
+            let account_id =
+                sqlx::query_scalar!("SELECT account_id FROM sessions WHERE id = $1", uuid)
+                    .fetch_optional(&mut *tx)
+                    .await?;
+            if let Some(account_id) = account_id {
+                crate::oauth::revoke_account_tokens(&mut *tx, account_id).await?;
+            }
+            sqlx::query!("DELETE FROM sessions WHERE id = $1", uuid)
+                .execute(&mut *tx)
                 .await?;
+            tx.commit().await?;
         }
         let attrs = session_cookie_attributes();
         let expired = format!("session_id=; {attrs}; Max-Age=0");
@@ -426,6 +435,7 @@ pub(crate) async fn change_password(
     )
     .execute(&mut *tx)
     .await?;
+    crate::oauth::revoke_account_tokens(&mut *tx, user.account_id).await?;
     tx.commit().await?;
 
     Ok(StatusCode::NO_CONTENT)
@@ -713,6 +723,7 @@ pub(crate) async fn reset_password(
     sqlx::query!("DELETE FROM sessions WHERE account_id = $1", account_id)
         .execute(&mut *tx)
         .await?;
+    crate::oauth::revoke_account_tokens(&mut *tx, account_id).await?;
 
     tx.commit().await?;
 
@@ -734,4 +745,5 @@ pub(crate) fn router() -> Router<AppState> {
         .route("/reset-password", post(reset_password))
         .route("/me", get(me))
         .merge(super::api_tokens::router())
+        .merge(super::oauth_sessions::router())
 }

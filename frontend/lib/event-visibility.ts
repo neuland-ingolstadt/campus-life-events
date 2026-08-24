@@ -21,20 +21,20 @@ export function deriveEventVisibilityMode(
 export function eventVisibilityLabel(mode: EventVisibilityMode): string {
 	switch (mode) {
 		case 'public':
-			return 'Extern'
+			return 'Bewerben'
 		case 'internal':
 			return 'Intern'
 		case 'host_only':
-			return 'Nur uns'
+			return 'Privat'
 	}
 }
 
 export function eventVisibilityTooltip(mode: EventVisibilityMode): string {
 	switch (mode) {
 		case 'public':
-			return 'Öffentliches Event: Beworben in Newsletter / App'
+			return 'Beworben in Newsletter / App'
 		case 'internal':
-			return 'Internes Event: Andere Vereine sehen es im Dashboard, nicht in App / Newsletter'
+			return 'Andere Vereine sehen es im Dashboard, nicht in App / Newsletter'
 		case 'host_only':
 			return 'Nur für eure Organisation – andere Vereine sehen es nicht'
 	}
@@ -43,7 +43,7 @@ export function eventVisibilityTooltip(mode: EventVisibilityMode): string {
 export function eventVisibilityDescription(mode: EventVisibilityMode): string {
 	switch (mode) {
 		case 'public':
-			return 'z. B. öffentlicher Vortrag oder Campus-Party – sichtbar für alle.'
+			return 'z. B. öffentlicher Vortrag oder Campus-Party – beworben in App und Newsletter.'
 		case 'internal':
 			return 'z. B. interner Stammtisch – andere Vereine sehen ihn im Dashboard, nicht in App/Newsletter.'
 		case 'host_only':

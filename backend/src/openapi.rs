@@ -16,8 +16,9 @@ use crate::{
     responses::{
         AccountEmailUpdatedResponse, ApiTokenCreatedResponse, ApiTokenSummaryResponse,
         AuthUserResponse, ErrorResponse, HealthResponse, NewsletterDataResponse,
-        OrganizerWithStatsResponse, PaginatedEventsResponse, PasswordResetRequestResponse,
-        PublicEventResponse, PublicOrganizerResponse, SetupTokenInfoResponse, SetupTokenResponse,
+        OAuthSessionSummaryResponse, OrganizerWithStatsResponse, PaginatedEventsResponse,
+        PasswordResetRequestResponse, PublicEventResponse, PublicOrganizerResponse,
+        SetupTokenInfoResponse, SetupTokenResponse,
     },
     routes,
 };
@@ -80,7 +81,10 @@ use crate::{
         routes::auth::reset_password,
         routes::api_tokens::list_api_tokens,
         routes::api_tokens::create_api_token,
-        routes::api_tokens::revoke_api_token
+        routes::api_tokens::revoke_api_token,
+        routes::oauth_sessions::list_oauth_sessions,
+        routes::oauth_sessions::revoke_oauth_session,
+        routes::oauth_sessions::revoke_all_oauth_sessions
     ),
     components(schemas(
         AdminWithInvite,
@@ -117,6 +121,7 @@ use crate::{
         CreateApiTokenRequest,
         ApiTokenSummaryResponse,
         ApiTokenCreatedResponse,
+        OAuthSessionSummaryResponse,
         SetupTokenResponse,
         AccountEmailUpdatedResponse,
         SetupTokenInfoResponse,

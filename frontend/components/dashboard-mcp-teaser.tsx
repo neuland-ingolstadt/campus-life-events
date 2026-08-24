@@ -101,7 +101,7 @@ export function DashboardMcpTeaser() {
 							verwalten, Organisationsinfos pflegen und mehr.
 						</p>
 						<Button asChild size="sm" className="mt-1">
-							<Link href="/ai-setup">MCP Setup</Link>
+							<Link href="/ai-setup">KI &amp; MCP</Link>
 						</Button>
 					</div>
 				</div>

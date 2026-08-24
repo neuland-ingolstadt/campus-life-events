@@ -260,7 +260,7 @@ export default function SettingsPage() {
 							Zugang für Automatisierung
 						</CardTitle>
 						<CardDescription>
-							Token für API-Zugriff (z. B. MCP oder Skripte), gültig 30 Tage ab
+							Token für API-Zugriff (z. B. iCal oder Skripte), gültig 30 Tage ab
 							Erstellung. Beim Aufruf Header{' '}
 							<code className="text-xs bg-muted px-1 rounded">
 								Authorization: Bearer …
