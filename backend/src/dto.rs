@@ -134,6 +134,15 @@ impl UpdateEventRequest {
 }
 
 #[derive(Debug, Deserialize, ToSchema, IntoParams)]
+#[serde(deny_unknown_fields)]
+#[into_params(parameter_in = Query)]
+pub struct ListMyEventsQuery {
+    pub upcoming_only: Option<bool>,
+    pub limit: Option<i64>,
+    pub offset: Option<i64>,
+}
+
+#[derive(Debug, Deserialize, ToSchema, IntoParams)]
 #[into_params(parameter_in = Query)]
 pub struct ListEventsQuery {
     pub organizer_id: Option<i64>,

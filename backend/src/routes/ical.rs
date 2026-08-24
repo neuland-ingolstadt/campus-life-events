@@ -1,5 +1,5 @@
 use axum::{
-    Json, Router,
+    Router,
     extract::{Path, State},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
@@ -11,11 +11,9 @@ use icalendar::{Calendar, Component, Event as ICalEvent, EventLike, Property};
 use tracing::{instrument, warn};
 
 use crate::{
-    api_token,
     app_state::AppState,
     error::AppError,
-    models::{Event, Organizer, OrganizerKind},
-    responses::IcalEventResponse,
+    models::{Organizer, OrganizerKind},
 };
 
 #[derive(Debug, Clone)]
@@ -343,106 +341,10 @@ fn build_ical_response_with_filename(
         .map_err(|_| AppError::internal("Failed to build response"))
 }
 
-fn extract_bearer_token(headers: &HeaderMap) -> Result<String, AppError> {
-    let header_value = headers
-        .get(axum::http::header::AUTHORIZATION)
-        .ok_or_else(|| AppError::unauthorized("missing API token"))?;
-
-    let header_str = header_value
-        .to_str()
-        .map_err(|_| AppError::unauthorized("invalid API token"))?;
-
-    let token = header_str
-        .strip_prefix("Bearer ")
-        .ok_or_else(|| AppError::unauthorized("invalid API token"))?
-        .trim();
-
-    if token.is_empty() {
-        return Err(AppError::unauthorized("invalid API token"));
-    }
-
-    Ok(token.to_string())
-}
-
-async fn validate_api_token(state: &AppState, headers: &HeaderMap) -> Result<(), AppError> {
-    let token = extract_bearer_token(headers)?;
-    api_token::authed_user_from_bearer(&token, state).await?;
-    Ok(())
-}
-
-#[utoipa::path(
-    get,
-    path = "/api/ical/{organizer_id}/events",
-    tag = "iCal",
-    params(
-        ("organizer_id" = i64, Path, description = "Organizer identifier"),
-        ("Authorization" = String, Header, description = "Bearer API token"),
-    ),
-    responses((status = 200, description = "Events for organizer that are iCal eligible", body = [IcalEventResponse])),
-)]
-#[instrument(skip(state, headers))]
-pub(crate) async fn list_organizer_ical_events(
-    State(state): State<AppState>,
-    Path(organizer_id): Path<i64>,
-    headers: HeaderMap,
-) -> Result<Json<Vec<IcalEventResponse>>, AppError> {
-    validate_api_token(&state, &headers).await?;
-
-    let organizer = sqlx::query!(
-        r#"
-        SELECT name
-        FROM organizers
-        WHERE id = $1
-        "#,
-        organizer_id
-    )
-    .fetch_optional(&state.db)
-    .await?;
-
-    let organizer = match organizer {
-        Some(organizer) => organizer,
-        None => return Err(AppError::not_found("Organizer not found")),
-    };
-
-    let events = sqlx::query_as::<_, Event>(
-        "SELECT id, organizer_id, title_de, title_en, description_de, description_en, start_date_time, end_date_time, event_url, location, publish_app, publish_newsletter, publish_in_ical, publish_web, host_only, created_at, updated_at FROM events WHERE organizer_id = $1 AND publish_in_ical = true ORDER BY start_date_time ASC",
-    )
-    .bind(organizer_id)
-    .fetch_all(&state.db)
-    .await?;
-
-    let organizer_name = organizer.name;
-
-    let response = events
-        .into_iter()
-        .map(|event| {
-            let is_internal = event.host_only || !(event.publish_app || event.publish_newsletter);
-
-            IcalEventResponse {
-                id: event.id,
-                organizer_id: event.organizer_id,
-                organizer_name: organizer_name.clone(),
-                title_de: event.title_de,
-                title_en: event.title_en,
-                description_de: event.description_de,
-                description_en: event.description_en,
-                start_date_time: event.start_date_time,
-                end_date_time: event.end_date_time,
-                event_url: event.event_url,
-                location: event.location,
-                is_internal,
-            }
-        })
-        .collect();
-
-    Ok(Json(response))
-}
-
 pub(crate) fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(get_all_events_ical))
         .route("/cl", get(get_cl_events_ical))
         .route("/thi", get(get_thi_events_ical))
         .route("/{organizer_id}", get(get_organizer_events_ical))
-        .route("/{organizer_id}/events", get(list_organizer_ical_events))
 }
