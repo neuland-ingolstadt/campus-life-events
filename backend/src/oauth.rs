@@ -43,12 +43,26 @@ pub fn pkce_s256_challenge(verifier: &str) -> String {
     URL_SAFE_NO_PAD.encode(hasher.finalize())
 }
 
+const MAX_REDIRECT_URI_LEN: usize = 2048;
+const BLOCKED_REDIRECT_SCHEMES: &[&str] = &[
+    "javascript",
+    "data",
+    "vbscript",
+    "file",
+    "blob",
+    "about",
+    "mailto",
+    "ftp",
+    "ws",
+    "wss",
+    "view-source",
+];
+
 pub fn is_loopback_redirect_uri(uri: &str) -> bool {
-    let Some(rest) = uri.strip_prefix("http://") else {
-        return false;
-    };
-    let authority = rest.split('/').next().unwrap_or("");
-    let host = host_from_http_authority(authority);
+    http_redirect_host(uri, "http://").is_some_and(is_loopback_host)
+}
+
+fn is_loopback_host(host: &str) -> bool {
     matches!(host, "127.0.0.1" | "localhost" | "[::1]" | "::1")
 }
 
@@ -65,28 +79,65 @@ fn host_from_http_authority(authority: &str) -> &str {
     }
 }
 
-fn uri_without_query(uri: &str) -> &str {
-    uri.split_once('?').map(|(p, _)| p).unwrap_or(uri)
+fn http_redirect_host<'a>(uri: &'a str, prefix: &str) -> Option<&'a str> {
+    let rest = uri.strip_prefix(prefix)?;
+    let without_query = rest.split_once('?').map(|(p, _)| p).unwrap_or(rest);
+    let authority = without_query.split('/').next().unwrap_or("");
+    if authority.is_empty() || authority.contains('@') {
+        return None;
+    }
+    let host = host_from_http_authority(authority);
+    if host.is_empty() {
+        return None;
+    }
+    Some(host)
 }
 
-fn is_cursor_native_redirect_uri(uri: &str) -> bool {
-    let base = uri_without_query(uri);
-    base == "cursor://anysphere.cursor-mcp/oauth/callback"
-        || base.starts_with("cursor://anysphere.cursor-mcp/")
+fn is_https_redirect_uri(uri: &str) -> bool {
+    http_redirect_host(uri, "https://").is_some()
 }
 
-fn is_cursor_https_redirect_uri(uri: &str) -> bool {
-    matches!(
-        uri_without_query(uri),
-        "https://www.cursor.com/agents/mcp/oauth/callback"
-            | "https://cursor.com/agents/mcp/oauth/callback"
-    )
+fn is_valid_uri_scheme(scheme: &str) -> bool {
+    let mut chars = scheme.chars();
+    let Some(first) = chars.next() else {
+        return false;
+    };
+    first.is_ascii_alphabetic()
+        && scheme.len() >= 2
+        && scheme.len() <= 64
+        && chars.all(|c| c.is_ascii_alphanumeric() || matches!(c, '+' | '.' | '-'))
+}
+
+fn is_native_app_redirect_uri(uri: &str) -> bool {
+    let Some((scheme, rest)) = uri.split_once(':') else {
+        return false;
+    };
+    let scheme = scheme.to_ascii_lowercase();
+    if !is_valid_uri_scheme(&scheme) || BLOCKED_REDIRECT_SCHEMES.contains(&scheme.as_str()) {
+        return false;
+    }
+    if matches!(scheme.as_str(), "http" | "https") {
+        return false;
+    }
+    let Some(after_slashes) = rest.strip_prefix("//") else {
+        return false;
+    };
+    let without_query = after_slashes
+        .split_once('?')
+        .map(|(p, _)| p)
+        .unwrap_or(after_slashes);
+    let host = without_query.split('/').next().unwrap_or("");
+    !host.is_empty() && !host.contains('@') && !host.contains('\\')
 }
 
 pub fn is_allowed_redirect_uri(uri: &str) -> bool {
-    is_loopback_redirect_uri(uri)
-        || is_cursor_native_redirect_uri(uri)
-        || is_cursor_https_redirect_uri(uri)
+    if uri.is_empty() || uri.len() > MAX_REDIRECT_URI_LEN {
+        return false;
+    }
+    if uri.contains('#') || uri.chars().any(char::is_whitespace) {
+        return false;
+    }
+    is_loopback_redirect_uri(uri) || is_https_redirect_uri(uri) || is_native_app_redirect_uri(uri)
 }
 
 pub async fn authed_user_from_access_token(
@@ -152,17 +203,36 @@ mod tests {
     use super::*;
 
     #[test]
-    fn accepts_cursor_dcr_redirects() {
+    fn accepts_mcp_client_redirects() {
         assert!(is_allowed_redirect_uri(
             "cursor://anysphere.cursor-mcp/oauth/callback"
         ));
         assert!(is_allowed_redirect_uri(
             "https://www.cursor.com/agents/mcp/oauth/callback"
         ));
+        assert!(is_allowed_redirect_uri(
+            "https://claude.ai/api/mcp/auth_callback"
+        ));
+        assert!(is_allowed_redirect_uri(
+            "vscode://anthropic.claude/oauth/callback"
+        ));
+        assert!(is_allowed_redirect_uri(
+            "https://opencode.ai/oauth/callback"
+        ));
+        assert!(is_allowed_redirect_uri(
+            "http://127.0.0.1:19876/mcp/oauth/callback"
+        ));
         assert!(is_allowed_redirect_uri("http://localhost:8787/callback"));
         assert!(is_allowed_redirect_uri("http://127.0.0.1:8787/callback"));
         assert!(is_allowed_redirect_uri("http://[::1]:8787/callback"));
-        assert!(!is_allowed_redirect_uri("https://evil.example/callback"));
         assert!(!is_allowed_redirect_uri("http://example.com/callback"));
+        assert!(!is_allowed_redirect_uri("javascript:alert(1)"));
+        assert!(!is_allowed_redirect_uri("data:text/html,pwned"));
+        assert!(!is_allowed_redirect_uri("file:///etc/passwd"));
+        assert!(!is_allowed_redirect_uri("https://evil.example/cb#fragment"));
+        assert!(!is_allowed_redirect_uri(
+            "https://user:pass@evil.example/cb"
+        ));
+        assert!(!is_allowed_redirect_uri("cursor:///empty-host"));
     }
 }

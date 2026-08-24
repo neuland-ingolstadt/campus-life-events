@@ -397,7 +397,7 @@ async fn register_client(
         return Err(OAuthError::new(
             StatusCode::BAD_REQUEST,
             "invalid_redirect_uri",
-            "no supported redirect_uris (loopback http, cursor://, or cursor.com callback)",
+            "no supported redirect_uris (loopback http, https, or native app URI scheme)",
         ));
     }
 

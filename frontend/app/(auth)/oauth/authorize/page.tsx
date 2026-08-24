@@ -52,6 +52,15 @@ async function submitConsent(
 	return res.json()
 }
 
+const BLOCKED_REDIRECT_PROTOCOLS = new Set([
+	'javascript:',
+	'data:',
+	'vbscript:',
+	'file:',
+	'blob:',
+	'about:'
+])
+
 function isLoopbackHttpRedirect(uri: string): boolean {
 	try {
 		const parsed = new URL(uri)
@@ -62,6 +71,26 @@ function isLoopbackHttpRedirect(uri: string): boolean {
 	} catch {
 		return false
 	}
+}
+
+function isSafeRedirectTarget(uri: string): boolean {
+	try {
+		const parsed = new URL(uri)
+		if (BLOCKED_REDIRECT_PROTOCOLS.has(parsed.protocol.toLowerCase())) {
+			return false
+		}
+		if (parsed.protocol === 'http:') {
+			return ['127.0.0.1', 'localhost', '[::1]'].includes(parsed.hostname)
+		}
+		return uri.length > 0 && uri.length <= 2048 && !uri.includes('#')
+	} catch {
+		return false
+	}
+}
+
+function withQueryParam(uri: string, key: string, value: string): string {
+	const sep = uri.includes('?') ? '&' : '?'
+	return `${uri}${sep}${encodeURIComponent(key)}=${encodeURIComponent(value)}`
 }
 
 function OAuthAuthorizeInner() {
@@ -89,6 +118,9 @@ function OAuthAuthorizeInner() {
 		setError(null)
 		try {
 			const { redirect_to } = await submitConsent(pending.request_id)
+			if (!isSafeRedirectTarget(redirect_to)) {
+				throw new Error('Ungültige redirect_uri')
+			}
 			window.location.assign(redirect_to)
 		} catch (err) {
 			setError(err instanceof Error ? err.message : 'Freigabe fehlgeschlagen')
@@ -98,13 +130,21 @@ function OAuthAuthorizeInner() {
 
 	function onDeny() {
 		if (!pending) return
+		if (!isSafeRedirectTarget(pending.redirect_uri)) {
+			setError('Ungültige redirect_uri')
+			return
+		}
 		try {
 			const url = new URL(pending.redirect_uri)
 			url.searchParams.set('error', 'access_denied')
 			if (pending.state) url.searchParams.set('state', pending.state)
 			window.location.assign(url.toString())
 		} catch {
-			setError('Ungültige redirect_uri')
+			let next = withQueryParam(pending.redirect_uri, 'error', 'access_denied')
+			if (pending.state) {
+				next = withQueryParam(next, 'state', pending.state)
+			}
+			window.location.assign(next)
 		}
 	}
 
