@@ -526,7 +526,7 @@ export function EventForm({
 										className="flex-1 gap-1.5 text-xs sm:text-sm"
 									>
 										<Globe2 />
-										Öffentlich
+										Bewerben
 									</TabsTrigger>
 									<TabsTrigger
 										value="internal"
@@ -540,7 +540,7 @@ export function EventForm({
 										className="flex-1 gap-1.5 text-xs sm:text-sm"
 									>
 										<Lock />
-										Nur uns
+										Privat
 									</TabsTrigger>
 								</TabsList>
 							</Tabs>

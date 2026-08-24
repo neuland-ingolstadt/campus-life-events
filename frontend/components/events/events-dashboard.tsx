@@ -454,9 +454,9 @@ export function EventsDashboard({
 								column: 'visibility',
 								title: 'Sichtbarkeit',
 								options: [
-									{ label: 'Öffentlich', value: 'public' },
+									{ label: 'Bewerben', value: 'public' },
 									{ label: 'Intern', value: 'internal' },
-									{ label: 'Nur uns', value: 'host_only' }
+									{ label: 'Privat', value: 'host_only' }
 								]
 							}
 						],
