@@ -213,6 +213,16 @@ export type NewsletterDataResponse = {
     week_after_start: string;
 };
 
+export type OAuthSessionSummaryResponse = {
+    access_expires_at: string;
+    client_id: string;
+    client_name?: string | null;
+    created_at: string;
+    id: number;
+    last_used_at?: string | null;
+    refresh_expires_at: string;
+};
+
 export type Organizer = {
     created_at: string;
     description_de?: string | null;
@@ -737,6 +747,84 @@ export type MeResponses = {
 };
 
 export type MeResponse = MeResponses[keyof MeResponses];
+
+export type RevokeAllOauthSessionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/oauth-sessions';
+};
+
+export type RevokeAllOauthSessionsErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type RevokeAllOauthSessionsResponses = {
+    /**
+     * All sessions revoked
+     */
+    204: void;
+};
+
+export type RevokeAllOauthSessionsResponse = RevokeAllOauthSessionsResponses[keyof RevokeAllOauthSessionsResponses];
+
+export type ListOauthSessionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/oauth-sessions';
+};
+
+export type ListOauthSessionsErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+};
+
+export type ListOauthSessionsResponses = {
+    /**
+     * Active MCP OAuth sessions for the current account
+     */
+    200: Array<OAuthSessionSummaryResponse>;
+};
+
+export type ListOauthSessionsResponse = ListOauthSessionsResponses[keyof ListOauthSessionsResponses];
+
+export type RevokeOauthSessionData = {
+    body?: never;
+    path: {
+        /**
+         * OAuth session (token) id
+         */
+        id: number;
+    };
+    query?: never;
+    url: '/api/v1/auth/oauth-sessions/{id}';
+};
+
+export type RevokeOauthSessionErrors = {
+    /**
+     * Not authenticated
+     */
+    401: unknown;
+    /**
+     * Not found
+     */
+    404: unknown;
+};
+
+export type RevokeOauthSessionResponses = {
+    /**
+     * Revoked
+     */
+    204: void;
+};
+
+export type RevokeOauthSessionResponse = RevokeOauthSessionResponses[keyof RevokeOauthSessionResponses];
 
 export type LookupSetupTokenData = {
     body: SetupTokenLookupRequest;

@@ -8,6 +8,7 @@ mod email;
 mod error;
 mod event_sort;
 mod models;
+mod oauth;
 mod openapi;
 mod responses;
 mod routes;
@@ -146,12 +147,19 @@ async fn main() {
     let api_token_hmac_key = api_token_secret
         .as_deref()
         .map(crate::api_token::derive_key);
+    let oauth_token_hmac_key = api_token_secret.as_deref().map(crate::oauth::derive_key);
     if api_token_hmac_key.is_some() {
         info!(
             target: "startup",
             component = "api_tokens",
             action = "init",
             "API token management enabled"
+        );
+        info!(
+            target: "startup",
+            component = "oauth",
+            action = "init",
+            "MCP OAuth enabled"
         );
     } else {
         warn!(
@@ -161,6 +169,12 @@ async fn main() {
             path = %backend_dir.join(".env.local").display(),
             "API token management disabled; set API_TOKEN_SECRET in the environment or in .env.local next to backend/Cargo.toml"
         );
+        warn!(
+            target: "startup",
+            component = "oauth",
+            action = "init",
+            "MCP OAuth disabled; set API_TOKEN_SECRET to enable"
+        );
     }
 
     let state = AppState {
@@ -168,6 +182,7 @@ async fn main() {
         email: email_client,
         cache,
         api_token_hmac_key,
+        oauth_token_hmac_key,
     };
 
     let cors = cors_config::build_cors_layer();
@@ -197,6 +212,7 @@ async fn main() {
     let app = Router::new()
         .merge(api)
         .merge(routes::mcp::router())
+        .merge(routes::oauth::well_known_router())
         .layer(cors)
         .layer(SetResponseHeaderLayer::overriding(
             header::X_FRAME_OPTIONS,

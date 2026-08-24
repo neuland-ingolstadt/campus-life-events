@@ -1,0 +1,74 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT t.id, a.id as account_id, a.account_type as \"account_type: AccountType\", a.organizer_id\n        FROM oauth_tokens t\n        JOIN accounts a ON a.id = t.account_id\n        WHERE t.access_token_hmac = $1\n          AND t.access_expires_at > NOW()\n          AND t.revoked_at IS NULL\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "oauth_tokens",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "account_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "accounts",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "account_type: AccountType",
+        "type_info": {
+          "Custom": {
+            "name": "account_type",
+            "kind": {
+              "Enum": [
+                "ADMIN",
+                "ORGANIZER"
+              ]
+            }
+          }
+        },
+        "origin": {
+          "Table": {
+            "table": "accounts",
+            "name": "account_type"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "organizer_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "accounts",
+            "name": "organizer_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "012e225c3086dd6a41495b70aa56b77aa207eeb162eaf0a0bf0e126aa86d0568"
+}

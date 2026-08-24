@@ -1,0 +1,136 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT id, client_id, redirect_uri, code_challenge, code_challenge_method,\n               state, resource, issuer, expires_at, consumed_at\n        FROM oauth_pending_requests\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "oauth_pending_requests",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "client_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "oauth_pending_requests",
+            "name": "client_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "redirect_uri",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "oauth_pending_requests",
+            "name": "redirect_uri"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "code_challenge",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "oauth_pending_requests",
+            "name": "code_challenge"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "code_challenge_method",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "oauth_pending_requests",
+            "name": "code_challenge_method"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "state",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "oauth_pending_requests",
+            "name": "state"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "resource",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "oauth_pending_requests",
+            "name": "resource"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "issuer",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "oauth_pending_requests",
+            "name": "issuer"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "expires_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "oauth_pending_requests",
+            "name": "expires_at"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "consumed_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "oauth_pending_requests",
+            "name": "consumed_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "f59759660c10b14930530495d76f02d867559b893acab7936e80d621d8f5856d"
+}

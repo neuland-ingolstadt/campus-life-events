@@ -6,7 +6,7 @@ This service exposes the REST and OpenAPI interface that powers the Campus Life 
 
 - **Web framework**: [Axum](https://github.com/tokio-rs/axum) with layered middleware for CORS and security headers.
 - **Database layer**: [SQLx](https://github.com/launchbadge/sqlx) with asynchronous PostgreSQL access and migrations stored in `migrations/`.
-- **Domain modules**: Route handlers grouped under `src/routes/` for health checks, authentication, events, organizers, audit logs, iCal feeds, and admin utilities.
+- **Domain modules**: Route handlers grouped under `src/routes/` for health checks, authentication, events, organizers, audit logs, iCal feeds, MCP, OAuth, and admin utilities.
 - **OpenAPI spec**: `src/openapi.rs` uses `utoipa` to derive documentation that is served at `/swagger-ui`.
 - **Email notifications**: `src/email.rs` wires SMTP configuration (via Lettre) for invitations and password flows; falls back to logging links when SMTP is absent.
 
@@ -35,6 +35,34 @@ cargo run
 ```
 
 On startup the server applies migrations from `migrations/`, binds to `0.0.0.0:8080`, and exposes documentation at `http://localhost:8080/swagger-ui`.
+
+### MCP OAuth (Cursor)
+
+Remote MCP at `POST /mcp` supports OAuth 2.1 (authorization code + PKCE) with the same email/password accounts as the dashboard. Multiple concurrent OAuth sessions are allowed (shared club credentials across devices). Manage and revoke them under **KI** in the dashboard (`/ai-setup`). Cursor only needs the MCP URL; the first connect opens `{BASE_URL}/oauth/authorize` for login and consent. API tokens are not accepted on `/mcp`.
+
+Relevant endpoints:
+
+- `GET /.well-known/oauth-protected-resource` (and `/mcp` variant)
+- `GET /api/v1/oauth/protected-resource`
+- `GET /api/v1/oauth/.well-known/oauth-authorization-server`
+- `POST /api/v1/oauth/register`, `/token`, `/consent`
+- `GET /api/v1/auth/oauth-sessions`, `DELETE /api/v1/auth/oauth-sessions/{id}`, `DELETE /api/v1/auth/oauth-sessions`
+
+Set `API_TOKEN_SECRET` (required for both API tokens and OAuth HMAC), `BASE_URL` (frontend origin for the login/consent page, default `http://localhost:3000`), and `PUBLIC_API_URL` (canonical API origin for OAuth issuer/metadata). Locally that is `http://localhost:8080`; in production it is the public origin that serves `/api` and `/mcp`. Cursor talks to `GET /api/v1/oauth/authorize`; the API then redirects to `{BASE_URL}/oauth/authorize?request=…` so Next.js never sees the large PKCE query string.
+
+In production, ingress must send `/.well-known/oauth-*` and `/api` (and `/mcp`) to this backend; `{BASE_URL}/oauth/authorize` is served by the frontend.
+
+Example Cursor config:
+
+```json
+{
+  "mcpServers": {
+    "campus-life-events": {
+      "url": "http://localhost:8080/mcp"
+    }
+  }
+}
+```
 
 ### Applying migrations manually
 

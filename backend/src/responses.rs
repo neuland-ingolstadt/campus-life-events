@@ -42,6 +42,17 @@ pub struct ApiTokenSummaryResponse {
 }
 
 #[derive(Debug, Serialize, ToSchema)]
+pub struct OAuthSessionSummaryResponse {
+    pub id: i64,
+    pub client_id: String,
+    pub client_name: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub access_expires_at: DateTime<Utc>,
+    pub refresh_expires_at: DateTime<Utc>,
+    pub last_used_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
 pub struct ApiTokenCreatedResponse {
     pub id: i64,
     pub label: String,

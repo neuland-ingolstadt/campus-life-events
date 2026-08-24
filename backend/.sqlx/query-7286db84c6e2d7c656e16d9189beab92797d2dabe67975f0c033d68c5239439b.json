@@ -1,0 +1,76 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT id, account_id, client_id, refresh_expires_at, revoked_at\n                FROM oauth_tokens\n                WHERE refresh_token_hmac = $1\n                ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "oauth_tokens",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "account_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "oauth_tokens",
+            "name": "account_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "client_id",
+        "type_info": "Uuid",
+        "origin": {
+          "Table": {
+            "table": "oauth_tokens",
+            "name": "client_id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "refresh_expires_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "oauth_tokens",
+            "name": "refresh_expires_at"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "revoked_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "oauth_tokens",
+            "name": "revoked_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bytea"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "7286db84c6e2d7c656e16d9189beab92797d2dabe67975f0c033d68c5239439b"
+}

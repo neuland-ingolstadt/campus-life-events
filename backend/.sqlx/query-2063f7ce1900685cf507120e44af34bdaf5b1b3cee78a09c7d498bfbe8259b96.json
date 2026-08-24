@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT account_id FROM sessions WHERE id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "account_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "sessions",
+            "name": "account_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "2063f7ce1900685cf507120e44af34bdaf5b1b3cee78a09c7d498bfbe8259b96"
+}
