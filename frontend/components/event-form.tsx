@@ -9,7 +9,7 @@ import {
 	SlidersHorizontal
 } from 'lucide-react'
 import Link from 'next/link'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 
@@ -114,6 +114,7 @@ export function EventForm({
 	const [startDate, setStartDate] = useState<Date>()
 	const [endDate, setEndDate] = useState<Date>()
 	const [channelsOpen, setChannelsOpen] = useState(false)
+	const endAutoFilledRef = useRef(false)
 
 	const form = useForm<EventFormValues>({
 		resolver: zodResolver(eventSchema),
@@ -200,11 +201,22 @@ export function EventForm({
 		if (value) {
 			form.clearErrors('start_date_time')
 			form.setValue('start_date_time', value, { shouldDirty: true })
+
+			if (!endDate || endAutoFilledRef.current) {
+				const nextEnd = new Date(value.getTime() + 60 * 60 * 1000)
+				endAutoFilledRef.current = true
+				setEndDate(nextEnd)
+				form.clearErrors('end_date_time')
+				form.setValue('end_date_time', nextEnd, { shouldDirty: true })
+				validateChronology(value, nextEnd)
+				return
+			}
 		}
 		validateChronology(value, endDate)
 	}
 
 	const handleEndDateChange = (value?: Date) => {
+		endAutoFilledRef.current = false
 		setEndDate(value)
 		if (value) {
 			form.clearErrors('end_date_time')
@@ -283,6 +295,7 @@ export function EventForm({
 		form.reset(resolvedValues)
 		setStartDate(nextStartDate)
 		setEndDate(nextEndDate)
+		endAutoFilledRef.current = false
 		validateChronology(nextStartDate, nextEndDate)
 	}, [event, form, initialValues, validateChronology])
 
