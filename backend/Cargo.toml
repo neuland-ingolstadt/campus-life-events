@@ -7,7 +7,7 @@ edition = "2024"
 opt-level = 3
 
 [dependencies]
-aws-lc-rs = "=1.18.0"
+aws-lc-rs = "=1.18.1"
 axum = "=0.8.9"
 chrono = { version = "=0.4.45", features = ["serde"] }
 dotenvy = "=0.15.7"
@@ -15,10 +15,10 @@ serde = { version = "=1.0.229", features = ["derive"] }
 serde_json = "=1.0.151"
 sqlx = { version = "=0.9.0", features = ["runtime-tokio", "tls-rustls-aws-lc-rs", "postgres", "chrono", "uuid", "migrate"] }
 tokio = { version = "=1.53.1", features = ["full"] }
-tower-http = { version = "=0.7.0", features = ["cors", "set-header"] }
+tower-http = { version = "=0.7.1", features = ["cors", "set-header"] }
 uuid = { version = "=1.26.0", features = ["serde", "v4"] }
 thiserror = "=2.0.20"
-redis = { version = "=1.6.0", features = ["tokio-comp"] }
+redis = { version = "=1.7.0", features = ["tokio-comp"] }
 utoipa = { version = "=5.5.0", features = ["chrono", "uuid"] }
 utoipa-swagger-ui = { version = "=9.0.2", features = ["axum", "vendored"] }
 tracing = "=0.1.44"
