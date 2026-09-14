@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { deleteEvent, getEvent, updateEvent } from '@/client'
+import { getEvent, updateEvent } from '@/client'
 import type { Event, UpdateEventRequest } from '@/client/types.gen'
 import { EventForm } from '@/components/event-form'
 import {
@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { me } from '@/lib/auth'
+import { scheduleOptimisticEventDelete } from '@/lib/optimistic-event-delete'
 
 export default function EditEventPage() {
 	const router = useRouter()
@@ -83,11 +84,17 @@ export default function EditEventPage() {
 		}
 	}
 
-	async function onDelete() {
-		await deleteEvent({ path: { id }, throwOnError: true })
-		await qc.invalidateQueries({ queryKey: ['events'] })
-		await qc.invalidateQueries({ queryKey: ['event', id] })
-		router.push('/events')
+	function onDelete() {
+		if (!data) {
+			return
+		}
+		scheduleOptimisticEventDelete({
+			queryClient: qc,
+			event: data,
+			onRemoved: () => {
+				router.push('/events')
+			}
+		})
 	}
 
 	return (

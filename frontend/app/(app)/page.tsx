@@ -1,19 +1,21 @@
 'use client'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { addDays, startOfDay } from 'date-fns'
+import { addDays, formatDistanceStrict, startOfDay } from 'date-fns'
+import { de } from 'date-fns/locale'
 import {
 	AlertTriangle,
 	Calendar,
 	ChevronRight,
 	Clock,
+	MapPin,
+	Pencil,
 	Plus,
-	TrendingUp,
-	Users
+	TrendingUp
 } from 'lucide-react'
 import Link from 'next/link'
-import { useCallback, useMemo, useState } from 'react'
-import { deleteEvent, listEvents, listOrganizers } from '@/client'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { listEvents, listOrganizers } from '@/client'
 import type {
 	Event as ApiEvent,
 	Organizer as ApiOrganizer
@@ -28,13 +30,12 @@ import { McpAnnounceDialog } from '@/components/mcp-announce-dialog'
 import QuickActions from '@/components/quick-actions'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { me } from '@/lib/auth'
 import { formatInCampusTimeZone } from '@/lib/date-time'
 import { deriveEventVisibilityMode } from '@/lib/event-visibility'
+import { scheduleOptimisticEventDelete } from '@/lib/optimistic-event-delete'
 
 const weekSkeletonKeys = [
 	'week-skeleton-1',
@@ -43,8 +44,20 @@ const weekSkeletonKeys = [
 	'week-skeleton-4'
 ]
 
+function useNowTicker(intervalMs = 60_000) {
+	const [now, setNow] = useState(() => new Date())
+
+	useEffect(() => {
+		const id = window.setInterval(() => setNow(new Date()), intervalMs)
+		return () => window.clearInterval(id)
+	}, [intervalMs])
+
+	return now
+}
+
 export default function Dashboard() {
 	const qc = useQueryClient()
+	const now = useNowTicker()
 	const { data: user } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
 	const { data: events = [], isLoading: eventsLoading } = useQuery<ApiEvent[]>({
 		queryKey: ['events'],
@@ -68,7 +81,6 @@ export default function Dashboard() {
 	const [sheetMode, setSheetMode] = useState<EventSheetMode>('view')
 	const [sheetOpen, setSheetOpen] = useState(false)
 
-	const now = useMemo(() => new Date(), [])
 	const organizerList = organizers
 	const isAdmin = user?.account_type === 'ADMIN'
 	const organizerId = user?.organizer_id ?? undefined
@@ -84,20 +96,34 @@ export default function Dashboard() {
 			!currentUserOrganizer.website_url)
 
 	const userEvents = events.filter((e) => e.organizer_id === user?.organizer_id)
-	const userUpcomingEvents = userEvents.filter(
-		(e) => new Date(e.start_date_time) > now
+	const userUpcomingEvents = useMemo(
+		() =>
+			userEvents
+				.filter((e) => new Date(e.start_date_time) > now)
+				.sort(
+					(a, b) =>
+						new Date(a.start_date_time).getTime() -
+						new Date(b.start_date_time).getTime()
+				),
+		[userEvents, now]
 	)
 	const userPublishedEvents = userEvents.filter((e) => e.publish_app)
+	const nextUpEvent = userUpcomingEvents[0] ?? null
+
+	const nextUpRelative = useMemo(() => {
+		if (!nextUpEvent) {
+			return null
+		}
+		return formatDistanceStrict(new Date(nextUpEvent.start_date_time), now, {
+			addSuffix: true,
+			locale: de
+		})
+	}, [nextUpEvent, now])
 
 	const thisWeekEvents = useMemo(() => {
 		const weekEnd = addDays(startOfDay(now), 7)
 		return userUpcomingEvents
 			.filter((event) => new Date(event.start_date_time) <= weekEnd)
-			.sort(
-				(a, b) =>
-					new Date(a.start_date_time).getTime() -
-					new Date(b.start_date_time).getTime()
-			)
 			.slice(0, 5)
 	}, [userUpcomingEvents, now])
 
@@ -121,46 +147,28 @@ export default function Dashboard() {
 		setSheetOpen(true)
 	}, [])
 
+	const openEdit = useCallback((event: ApiEvent) => {
+		setSelectedEvent(event)
+		setSheetMode('edit')
+		setSheetOpen(true)
+	}, [])
+
 	const onDelete = useCallback(
-		async (id: number) => {
-			await deleteEvent({ path: { id } })
-			await qc.invalidateQueries({
-				predicate: (q) => q.queryKey[0] === 'events'
+		(event: ApiEvent) => {
+			scheduleOptimisticEventDelete({
+				queryClient: qc,
+				event,
+				onRemoved: () => {
+					if (selectedEvent?.id === event.id) {
+						setSheetOpen(false)
+						setSelectedEvent(null)
+						setSheetMode('view')
+					}
+				}
 			})
-			if (selectedEvent?.id === id) {
-				setSheetOpen(false)
-				setSelectedEvent(null)
-			}
 		},
 		[qc, selectedEvent?.id]
 	)
-
-	const stats = [
-		{
-			title: 'Anstehend',
-			value: userUpcomingEvents.length,
-			icon: Clock,
-			description: 'Kommende eigene Events'
-		},
-		{
-			title: 'Bewerben',
-			value: userPublishedEvents.length,
-			icon: TrendingUp,
-			description: 'In App / Newsletter'
-		},
-		{
-			title: 'Deine Events',
-			value: userEvents.length || 0,
-			icon: Calendar,
-			description: 'Gesamt'
-		},
-		{
-			title: 'Organisationen',
-			value: organizerList.length,
-			icon: Users,
-			description: 'Im System'
-		}
-	]
 
 	return (
 		<div className="flex flex-col min-h-screen">
@@ -221,34 +229,136 @@ export default function Dashboard() {
 					</div>
 				) : (
 					<>
-						<div className="space-y-4">
+						<section className="space-y-4">
 							<h3 className="text-lg font-semibold">Übersicht</h3>
-							<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-								{stats.map((stat) => (
-									<Card
-										key={stat.title}
-										className="transition-colors hover:bg-muted/50"
-									>
-										<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-											<CardTitle className="text-sm font-medium">
-												{stat.title}
-											</CardTitle>
-											<stat.icon className="h-4 w-4 text-primary" />
-										</CardHeader>
-										<CardContent>
-											<div className="text-2xl font-bold text-primary">
-												{stat.value}
+							{eventsLoading ? (
+								<div className="grid gap-4 lg:grid-cols-3">
+									<Skeleton className="h-48 w-full rounded-lg lg:col-span-2" />
+									<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+										<Skeleton className="h-[5.5rem] w-full rounded-lg" />
+										<Skeleton className="h-[5.5rem] w-full rounded-lg" />
+									</div>
+								</div>
+							) : (
+								<div className="grid gap-4 lg:grid-cols-3 lg:items-stretch">
+									{nextUpEvent ? (
+										<div className="flex h-full min-h-48 flex-col gap-4 rounded-lg border bg-card p-5 sm:p-6 lg:col-span-2">
+											<div className="flex flex-wrap items-center justify-between gap-2">
+												<p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+													Nächstes Event
+												</p>
+												<EventVisibilityIndicator
+													mode={deriveEventVisibilityMode(nextUpEvent)}
+												/>
 											</div>
-											<p className="text-xs text-muted-foreground">
-												{stat.description}
-											</p>
-										</CardContent>
-									</Card>
-								))}
-							</div>
-						</div>
 
-						<Separator className="my-6" />
+											<button
+												type="button"
+												onClick={() => openEvent(nextUpEvent)}
+												className="rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+											>
+												<h4 className="text-xl font-semibold tracking-tight leading-snug">
+													{nextUpEvent.title_de}
+												</h4>
+												<p className="mt-2 text-sm text-muted-foreground">
+													<span className="font-medium text-foreground">
+														{nextUpRelative}
+													</span>
+													<span className="mx-1.5 text-border">·</span>
+													<span className="tabular-nums">
+														{formatInCampusTimeZone(
+															new Date(nextUpEvent.start_date_time),
+															'EEEE, dd.MM.yyyy · HH:mm'
+														)}
+													</span>
+												</p>
+												{nextUpEvent.location ? (
+													<p className="mt-2 inline-flex max-w-full items-center gap-1.5 text-sm text-muted-foreground">
+														<MapPin className="size-3.5 shrink-0" />
+														<span className="truncate">
+															{nextUpEvent.location}
+														</span>
+													</p>
+												) : null}
+											</button>
+
+											<div className="mt-auto flex flex-wrap gap-2 pt-1">
+												<Button
+													type="button"
+													size="sm"
+													onClick={() => openEdit(nextUpEvent)}
+												>
+													<Pencil className="size-3.5" />
+													Bearbeiten
+												</Button>
+												<Button
+													type="button"
+													size="sm"
+													variant="outline"
+													onClick={() => openEvent(nextUpEvent)}
+												>
+													Details
+													<ChevronRight className="size-3.5" />
+												</Button>
+											</div>
+										</div>
+									) : (
+										<div className="flex min-h-48 flex-col items-start justify-center gap-3 rounded-lg border border-dashed px-5 py-6 sm:px-6 lg:col-span-2">
+											<p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+												Nächstes Event
+											</p>
+											<div>
+												<p className="text-base font-medium">
+													Kein anstehendes Event
+												</p>
+												<p className="mt-1 text-sm text-muted-foreground">
+													Plane dein nächstes Campus-Event – der Countdown
+													startet hier.
+												</p>
+											</div>
+											{organizerId !== undefined ? (
+												<Button type="button" size="sm" onClick={openCreate}>
+													<Plus className="size-4" />
+													Event erstellen
+												</Button>
+											) : null}
+										</div>
+									)}
+
+									<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 lg:content-stretch">
+										<div className="flex h-full flex-col justify-between rounded-lg border bg-card p-5">
+											<div className="flex items-center justify-between gap-2">
+												<p className="text-sm font-medium">Anstehend</p>
+												<Clock className="size-4 text-muted-foreground" />
+											</div>
+											<div className="mt-4">
+												<p className="text-3xl font-bold tracking-tight tabular-nums">
+													{userUpcomingEvents.length}
+												</p>
+												<p className="mt-1 text-xs text-muted-foreground">
+													Kommende eigene Events
+												</p>
+											</div>
+										</div>
+
+										<div className="flex h-full flex-col justify-between rounded-lg border bg-card p-5">
+											<div className="flex items-center justify-between gap-2">
+												<p className="text-sm font-medium">Bewerben</p>
+												<TrendingUp className="size-4 text-muted-foreground" />
+											</div>
+											<div className="mt-4">
+												<p className="text-3xl font-bold tracking-tight tabular-nums">
+													{userPublishedEvents.length}
+												</p>
+												<p className="mt-1 text-xs text-muted-foreground">
+													In App / Newsletter
+												</p>
+											</div>
+										</div>
+									</div>
+								</div>
+							)}
+						</section>
 
 						<section className="space-y-4">
 							<div className="flex flex-wrap items-end justify-between gap-3">

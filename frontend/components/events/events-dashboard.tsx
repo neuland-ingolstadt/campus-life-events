@@ -22,7 +22,7 @@ import {
 	useState
 } from 'react'
 import { toast } from 'sonner'
-import { deleteEvent, getEvent, listEvents, listOrganizers } from '@/client'
+import { getEvent, listEvents, listOrganizers } from '@/client'
 import type {
 	Event as ApiEvent,
 	Organizer as ApiOrganizer
@@ -37,6 +37,7 @@ import { EventsMobileList } from '@/components/events/events-mobile-list'
 import { EventsPageShell } from '@/components/events/events-page-shell'
 import { useEventColumns } from '@/components/events/use-event-columns'
 import { me } from '@/lib/auth'
+import { scheduleOptimisticEventDelete } from '@/lib/optimistic-event-delete'
 
 const DATE_FILTER_ID = 'start_date_time'
 
@@ -357,15 +358,18 @@ export function EventsDashboard({
 	)
 
 	const onDelete = useCallback(
-		async (id: number) => {
-			await deleteEvent({ path: { id } })
-			await qc.invalidateQueries({
-				predicate: (q) => q.queryKey[0] === 'events'
+		(event: ApiEvent) => {
+			scheduleOptimisticEventDelete({
+				queryClient: qc,
+				event,
+				onRemoved: () => {
+					if (selectedEvent?.id === event.id) {
+						setSheetOpen(false)
+						setSelectedEvent(null)
+						setSheetMode('view')
+					}
+				}
 			})
-			if (selectedEvent?.id === id) {
-				setSheetOpen(false)
-				setSelectedEvent(null)
-			}
 		},
 		[qc, selectedEvent?.id]
 	)
@@ -574,10 +578,11 @@ export function EventsDashboard({
 					organizerId === selectedEvent.organizer_id
 				}
 				canManage={
-					selectedEvent !== null &&
-					(isAdmin ||
-						(organizerId !== undefined &&
-							organizerId === selectedEvent.organizer_id))
+					sheetMode === 'create' ||
+					(selectedEvent !== null &&
+						(isAdmin ||
+							(organizerId !== undefined &&
+								organizerId === selectedEvent.organizer_id)))
 				}
 				onDelete={onDelete}
 			/>

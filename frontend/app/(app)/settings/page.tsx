@@ -326,7 +326,7 @@ export default function SettingsPage() {
 									id={apiLabelId}
 									value={apiLabel}
 									onChange={(e) => setApiLabel(e.target.value)}
-									placeholder="z. B. MCP Laptop"
+									placeholder="z. B. API Website"
 									maxLength={200}
 									autoComplete="off"
 								/>
@@ -507,6 +507,17 @@ export default function SettingsPage() {
 								</div>
 							)}
 						</div>
+						<p className="text-sm text-muted-foreground">
+							Built by{' '}
+							<a
+								href="https://eggl.dev"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="font-medium text-foreground transition-colors hover:text-primary"
+							>
+								Robert Eggl
+							</a>
+						</p>
 					</CardContent>
 				</Card>
 			</div>

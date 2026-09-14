@@ -1,14 +1,16 @@
 import { de } from 'date-fns/locale'
 import { formatInTimeZone } from 'date-fns-tz'
-import { Clock, ExternalLink, MapPin, Share2, Users } from 'lucide-react'
+import { CalendarDays, ExternalLink, MapPin } from 'lucide-react'
+import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { AuthFooter } from '@/components/auth/auth-footer'
-import { ShareButtons } from '@/components/share-buttons'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
+import NeulandPalm from '@/components/neuland-palm'
+import { PublicEventActions } from '@/components/public-event-actions'
+import { ThemeToggle } from '@/components/theme-toggle'
+import { UnifiedFooter } from '@/components/unified-footer'
+import { CAMPUS_TIME_ZONE } from '@/lib/date-time'
 
-type Event = {
+type PublicEvent = {
 	id: number
 	organizer_id: number
 	title_de: string
@@ -22,7 +24,7 @@ type Event = {
 	publish_web: boolean
 }
 
-type Organizer = {
+type PublicOrganizer = {
 	id: number
 	name: string
 	description_de?: string
@@ -30,14 +32,13 @@ type Organizer = {
 	website_url?: string
 	instagram_url?: string
 	location?: string
-	created_at: string
-	updated_at: string
 }
 
-const baseUrl = process.env.BACKEND_URL || 'http://localhost:8080'
+const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080'
+const siteUrl = process.env.BASE_URL || process.env.NEXT_PUBLIC_SITE_URL
 
-async function getPublicEvent(id: number): Promise<Event> {
-	const response = await fetch(`${baseUrl}/api/v1/public/events/${id}`, {
+async function getPublicEvent(id: number): Promise<PublicEvent> {
+	const response = await fetch(`${backendUrl}/api/v1/public/events/${id}`, {
 		cache: 'no-store'
 	})
 
@@ -48,11 +49,14 @@ async function getPublicEvent(id: number): Promise<Event> {
 	return response.json()
 }
 
-async function getPublicOrganizer(id: number): Promise<Organizer | null> {
+async function getPublicOrganizer(id: number): Promise<PublicOrganizer | null> {
 	try {
-		const response = await fetch(`${baseUrl}/api/v1/public/organizers/${id}`, {
-			cache: 'no-store'
-		})
+		const response = await fetch(
+			`${backendUrl}/api/v1/public/organizers/${id}`,
+			{
+				cache: 'no-store'
+			}
+		)
 
 		if (!response.ok) {
 			return null
@@ -64,13 +68,93 @@ async function getPublicOrganizer(id: number): Promise<Organizer | null> {
 	}
 }
 
+function formatCampus(date: string, pattern: string) {
+	return formatInTimeZone(new Date(date), CAMPUS_TIME_ZONE, pattern, {
+		locale: de
+	})
+}
+
+function mapsUrl(location: string) {
+	return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`
+}
+
+function sameDay(startIso: string, endIso: string) {
+	return (
+		formatCampus(startIso, 'yyyy-MM-dd') === formatCampus(endIso, 'yyyy-MM-dd')
+	)
+}
+
+export async function generateMetadata({
+	params
+}: {
+	params: Promise<{ id: string }>
+}): Promise<Metadata> {
+	const { id: rawId } = await params
+	const id = Number(rawId)
+
+	if (!Number.isFinite(id)) {
+		return {
+			title: 'Event nicht gefunden'
+		}
+	}
+
+	try {
+		const event = await getPublicEvent(id)
+		if (!event.publish_web) {
+			return { title: 'Event nicht gefunden' }
+		}
+
+		const when = formatCampus(
+			event.start_date_time,
+			"EEEE, d. MMMM yyyy 'um' HH:mm"
+		)
+		const description = [
+			when,
+			event.location,
+			event.description_de?.slice(0, 140)
+		]
+			.filter(Boolean)
+			.join(' · ')
+
+		const canonical = siteUrl
+			? `${siteUrl.replace(/\/$/, '')}/e/${event.id}`
+			: undefined
+
+		return {
+			title: event.title_de,
+			description,
+			robots: {
+				index: true,
+				follow: true
+			},
+			alternates: canonical ? { canonical } : undefined,
+			openGraph: {
+				title: event.title_de,
+				description,
+				type: 'website',
+				locale: 'de_DE',
+				url: canonical
+			},
+			twitter: {
+				card: 'summary',
+				title: event.title_de,
+				description
+			}
+		}
+	} catch {
+		return {
+			title: 'Event nicht gefunden'
+		}
+	}
+}
+
 export default async function PublicEventPage({
 	params
 }: {
 	params: Promise<{ id: string }>
 }) {
-	const resolvedParams = await params
-	const id = Number(resolvedParams.id)
+	const { id: rawId } = await params
+	const id = Number(rawId)
 
 	if (!Number.isFinite(id)) {
 		notFound()
@@ -86,217 +170,189 @@ export default async function PublicEventPage({
 		? await getPublicOrganizer(event.organizer_id)
 		: null
 
-	const formatDateTime = (date: string) => {
-		return formatInTimeZone(
-			new Date(date),
-			'Europe/Berlin',
-			"EEEE, d. MMMM yyyy 'um' HH:mm",
-			{
-				locale: de
-			}
-		)
-	}
-
-	const formatTime = (date: string) => {
-		return formatInTimeZone(new Date(date), 'Europe/Berlin', 'HH:mm')
-	}
+	const showEnglishTitle =
+		Boolean(event.title_en) && event.title_en !== event.title_de
+	const isSameDay = sameDay(event.start_date_time, event.end_date_time)
+	const startLabel = formatCampus(
+		event.start_date_time,
+		"EEEE, d. MMMM yyyy '·' HH:mm"
+	)
+	const endLabel = isSameDay
+		? formatCampus(event.end_date_time, 'HH:mm')
+		: formatCampus(event.end_date_time, "EEEE, d. MMMM yyyy '·' HH:mm")
 
 	return (
-		<div className="min-h-screen bg-background flex flex-col">
-			{/* Header */}
+		<div className="relative flex min-h-screen flex-col bg-background">
 			<div
-				className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur-sm"
-				style={{
-					backdropFilter: 'blur(8px)',
-					WebkitBackdropFilter: 'blur(8px)'
-				}}
+				className="pointer-events-none absolute inset-0 overflow-hidden"
+				aria-hidden
 			>
-				<div className="container mx-auto px-4 py-6">
-					<div className="max-w-4xl mx-auto">
-						<div className="flex items-center justify-between">
-							<div>
-								<h1 className="text-3xl font-bold text-foreground">
-									{event.title_de}
-								</h1>
-								<p className="text-muted-foreground mt-1">{event.title_en}</p>
+				<div className="absolute inset-x-0 top-0 h-[28rem] bg-[radial-gradient(ellipse_at_top,oklch(0.92_0.02_250/_0.55),transparent_60%)] dark:bg-[radial-gradient(ellipse_at_top,oklch(0.28_0.03_250/_0.5),transparent_60%)]" />
+			</div>
+
+			<header className="relative z-10 border-b">
+				<div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between gap-3 px-4 sm:px-6">
+					<Link
+						href="https://neuland-ingolstadt.de"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="inline-flex items-center gap-2.5 text-foreground"
+					>
+						<NeulandPalm className="size-6" color="currentColor" />
+						<span className="text-sm font-semibold tracking-tight">
+							Campus Life
+						</span>
+					</Link>
+					<ThemeToggle variant="page" menuSide="bottom" />
+				</div>
+			</header>
+
+			<main className="relative z-10 mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-10 sm:px-6 sm:py-14">
+				<section className="space-y-8">
+					<div className="space-y-4">
+						<p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+							Öffentliches Event
+						</p>
+						<div className="space-y-2">
+							<h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
+								{event.title_de}
+							</h1>
+							{showEnglishTitle ? (
+								<p className="text-lg text-muted-foreground sm:text-xl">
+									{event.title_en}
+								</p>
+							) : null}
+						</div>
+
+						<div className="space-y-3 pt-2 text-base sm:text-lg">
+							<div className="flex items-start gap-3">
+								<CalendarDays className="mt-1 size-5 shrink-0 text-muted-foreground" />
+								<div className="min-w-0">
+									<p className="font-medium tabular-nums">{startLabel}</p>
+									<p className="text-sm text-muted-foreground tabular-nums sm:text-base">
+										bis {endLabel}
+										<span className="text-muted-foreground/80">
+											{' '}
+											· Europe/Berlin
+										</span>
+									</p>
+								</div>
 							</div>
-						</div>
-					</div>
-				</div>
-			</div>
 
-			{/* Main Content */}
-			<div className="flex-1 container mx-auto px-4 py-8">
-				<div className="max-w-4xl mx-auto">
-					<div className="grid gap-6 lg:grid-cols-3">
-						{/* Event Details */}
-						<div className="lg:col-span-2 space-y-6">
-							{/* Event Info */}
-							<Card>
-								<CardHeader>
-									<CardTitle className="flex items-center gap-2">
-										<Clock className="h-5 w-5" />
-										Event Details
-									</CardTitle>
-								</CardHeader>
-								<CardContent className="space-y-4">
-									{/* Date and Time */}
-									<div className="flex items-start gap-4">
-										<Clock className="h-5 w-5 text-muted-foreground mt-1" />
-										<div>
-											<p className="font-semibold">
-												{formatDateTime(event.start_date_time)}
-											</p>
-											<p className="text-sm text-muted-foreground">
-												bis {formatTime(event.end_date_time)}
-											</p>
-										</div>
+							{event.location ? (
+								<div className="flex items-start gap-3">
+									<MapPin className="mt-1 size-5 shrink-0 text-muted-foreground" />
+									<div className="min-w-0">
+										<a
+											href={mapsUrl(event.location)}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="font-medium underline-offset-4 hover:underline"
+										>
+											{event.location}
+										</a>
+										<p className="text-sm text-muted-foreground">
+											In Maps öffnen
+										</p>
 									</div>
-
-									{/* Location */}
-									{event.location && (
-										<div className="flex items-start gap-4">
-											<MapPin className="h-5 w-5 text-muted-foreground mt-1" />
-											<div>
-												<p className="font-semibold">Ort</p>
-												<p className="text-muted-foreground">
-													{event.location}
-												</p>
-											</div>
-										</div>
-									)}
-
-									{/* Event URL */}
-									{event.event_url && (
-										<div className="flex items-start gap-4">
-											<ExternalLink className="h-5 w-5 text-muted-foreground mt-1" />
-											<div>
-												<p className="font-semibold">Weitere Informationen</p>
-												<a
-													href={event.event_url}
-													target="_blank"
-													rel="noopener noreferrer"
-													className="text-primary hover:underline"
-												>
-													{event.event_url}
-												</a>
-											</div>
-										</div>
-									)}
-
-									<Separator />
-
-									{/* Description */}
-									{event.description_de && (
-										<div>
-											<h3 className="font-semibold mb-2">Beschreibung</h3>
-											<p className="text-muted-foreground whitespace-pre-wrap">
-												{event.description_de}
-											</p>
-										</div>
-									)}
-
-									{event.description_en && (
-										<div>
-											<h3 className="font-semibold mb-2">
-												Englische Beschreibung
-											</h3>
-											<p className="text-muted-foreground whitespace-pre-wrap">
-												{event.description_en}
-											</p>
-										</div>
-									)}
-								</CardContent>
-							</Card>
-						</div>
-
-						{/* Sidebar */}
-						<div className="space-y-6">
-							{/* Organizer Info */}
-							<Card>
-								<CardHeader>
-									<CardTitle className="flex items-center gap-2">
-										<Users className="h-5 w-5" />
-										Veranstalter
-									</CardTitle>
-								</CardHeader>
-								<CardContent className="space-y-4">
-									{organizer ? (
-										<>
-											<div>
-												<h4 className="font-semibold">{organizer.name}</h4>
-												{organizer.description_de && (
-													<p className="text-sm text-muted-foreground mt-1">
-														{organizer.description_de}
-													</p>
-												)}
-												{organizer.description_en && (
-													<p className="text-sm text-muted-foreground mt-1">
-														{organizer.description_en}
-													</p>
-												)}
-											</div>
-
-											{organizer.location && (
-												<div className="flex items-center gap-2">
-													<MapPin className="h-4 w-4 text-muted-foreground" />
-													<span className="text-sm text-muted-foreground">
-														{organizer.location}
-													</span>
-												</div>
-											)}
-
-											<div className="flex gap-2">
-												{organizer.website_url && (
-													<Button variant="outline" size="sm" asChild>
-														<a
-															href={organizer.website_url}
-															target="_blank"
-															rel="noopener noreferrer"
-														>
-															Website
-														</a>
-													</Button>
-												)}
-												{organizer.instagram_url && (
-													<Button variant="outline" size="sm" asChild>
-														<a
-															href={organizer.instagram_url}
-															target="_blank"
-															rel="noopener noreferrer"
-														>
-															Instagram
-														</a>
-													</Button>
-												)}
-											</div>
-										</>
-									) : (
-										<div className="text-sm text-muted-foreground">
-											Keine Organisator-Informationen verfügbar.
-										</div>
-									)}
-								</CardContent>
-							</Card>
-
-							{/* Share */}
-							<Card>
-								<CardHeader>
-									<CardTitle className="flex items-center gap-2">
-										<Share2 className="h-5 w-5" />
-										Teilen
-									</CardTitle>
-								</CardHeader>
-								<CardContent className="space-y-3">
-									<ShareButtons eventTitle={event.title_de} />
-								</CardContent>
-							</Card>
+								</div>
+							) : null}
 						</div>
 					</div>
-				</div>
-			</div>
 
-			<AuthFooter />
+					<PublicEventActions
+						title={event.title_de}
+						description={event.description_de}
+						location={event.location}
+						eventUrl={event.event_url}
+						startIso={event.start_date_time}
+						endIso={event.end_date_time}
+					/>
+				</section>
+
+				{(event.description_de || event.description_en) && (
+					<section className="mt-12 space-y-6 border-t pt-10">
+						{event.description_de ? (
+							<div className="space-y-3">
+								<h2 className="text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground">
+									Beschreibung
+								</h2>
+								<p className="whitespace-pre-wrap text-base leading-relaxed text-foreground/90">
+									{event.description_de}
+								</p>
+							</div>
+						) : null}
+						{event.description_en ? (
+							<div className="space-y-3">
+								<h2 className="text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground">
+									Description
+								</h2>
+								<p className="whitespace-pre-wrap text-base leading-relaxed text-muted-foreground">
+									{event.description_en}
+								</p>
+							</div>
+						) : null}
+					</section>
+				)}
+
+				{organizer ? (
+					<section className="mt-12 space-y-4 border-t pt-10">
+						<h2 className="text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground">
+							Veranstalter
+						</h2>
+						<div className="space-y-3">
+							<p className="text-xl font-semibold tracking-tight">
+								{organizer.name}
+							</p>
+							{organizer.description_de ? (
+								<p className="text-sm leading-relaxed text-muted-foreground">
+									{organizer.description_de}
+								</p>
+							) : organizer.description_en ? (
+								<p className="text-sm leading-relaxed text-muted-foreground">
+									{organizer.description_en}
+								</p>
+							) : null}
+							{organizer.location ? (
+								<p className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+									<MapPin className="size-3.5 shrink-0" />
+									{organizer.location}
+								</p>
+							) : null}
+							{(organizer.website_url || organizer.instagram_url) && (
+								<div className="flex flex-wrap gap-x-4 gap-y-2 pt-1 text-sm">
+									{organizer.website_url ? (
+										<a
+											href={organizer.website_url}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="inline-flex items-center gap-1.5 font-medium underline-offset-4 hover:underline"
+										>
+											Website
+											<ExternalLink className="size-3.5" />
+										</a>
+									) : null}
+									{organizer.instagram_url ? (
+										<a
+											href={organizer.instagram_url}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="inline-flex items-center gap-1.5 font-medium underline-offset-4 hover:underline"
+										>
+											Instagram
+											<ExternalLink className="size-3.5" />
+										</a>
+									) : null}
+								</div>
+							)}
+						</div>
+					</section>
+				) : null}
+			</main>
+
+			<div className="relative z-10 mt-auto">
+				<UnifiedFooter variant="app" showThemeToggle={false} />
+			</div>
 		</div>
 	)
 }

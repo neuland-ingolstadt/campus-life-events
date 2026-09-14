@@ -5,7 +5,7 @@ import { Copy, ExternalLink, Pencil, Share2, Trash2 } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { createEvent, updateEvent } from '@/client'
 import type {
@@ -13,22 +13,12 @@ import type {
 	CreateEventRequest,
 	UpdateEventRequest
 } from '@/client/types.gen'
+import { PartyPopper } from '@/components/animate-ui/icons/party-popper'
 import { EventForm } from '@/components/event-form'
 import {
 	EventOrganizerBadge,
 	EventVisibilityIndicator
 } from '@/components/events/event-status-badges'
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-	AlertDialogTrigger
-} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import {
 	Sheet,
@@ -53,7 +43,7 @@ type EventDetailSheetProps = {
 	readonly organizerName: string
 	readonly isOwnOrganizer: boolean
 	readonly canManage: boolean
-	readonly onDelete: (id: number) => Promise<void>
+	readonly onDelete: (event: ApiEvent) => void | Promise<void>
 }
 
 function DetailRow({
@@ -88,11 +78,29 @@ export function EventDetailSheet({
 	const reducedMotion = useReducedMotion()
 	const [saving, setSaving] = useState(false)
 	const [saveArmed, setSaveArmed] = useState(false)
+	const [showSuccess, setShowSuccess] = useState(false)
+	const formModeFocusRef = useRef<HTMLDivElement>(null)
 
 	const isCreate = mode === 'create'
 	const isDuplicate = mode === 'duplicate' && canManage && event !== null
 	const isEdit = mode === 'edit' && canManage && event !== null
 	const isFormMode = isCreate || isEdit || isDuplicate
+
+	useEffect(() => {
+		if (!open) {
+			setShowSuccess(false)
+		}
+	}, [open])
+
+	useEffect(() => {
+		if (!open || !isFormMode) {
+			return
+		}
+		const frame = window.requestAnimationFrame(() => {
+			formModeFocusRef.current?.focus()
+		})
+		return () => window.cancelAnimationFrame(frame)
+	}, [open, isFormMode])
 
 	useEffect(() => {
 		if (!open) {
@@ -141,6 +149,14 @@ export function EventDetailSheet({
 			if (event) {
 				await qc.invalidateQueries({ queryKey: ['event', event.id] })
 			}
+
+			const celebrate = isCreate || isDuplicate
+			if (celebrate && !reducedMotion) {
+				setShowSuccess(true)
+				await new Promise((resolve) => window.setTimeout(resolve, 900))
+				setShowSuccess(false)
+			}
+
 			toast.success(
 				isDuplicate
 					? 'Event erfolgreich dupliziert'
@@ -202,10 +218,15 @@ export function EventDetailSheet({
 		[isDuplicate]
 	)
 
+	const motionTransition = reducedMotion
+		? { duration: 0 }
+		: { duration: 0.16, ease: [0.16, 1, 0.3, 1] as const }
+
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
 			<SheetContent
 				side="right"
+				onOpenAutoFocus={(event) => event.preventDefault()}
 				className={cn(
 					'flex w-full flex-col gap-0 p-0 transition-[max-width] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]',
 					isFormMode ? 'sm:max-w-2xl md:max-w-3xl' : 'sm:max-w-md md:max-w-lg'
@@ -220,7 +241,7 @@ export function EventDetailSheet({
 									initial={reducedMotion ? false : { opacity: 0 }}
 									animate={{ opacity: 1 }}
 									exit={reducedMotion ? undefined : { opacity: 0 }}
-									transition={{ duration: 0.12 }}
+									transition={motionTransition}
 									className="space-y-3"
 								>
 									{isCreate ? (
@@ -286,76 +307,108 @@ export function EventDetailSheet({
 							</AnimatePresence>
 						</SheetHeader>
 
-						<div className="flex-1 overflow-y-auto px-4 py-4">
-							<AnimatePresence mode="wait" initial={false}>
-								<motion.div
-									key={contentKey}
-									initial={reducedMotion ? false : { opacity: 0 }}
-									animate={{ opacity: 1 }}
-									exit={reducedMotion ? undefined : { opacity: 0 }}
-									transition={{ duration: 0.12 }}
-								>
-									{isFormMode ? (
-										<EventForm
-											key={contentKey}
-											formId="event-sheet-form"
-											hideSubmitButton
-											event={isCreate ? null : event}
-											initialValues={duplicateInitialValues}
-											onSave={onSave}
-											isLoading={isPending}
-										/>
-									) : event ? (
-										<dl className="space-y-4">
-											<DetailRow label="Start">
-												<span className="tabular-nums">
-													{formatInCampusTimeZone(
-														new Date(event.start_date_time),
-														'dd.MM.yyyy HH:mm'
-													)}
-												</span>
-											</DetailRow>
-											<DetailRow label="Ende">
-												<span className="tabular-nums">
-													{formatInCampusTimeZone(
-														new Date(event.end_date_time),
-														'dd.MM.yyyy HH:mm'
-													)}
-												</span>
-											</DetailRow>
-											{event.location ? (
-												<DetailRow label="Ort">{event.location}</DetailRow>
-											) : null}
-											{event.event_url ? (
-												<DetailRow label="Link">
-													<a
-														href={event.event_url}
-														target="_blank"
-														rel="noopener noreferrer"
-														className="inline-flex items-center gap-1 text-primary underline-offset-2 hover:underline break-all"
-													>
-														{event.event_url}
-														<ExternalLink className="size-3.5 shrink-0" />
-													</a>
+						<div className="relative flex-1 overflow-x-hidden overflow-y-auto">
+							{isFormMode ? (
+								<div
+									ref={formModeFocusRef}
+									tabIndex={-1}
+									className="sr-only outline-none"
+								/>
+							) : null}
+
+							<div className="px-4 py-4">
+								<AnimatePresence mode="wait" initial={false}>
+									<motion.div
+										key={contentKey}
+										initial={reducedMotion ? false : { opacity: 0 }}
+										animate={{ opacity: 1 }}
+										exit={reducedMotion ? undefined : { opacity: 0 }}
+										transition={motionTransition}
+									>
+										{isFormMode ? (
+											<EventForm
+												key={contentKey}
+												formId="event-sheet-form"
+												hideSubmitButton
+												event={isCreate ? null : event}
+												initialValues={duplicateInitialValues}
+												onSave={onSave}
+												isLoading={isPending}
+											/>
+										) : event ? (
+											<dl className="space-y-4">
+												<DetailRow label="Start">
+													<span className="tabular-nums">
+														{formatInCampusTimeZone(
+															new Date(event.start_date_time),
+															'dd.MM.yyyy HH:mm'
+														)}
+													</span>
 												</DetailRow>
-											) : null}
-											{event.description_de ? (
-												<DetailRow label="Beschreibung">
-													<p className="whitespace-pre-wrap text-sm leading-relaxed">
-														{event.description_de}
-													</p>
+												<DetailRow label="Ende">
+													<span className="tabular-nums">
+														{formatInCampusTimeZone(
+															new Date(event.end_date_time),
+															'dd.MM.yyyy HH:mm'
+														)}
+													</span>
 												</DetailRow>
-											) : null}
-											{event.description_en ? (
-												<DetailRow label="Beschreibung (EN)">
-													<p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
-														{event.description_en}
-													</p>
-												</DetailRow>
-											) : null}
-										</dl>
-									) : null}
-								</motion.div>
+												{event.location ? (
+													<DetailRow label="Ort">{event.location}</DetailRow>
+												) : null}
+												{event.event_url ? (
+													<DetailRow label="Link">
+														<a
+															href={event.event_url}
+															target="_blank"
+															rel="noopener noreferrer"
+															className="inline-flex items-center gap-1 text-primary underline-offset-2 hover:underline break-all"
+														>
+															{event.event_url}
+															<ExternalLink className="size-3.5 shrink-0" />
+														</a>
+													</DetailRow>
+												) : null}
+												{event.description_de ? (
+													<DetailRow label="Beschreibung">
+														<p className="whitespace-pre-wrap text-sm leading-relaxed">
+															{event.description_de}
+														</p>
+													</DetailRow>
+												) : null}
+												{event.description_en ? (
+													<DetailRow label="Beschreibung (EN)">
+														<p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+															{event.description_en}
+														</p>
+													</DetailRow>
+												) : null}
+											</dl>
+										) : null}
+									</motion.div>
+								</AnimatePresence>
+							</div>
+
+							<AnimatePresence>
+								{showSuccess ? (
+									<motion.div
+										initial={reducedMotion ? false : { opacity: 0 }}
+										animate={{ opacity: 1 }}
+										exit={reducedMotion ? undefined : { opacity: 0 }}
+										className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-background/90 backdrop-blur-sm"
+									>
+										<span className="flex size-14 items-center justify-center rounded-full border bg-primary text-primary-foreground">
+											<PartyPopper className="size-7" animate />
+										</span>
+										<p className="text-sm font-medium">
+											{isDuplicate
+												? 'Kopie erstellt'
+												: isCreate
+													? 'Event erstellt'
+													: 'Gespeichert'}
+										</p>
+									</motion.div>
+								) : null}
 							</AnimatePresence>
 						</div>
 
@@ -402,37 +455,16 @@ export function EventDetailSheet({
 												<Copy className="size-3.5" />
 												Duplizieren
 											</Button>
-											<AlertDialog>
-												<AlertDialogTrigger asChild>
-													<Button
-														type="button"
-														variant="outline"
-														size="sm"
-														className="text-destructive hover:text-destructive"
-													>
-														<Trash2 className="size-3.5" />
-														Löschen
-													</Button>
-												</AlertDialogTrigger>
-												<AlertDialogContent>
-													<AlertDialogHeader>
-														<AlertDialogTitle>Event löschen</AlertDialogTitle>
-														<AlertDialogDescription>
-															Bist du sicher, dass du "{event.title_de}" löschen
-															möchtest? Diese Aktion kann nicht rückgängig
-															gemacht werden.
-														</AlertDialogDescription>
-													</AlertDialogHeader>
-													<AlertDialogFooter>
-														<AlertDialogCancel>Abbrechen</AlertDialogCancel>
-														<AlertDialogAction
-															onClick={() => onDelete(event.id)}
-														>
-															Löschen
-														</AlertDialogAction>
-													</AlertDialogFooter>
-												</AlertDialogContent>
-											</AlertDialog>
+											<Button
+												type="button"
+												variant="outline"
+												size="sm"
+												className="text-destructive hover:text-destructive"
+												onClick={() => onDelete(event)}
+											>
+												<Trash2 className="size-3.5" />
+												Löschen
+											</Button>
 										</>
 									) : null}
 								</div>
@@ -444,6 +476,7 @@ export function EventDetailSheet({
 								<Button
 									type="button"
 									variant="outline"
+									disabled={isPending || showSuccess}
 									onClick={() => {
 										if (isCreate) {
 											onOpenChange(false)
@@ -456,7 +489,7 @@ export function EventDetailSheet({
 								</Button>
 								<Button
 									type="button"
-									disabled={!saveArmed || isPending}
+									disabled={!saveArmed || isPending || showSuccess}
 									onClick={() => {
 										const form = document.getElementById('event-sheet-form')
 										if (form instanceof HTMLFormElement) {
