@@ -21,6 +21,9 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
 
+const DESCRIPTION_TEXTAREA_CLASSNAME =
+	'field-sizing-fixed min-h-[120px] max-h-[320px] resize-y overflow-y-auto'
+
 const organizerSchema = z.object({
 	name: z.string().trim().min(1, 'Name ist erforderlich'),
 	description_de: z.string().optional(),
@@ -53,11 +56,15 @@ export type OrganizerFormValues = z.infer<typeof organizerSchema>
 export function OrganizerForm({
 	organizer,
 	onSave,
-	isLoading = false
+	isLoading = false,
+	formId = 'organizer-form',
+	hideSubmitButton = false
 }: {
 	organizer?: Organizer | null
 	onSave: (data: UpdateOrganizerRequest) => Promise<void> | void
 	isLoading?: boolean
+	formId?: string
+	hideSubmitButton?: boolean
 }) {
 	const form = useForm<OrganizerFormValues>({
 		resolver: zodResolver(organizerSchema),
@@ -139,14 +146,13 @@ export function OrganizerForm({
 	return (
 		<Form {...form}>
 			<form
+				id={formId}
 				onSubmit={form.handleSubmit(onSubmit)}
-				className="flex flex-col gap-6 max-w-5xl"
+				className="flex flex-col gap-6"
 			>
 				<div>
-					<h2 className="text-xl font-bold tracking-tight">
-						Organisationsinformationen
-					</h2>
-					<div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+					<h2 className="text-xl font-bold tracking-tight">Grundlagen</h2>
+					<div className="mt-3 grid grid-cols-1 gap-6 md:grid-cols-2">
 						<FormField
 							control={form.control}
 							name="name"
@@ -162,52 +168,6 @@ export function OrganizerForm({
 								</FormItem>
 							)}
 						/>
-					</div>
-				</div>
-
-				<div>
-					<h2 className="text-xl font-bold tracking-tight">Beschreibungen</h2>
-					<div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-6">
-						<FormField
-							control={form.control}
-							name="description_de"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Deutsche Beschreibung</FormLabel>
-									<FormControl>
-										<Textarea
-											placeholder="Das Hinzufügen einer Beschreibung hilft anderen, deine Organisation besser zu verstehen und ihre Aktivitäten zu erkennen."
-											className="min-h-[120px]"
-											{...field}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-						<FormField
-							control={form.control}
-							name="description_en"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Englische Beschreibung</FormLabel>
-									<FormControl>
-										<Textarea
-											placeholder="Eine Beschreibung hilft Leuten, euren Verein und eure Aktivitäten besser zu verstehen."
-											className="min-h-[120px]"
-											{...field}
-										/>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-					</div>
-				</div>
-
-				<div>
-					<h2 className="text-xl font-bold tracking-tight">Standort & Links</h2>
-					<div className="mt-3 space-y-6">
 						<FormField
 							control={form.control}
 							name="location"
@@ -227,69 +187,112 @@ export function OrganizerForm({
 								</FormItem>
 							)}
 						/>
+					</div>
+				</div>
 
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-							<FormField
-								control={form.control}
-								name="website_url"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Website-URL</FormLabel>
-										<FormControl>
-											<Input placeholder="https://example.com" {...field} />
-										</FormControl>
-										<FormDescription>
-											Optionale Website-URL der Organisation
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="instagram_url"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Instagram-URL</FormLabel>
-										<FormControl>
-											<Input
-												placeholder="https://instagram.com/username"
-												{...field}
-											/>
-										</FormControl>
-										<FormDescription>
-											Optionale Instagram-Profil-URL
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-							<FormField
-								control={form.control}
-								name="linkedin_url"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>LinkedIn-URL</FormLabel>
-										<FormControl>
-											<Input
-												placeholder="https://linkedin.com/company/organisation"
-												{...field}
-											/>
-										</FormControl>
-										<FormDescription>
-											Optionale LinkedIn-Profil-URL
-										</FormDescription>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-						</div>
+				<div>
+					<h2 className="text-xl font-bold tracking-tight">Beschreibungen</h2>
+					<div className="mt-3 grid grid-cols-1 items-start gap-6 md:grid-cols-2">
+						<FormField
+							control={form.control}
+							name="description_de"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Deutsche Beschreibung</FormLabel>
+									<FormControl>
+										<Textarea
+											placeholder="Das Hinzufügen einer Beschreibung hilft anderen, deine Organisation besser zu verstehen und ihre Aktivitäten zu erkennen."
+											className={DESCRIPTION_TEXTAREA_CLASSNAME}
+											{...field}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="description_en"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Englische Beschreibung</FormLabel>
+									<FormControl>
+										<Textarea
+											placeholder="Eine Beschreibung hilft Leuten, euren Verein und eure Aktivitäten besser zu verstehen."
+											className={DESCRIPTION_TEXTAREA_CLASSNAME}
+											{...field}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+					</div>
+				</div>
+
+				<div>
+					<h2 className="text-xl font-bold tracking-tight">Links & Präsenz</h2>
+					<div className="mt-3 grid grid-cols-1 gap-6 md:grid-cols-2">
+						<FormField
+							control={form.control}
+							name="website_url"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Website-URL</FormLabel>
+									<FormControl>
+										<Input placeholder="https://example.com" {...field} />
+									</FormControl>
+									<FormDescription>
+										Optionale Website-URL der Organisation
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="instagram_url"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Instagram-URL</FormLabel>
+									<FormControl>
+										<Input
+											placeholder="https://instagram.com/username"
+											{...field}
+										/>
+									</FormControl>
+									<FormDescription>
+										Optionale Instagram-Profil-URL
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="linkedin_url"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>LinkedIn-URL</FormLabel>
+									<FormControl>
+										<Input
+											placeholder="https://linkedin.com/company/organisation"
+											{...field}
+										/>
+									</FormControl>
+									<FormDescription>
+										Optionale LinkedIn-Profil-URL
+									</FormDescription>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
 					</div>
 				</div>
 
 				<div>
 					<h2 className="text-xl font-bold tracking-tight">Weitere Angaben</h2>
-					<div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+					<div className="mt-3 grid grid-cols-1 gap-6 md:grid-cols-2">
 						<FormField
 							control={form.control}
 							name="registration_number"
@@ -310,8 +313,8 @@ export function OrganizerForm({
 							control={form.control}
 							name="non_profit"
 							render={({ field }) => (
-								<FormItem className="flex items-center justify-between rounded-md border p-4">
-									<div className="space-y-1">
+								<FormItem className="flex items-center justify-between gap-3">
+									<div className="space-y-0.5">
 										<FormLabel className="text-sm font-medium">
 											Gemeinnützige Organisation
 										</FormLabel>
@@ -331,15 +334,17 @@ export function OrganizerForm({
 					</div>
 				</div>
 
-				<div className="flex justify-end pt-2">
-					<Button type="submit" disabled={isLoading} size="lg" className="px-8">
-						{isLoading
-							? 'Speichern...'
-							: organizer
-								? 'Organisation aktualisieren'
-								: 'Organisation erstellen'}
-					</Button>
-				</div>
+				{hideSubmitButton ? null : (
+					<div className="flex justify-end pt-2">
+						<Button type="submit" disabled={isLoading}>
+							{isLoading
+								? 'Speichern...'
+								: organizer
+									? 'Organisation aktualisieren'
+									: 'Organisation erstellen'}
+						</Button>
+					</div>
+				)}
 			</form>
 		</Form>
 	)

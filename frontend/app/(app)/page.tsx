@@ -207,7 +207,15 @@ export default function Dashboard() {
 								Profil, damit andere Vereine euch besser finden.
 							</p>
 							<Button asChild size="sm" className="mt-1 w-fit">
-								<Link href="/organizers">Profil bearbeiten</Link>
+								<Link
+									href={
+										currentUserOrganizer
+											? `/organizers?edit=${currentUserOrganizer.id}`
+											: '/organizers'
+									}
+								>
+									Profil bearbeiten
+								</Link>
 							</Button>
 						</AlertDescription>
 					</Alert>

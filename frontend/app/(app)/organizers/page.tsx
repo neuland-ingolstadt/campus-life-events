@@ -1,26 +1,80 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { AlertTriangle, Pencil, User2Icon, UsersIcon } from 'lucide-react'
+import {
+	AlertTriangle,
+	ChevronRight,
+	ExternalLink,
+	Globe2,
+	MapPin,
+	Pencil,
+	User2Icon,
+	UsersIcon
+} from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import type { ReactNode } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import { listOrganizers } from '@/client'
 import type { Organizer } from '@/client/types.gen'
 import { Instagram } from '@/components/icons/instagram-icon'
 import { Linkedin } from '@/components/icons/linkedin-icon'
-import { OrganizerViewDialog } from '@/components/organizer-view-dialog'
+import {
+	OrganizerDetailSheet,
+	type OrganizerSheetMode
+} from '@/components/organizer-detail-sheet'
+import { OrganizerKindBadge } from '@/components/organizer-kind-badge'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SidebarTrigger } from '@/components/ui/sidebar'
+import { Skeleton } from '@/components/ui/skeleton'
 import { me } from '@/lib/auth'
+import { cn } from '@/lib/utils'
 
 const ORGANIZER_SKELETON_KEYS = Array.from(
-	{ length: 3 },
+	{ length: 6 },
 	(_, idx) => `organizer-skeleton-${idx}`
 )
 
-export default function OrganizersPage() {
+function LinkChip({
+	href,
+	icon,
+	label,
+	emptyLabel
+}: {
+	readonly href?: string | null
+	readonly icon: ReactNode
+	readonly label: string
+	readonly emptyLabel: string
+}) {
+	if (href) {
+		return (
+			<a
+				href={href}
+				target="_blank"
+				rel="noopener noreferrer"
+				onClick={(event) => event.stopPropagation()}
+				className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted/60"
+			>
+				{icon}
+				{label}
+				<ExternalLink className="size-3 text-muted-foreground" />
+			</a>
+		)
+	}
+
+	return (
+		<span className="inline-flex items-center gap-1.5 rounded-md border border-dashed px-2.5 py-1.5 text-xs text-muted-foreground">
+			{icon}
+			{emptyLabel}
+		</span>
+	)
+}
+
+function OrganizersPageContent() {
+	const router = useRouter()
+	const searchParams = useSearchParams()
 	const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
 	const organizerId = meData?.organizer_id ?? undefined
 	const isAdmin = meData?.account_type === 'ADMIN'
@@ -35,306 +89,364 @@ export default function OrganizersPage() {
 			return response.data ?? []
 		}
 	})
-	const [viewing, setViewing] = useState<Organizer | null>(null)
+	const [selected, setSelected] = useState<Organizer | null>(null)
+	const [sheetMode, setSheetMode] = useState<OrganizerSheetMode>('view')
+	const [sheetOpen, setSheetOpen] = useState(false)
 
-	// Get current user's organizer profile
 	const currentUserOrganizer = organizers.find((o) => o.id === organizerId)
+	const otherOrganizers = organizers.filter((o) => o.id !== organizerId)
 
-	// Check if organizer profile is incomplete (same logic as dashboard)
 	const isProfileIncomplete =
 		currentUserOrganizer &&
 		((!currentUserOrganizer.description_de &&
 			!currentUserOrganizer.description_en) ||
 			!currentUserOrganizer.website_url)
 
+	const canManageOrganizer = useCallback(
+		(organizer: Organizer) =>
+			isAdmin || (organizerId !== undefined && organizer.id === organizerId),
+		[isAdmin, organizerId]
+	)
+
+	const openOrganizer = useCallback(
+		(organizer: Organizer, mode: OrganizerSheetMode = 'view') => {
+			setSelected(organizer)
+			setSheetMode(
+				mode === 'edit' && canManageOrganizer(organizer) ? 'edit' : 'view'
+			)
+			setSheetOpen(true)
+		},
+		[canManageOrganizer]
+	)
+
+	const clearEditQuery = useCallback(() => {
+		if (!searchParams.get('edit')) {
+			return
+		}
+		router.replace('/organizers', { scroll: false })
+	}, [router, searchParams])
+
+	useEffect(() => {
+		const editParam = searchParams.get('edit')
+		if (!editParam) {
+			return
+		}
+		const editId = Number(editParam)
+		if (!Number.isFinite(editId) || organizers.length === 0) {
+			return
+		}
+		const target = organizers.find((organizer) => organizer.id === editId)
+		if (!target) {
+			clearEditQuery()
+			return
+		}
+		openOrganizer(target, canManageOrganizer(target) ? 'edit' : 'view')
+		clearEditQuery()
+	}, [
+		searchParams,
+		organizers,
+		openOrganizer,
+		canManageOrganizer,
+		clearEditQuery
+	])
+
 	return (
 		<div className="flex flex-col min-h-screen">
-			<header
-				className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur-sm px-4"
-				style={{
-					backdropFilter: 'blur(8px)',
-					WebkitBackdropFilter: 'blur(8px)'
-				}}
-			>
+			<header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 px-4">
 				<SidebarTrigger className="-ml-1" />
 				<div className="flex items-center gap-2">
 					<h1 className="text-lg font-semibold">Organisationen</h1>
 				</div>
 			</header>
 
-			<div className="flex-1 p-4 md:p-8 space-y-4 pt-6">
+			<div className="mb-12 flex-1 space-y-8 p-4 pt-6 md:p-8">
+				<div>
+					<h2 className="text-3xl font-bold tracking-tight">Organisationen</h2>
+					<p className="mt-1 text-muted-foreground">
+						Dein Profil und weitere Organisationen am Campus
+					</p>
+				</div>
+
 				{isLoading ? (
-					<div className="space-y-2">
-						{ORGANIZER_SKELETON_KEYS.map((key) => (
-							<div key={key} className="h-16 bg-muted animate-pulse rounded" />
-						))}
+					<div className="space-y-8">
+						<div className="space-y-4">
+							<Skeleton className="h-6 w-48" />
+							<Skeleton className="h-56 w-full rounded-lg" />
+						</div>
+						<div className="space-y-4">
+							<Skeleton className="h-6 w-56" />
+							<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+								{ORGANIZER_SKELETON_KEYS.map((key) => (
+									<Skeleton key={key} className="h-36 w-full rounded-lg" />
+								))}
+							</div>
+						</div>
 					</div>
 				) : error ? (
 					<p className="text-destructive">
 						Fehler beim Laden der Organisationen
 					</p>
 				) : (
-					<div className="space-y-14	">
-						{/* Your organizer first with edit only */}
-						{organizers.find((o) => o.id === organizerId) && (
-							<div className="space-y-4">
+					<>
+						{currentUserOrganizer ? (
+							<section className="space-y-4">
 								<div className="flex items-center gap-3">
-									<div className="h-8 w-8 bg-muted rounded-lg flex items-center justify-center">
-										<User2Icon className="h-6 w-6" />
-									</div>
+									<span className="flex size-8 items-center justify-center rounded-lg border bg-muted/60">
+										<User2Icon className="size-4" />
+									</span>
 									<div>
-										<h2 className="text-xl font-bold">Deine Organisation</h2>
+										<h3 className="text-lg font-semibold">
+											Deine Organisation
+										</h3>
 										<p className="text-sm text-muted-foreground">
-											Verwalte die Angaben deiner Organisation
+											Verwalte Angaben, Links und Sichtbarkeit deines Profils
 										</p>
 									</div>
 								</div>
 
-								{organizers
-									.filter((o) => o.id === organizerId)
-									.map((o) => (
-										<Card
-											key={o.id}
-											className="transition-colors hover:bg-muted/50"
-										>
-											<CardHeader>
-												<div className="flex flex-row items-start justify-between gap-4">
-													<div className="flex-1 space-y-2">
-														<CardTitle className="text-xl flex items-center gap-3">
-															<Avatar className="h-10 w-10">
-																<AvatarFallback className=" from-primary/90 to-primary bg-gradient-to-br text-primary-foreground font-semibold text-lg">
-																	{o.name.charAt(0).toUpperCase()}
-																</AvatarFallback>
-															</Avatar>
-															{o.name}
-														</CardTitle>
-													</div>
-													<div className="flex gap-2">
-														<Link href={`/organizers/${o.id}`}>
-															<Button size="sm" variant="outline">
-																<Pencil className="h-4 w-4 mr-2" />
-																Bearbeiten
-															</Button>
-														</Link>
-													</div>
+								{isProfileIncomplete ? (
+									<Alert className="border-amber-500/40 bg-amber-500/10 text-foreground [&>svg]:text-amber-700 dark:[&>svg]:text-amber-400">
+										<AlertTriangle />
+										<AlertTitle>
+											Organisationsprofil vervollständigen
+										</AlertTitle>
+										<AlertDescription>
+											Beschreibung oder Website fehlen noch. Ergänze die Angaben
+											über Bearbeiten, damit andere euch besser finden.
+										</AlertDescription>
+									</Alert>
+								) : null}
+
+								<div className="flex flex-col gap-5 rounded-lg border bg-card p-5 sm:p-6">
+									<div className="flex flex-wrap items-center justify-between gap-4">
+										<div className="flex min-w-0 items-center gap-3">
+											<Avatar className="size-12 shrink-0">
+												<AvatarFallback className="bg-gradient-to-br from-primary/90 to-primary text-lg font-semibold text-primary-foreground">
+													{currentUserOrganizer.name.charAt(0).toUpperCase()}
+												</AvatarFallback>
+											</Avatar>
+											<div className="min-w-0 space-y-2">
+												<h4 className="text-xl font-semibold tracking-tight leading-snug">
+													{currentUserOrganizer.name}
+												</h4>
+												<div className="flex flex-wrap items-center gap-2">
+													<OrganizerKindBadge
+														kind={currentUserOrganizer.organizer_kind}
+														showIcon
+													/>
+													{currentUserOrganizer.non_profit ? (
+														<span className="inline-flex items-center rounded-md border border-border bg-muted/60 px-2 py-1 text-xs font-medium">
+															Gemeinnützig
+														</span>
+													) : null}
 												</div>
-											</CardHeader>
-											<CardContent className="space-y-4">
-												{isProfileIncomplete && (
-													<div className="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-amber-800 dark:bg-amber-950">
-														<div className="flex items-start gap-3">
-															<AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400 mt-0.5 flex-shrink-0" />
-															<div className="flex-1">
-																<h3 className="text-sm font-medium text-orange-800 dark:text-orange-200">
-																	Organisationsprofil vervollständigen
-																</h3>
-																<p className="mt-1 text-sm text-orange-700 dark:text-orange-300">
-																	Tippe auf Bearbeiten und aktualisiere deine
-																	Informationen.
-																</p>
-															</div>
-														</div>
-													</div>
+											</div>
+										</div>
+										<Button
+											type="button"
+											size="sm"
+											onClick={() =>
+												openOrganizer(currentUserOrganizer, 'edit')
+											}
+										>
+											<Pencil className="size-3.5" />
+											Bearbeiten
+										</Button>
+									</div>
+
+									<p className="text-sm leading-relaxed text-muted-foreground">
+										{currentUserOrganizer.description_de ||
+											currentUserOrganizer.description_en ||
+											'Noch keine Beschreibung hinterlegt.'}
+									</p>
+
+									{currentUserOrganizer.location ? (
+										<p className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+											<MapPin className="size-3.5 shrink-0" />
+											{currentUserOrganizer.location}
+										</p>
+									) : null}
+
+									<div className="flex flex-wrap gap-2">
+										<LinkChip
+											href={currentUserOrganizer.website_url}
+											icon={<Globe2 className="size-3.5" />}
+											label="Website"
+											emptyLabel="Keine Website"
+										/>
+										<LinkChip
+											href={currentUserOrganizer.instagram_url}
+											icon={<Instagram className="size-3.5" />}
+											label="Instagram"
+											emptyLabel="Kein Instagram"
+										/>
+										<LinkChip
+											href={currentUserOrganizer.linkedin_url}
+											icon={<Linkedin className="size-3.5" />}
+											label="LinkedIn"
+											emptyLabel="Kein LinkedIn"
+										/>
+									</div>
+
+									<div className="grid gap-4 border-t pt-4 text-sm sm:grid-cols-2">
+										<div className="space-y-1">
+											<p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+												Registrierungsnummer
+											</p>
+											<p>
+												{currentUserOrganizer.registration_number ||
+													'Keine Angabe'}
+											</p>
+										</div>
+										<div className="space-y-1">
+											<p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+												Gemeinnützig
+											</p>
+											<p>{currentUserOrganizer.non_profit ? 'Ja' : 'Nein'}</p>
+										</div>
+									</div>
+								</div>
+							</section>
+						) : null}
+
+						<section className="space-y-4">
+							<div className="flex flex-wrap items-end justify-between gap-3">
+								<div className="flex items-center gap-3">
+									<span className="flex size-8 items-center justify-center rounded-lg border bg-muted/60">
+										<UsersIcon className="size-4" />
+									</span>
+									<div>
+										<h3 className="text-lg font-semibold">
+											{isAdmin
+												? 'Alle Organisationen'
+												: 'Weitere Organisationen'}
+										</h3>
+										<p className="text-sm text-muted-foreground">
+											{isAdmin ? (
+												<>
+													Verwende die{' '}
+													<Link
+														href="/organizers/manage"
+														className="text-primary underline-offset-2 hover:underline"
+													>
+														Admin-Seite
+													</Link>
+													, um Organisationen zu verwalten.
+												</>
+											) : (
+												'Entdecke weitere Organisationen am Campus'
+											)}
+										</p>
+									</div>
+								</div>
+							</div>
+
+							{otherOrganizers.length === 0 ? (
+								<div className="flex flex-col items-center justify-center rounded-lg border border-dashed px-6 py-12 text-center">
+									<UsersIcon className="mb-3 size-10 text-muted-foreground" />
+									<p className="text-sm font-medium">
+										Keine weiteren Organisationen
+									</p>
+									<p className="mt-1 max-w-sm text-sm text-muted-foreground">
+										Sobald weitere Organisationen freigeschaltet sind,
+										erscheinen sie hier.
+									</p>
+								</div>
+							) : (
+								<ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+									{otherOrganizers.map((organizer) => (
+										<li key={organizer.id}>
+											<button
+												type="button"
+												onClick={() => openOrganizer(organizer, 'view')}
+												className={cn(
+													'flex h-full w-full flex-col gap-3 rounded-lg border bg-card p-4 text-left',
+													'transition-colors hover:bg-muted/50',
+													'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 												)}
-
-												<div className="space-y-3">
-													<div>
-														<h4 className="text-sm font-medium text-foreground mb-2">
-															Beschreibung
-														</h4>
-														<p className="text-sm text-muted-foreground leading-relaxed">
-															{o.description_de ||
-																o.description_en ||
-																'Keine Beschreibung verfügbar.'}
-														</p>
-													</div>
-
-													<div>
-														<h4 className="text-sm font-medium text-foreground mb-2">
-															Links & Kontakt
-														</h4>
-														<div className="flex flex-wrap gap-4">
-															{o.website_url ? (
-																<a
-																	href={o.website_url}
-																	target="_blank"
-																	rel="noreferrer"
-																	className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-																>
-																	<svg
-																		className="h-4 w-4"
-																		fill="none"
-																		stroke="currentColor"
-																		viewBox="0 0 24 24"
-																		aria-label="Externer-Link-Symbol"
-																	>
-																		<title>Externer-Link-Symbol</title>
-																		<path
-																			strokeLinecap="round"
-																			strokeLinejoin="round"
-																			strokeWidth={2}
-																			d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-																		/>
-																	</svg>
-																	Website
-																</a>
-															) : (
-																<div className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-muted-foreground">
-																	<svg
-																		className="h-4 w-4"
-																		fill="none"
-																		stroke="currentColor"
-																		viewBox="0 0 24 24"
-																		aria-label="Externer-Link-Symbol"
-																	>
-																		<title>Externer-Link-Symbol</title>
-																		<path
-																			strokeLinecap="round"
-																			strokeLinejoin="round"
-																			strokeWidth={2}
-																			d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-																		/>
-																	</svg>
-																	Keine Website
-																</div>
-															)}
-															{o.instagram_url ? (
-																<a
-																	href={o.instagram_url}
-																	target="_blank"
-																	rel="noreferrer"
-																	className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground"
-																>
-																	<Instagram className="h-4 w-4" />
-																	Instagram
-																</a>
-															) : (
-																<div className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-muted-foreground">
-																	<Instagram className="h-4 w-4" />
-																	Kein Instagram
-																</div>
-															)}
-															{o.linkedin_url ? (
-																<a
-																	href={o.linkedin_url}
-																	target="_blank"
-																	rel="noreferrer"
-																	className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-																>
-																	<Linkedin className="h-4 w-4" />
-																	LinkedIn
-																</a>
-															) : (
-																<div className="inline-flex items-center gap-2 px-3 py-2 bg-background border border-border rounded-lg text-sm text-muted-foreground">
-																	<Linkedin className="h-4 w-4" />
-																	Kein LinkedIn
-																</div>
-															)}
-														</div>
-														<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mt-3">
-															<div className="space-y-1">
-																<p className="font-medium text-foreground">
-																	Registrierungsnummer
-																</p>
-																<p className="text-muted-foreground">
-																	{o.registration_number || 'Keine Angabe'}
-																</p>
-															</div>
-															<div className="space-y-1">
-																<p className="font-medium text-foreground">
-																	Gemeinnützig
-																</p>
-																<p className="text-muted-foreground">
-																	{o.non_profit ? 'Ja' : 'Nein'}
-																</p>
-															</div>
-														</div>
-													</div>
-												</div>
-											</CardContent>
-										</Card>
-									))}
-							</div>
-						)}
-
-						{/* Other organizers as clickable cards for details */}
-						<div className="space-y-4">
-							<div className="flex items-center gap-3">
-								<div className="h-8 w-8 bg-muted rounded-lg flex items-center justify-center">
-									<UsersIcon className="h-6 w-6" />
-								</div>
-								{isAdmin ? (
-									<div>
-										<h2 className="text-xl font-bold">Alle Organisationen</h2>
-										<p className="text-sm text-muted-foreground">
-											Verwende die{' '}
-											<Link
-												href="/organizers/manage"
-												className="text-primary hover:underline"
 											>
-												Admin-Seite
-											</Link>{' '}
-											um alle Organisationen zu verwalten.
-										</p>
-									</div>
-								) : (
-									<div>
-										<h2 className="text-xl font-bold">
-											Weitere Organisationen
-										</h2>
-										<p className="text-sm text-muted-foreground">
-											Entdecke weitere Organisationen am Campus
-										</p>
-									</div>
-								)}
-							</div>
-
-							<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-								{organizers
-									.filter((o) => o.id !== organizerId)
-									.map((o) => (
-										<Card
-											key={o.id}
-											className="cursor-pointer transition-colors hover:bg-muted/50"
-											onClick={() => setViewing(o)}
-										>
-											<CardHeader className="pb-3">
 												<div className="flex items-center gap-3">
-													<Avatar className="h-10 w-10 flex-shrink-0">
-														<AvatarFallback className=" from-primary/90 to-primary bg-gradient-to-br text-primary-foreground font-semibold text-lg">
-															{o.name.charAt(0).toUpperCase()}
+													<Avatar className="size-8 shrink-0">
+														<AvatarFallback className="bg-gradient-to-br from-primary/90 to-primary text-sm font-semibold text-primary-foreground">
+															{organizer.name.charAt(0).toUpperCase()}
 														</AvatarFallback>
 													</Avatar>
-													<div className="flex-1 min-w-0">
-														<CardTitle className="text-lg leading-tight">
-															{o.name}
-														</CardTitle>
+													<div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+														<p className="line-clamp-2 text-sm font-medium leading-snug">
+															{organizer.name}
+														</p>
+														<ChevronRight
+															className="size-4 shrink-0 text-muted-foreground"
+															aria-hidden
+														/>
 													</div>
 												</div>
-											</CardHeader>
-											<CardContent className="space-y-3">
-												<p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
-													{o.description_de ||
-														o.description_en ||
+												<p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+													{organizer.description_de ||
+														organizer.description_en ||
 														'Keine Beschreibung verfügbar'}
 												</p>
-
-												<div className="flex items-center gap-2 text-xs text-muted-foreground">
-													<span>Klicken für Details</span>
-												</div>
-											</CardContent>
-										</Card>
+												{organizer.location ? (
+													<p className="mt-auto inline-flex max-w-full items-center gap-1.5 text-xs text-muted-foreground">
+														<MapPin className="size-3 shrink-0" />
+														<span className="truncate">
+															{organizer.location}
+														</span>
+													</p>
+												) : (
+													<p className="mt-auto text-xs text-muted-foreground">
+														Details anzeigen
+													</p>
+												)}
+											</button>
+										</li>
 									))}
-							</div>
-						</div>
-					</div>
+								</ul>
+							)}
+						</section>
+					</>
 				)}
-				<OrganizerViewDialog
-					open={!!viewing}
-					onOpenChange={(o) => !o && setViewing(null)}
-					organizer={viewing}
+
+				<OrganizerDetailSheet
+					organizer={selected}
+					open={sheetOpen}
+					onOpenChange={(open) => {
+						setSheetOpen(open)
+						if (!open) {
+							setSelected(null)
+							setSheetMode('view')
+							clearEditQuery()
+						}
+					}}
+					mode={sheetMode}
+					onModeChange={setSheetMode}
+					canEdit={selected !== null && canManageOrganizer(selected)}
+					onSaved={(updated) => setSelected(updated)}
 				/>
 			</div>
 		</div>
+	)
+}
+
+export default function OrganizersPage() {
+	return (
+		<Suspense
+			fallback={
+				<div className="flex min-h-screen flex-col">
+					<header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 px-4">
+						<SidebarTrigger className="-ml-1" />
+						<div className="flex items-center gap-2">
+							<h1 className="text-lg font-semibold">Organisationen</h1>
+						</div>
+					</header>
+					<div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+						<Skeleton className="h-8 w-64" />
+						<Skeleton className="h-56 w-full rounded-lg" />
+					</div>
+				</div>
+			}
+		>
+			<OrganizersPageContent />
+		</Suspense>
 	)
 }

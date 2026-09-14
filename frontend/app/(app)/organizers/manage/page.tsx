@@ -220,7 +220,7 @@ export default function ManageOrganizersPage() {
 										<Pencil className="h-4 w-4" />
 									</Button>
 								) : (
-									<Link href={`/organizers/${organizer.id}`}>
+									<Link href={`/organizers?edit=${organizer.id}`}>
 										<Button variant="outline" size="sm" className="h-8 px-2">
 											<Pencil className="h-4 w-4" />
 										</Button>
