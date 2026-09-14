@@ -189,7 +189,7 @@ export function OrganizerDetailSheet({
 			>
 				{organizer ? (
 					<>
-						<ResponsiveSheetHeader className="gap-3 overflow-hidden border-b pr-12">
+						<ResponsiveSheetHeader className="shrink-0 gap-3 overflow-hidden border-b pr-12">
 							<AnimatePresence mode="wait" initial={false}>
 								<motion.div
 									key={`header-${mode}`}
@@ -240,7 +240,7 @@ export function OrganizerDetailSheet({
 							</AnimatePresence>
 						</ResponsiveSheetHeader>
 
-						<div className="relative flex-1 overflow-x-hidden overflow-y-auto">
+						<div className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
 							{isFormMode ? (
 								<div
 									ref={formModeFocusRef}
