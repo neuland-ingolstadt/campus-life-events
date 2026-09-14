@@ -3,20 +3,24 @@
 import { Copy, MessageCircle, Share2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { publicEventShareUrl } from '@/lib/public-event-url'
 
 interface ShareButtonsProps {
+	eventId: number
 	eventTitle: string
 }
 
-export function ShareButtons({ eventTitle }: ShareButtonsProps) {
+export function ShareButtons({ eventId, eventTitle }: ShareButtonsProps) {
+	const shareUrl = publicEventShareUrl(eventId)
+
 	const handleCopyLink = () => {
-		navigator.clipboard.writeText(window.location.href)
+		void navigator.clipboard.writeText(shareUrl)
 		toast.success('Link wurde in die Zwischenablage kopiert!')
 	}
 
 	const handleWhatsAppShare = () => {
 		window.open(
-			`https://wa.me/?text=${encodeURIComponent(`${eventTitle} - ${window.location.href}`)}`
+			`https://wa.me/?text=${encodeURIComponent(`${eventTitle} - ${shareUrl}`)}`
 		)
 	}
 
@@ -25,14 +29,12 @@ export function ShareButtons({ eventTitle }: ShareButtonsProps) {
 			try {
 				await navigator.share({
 					title: eventTitle,
-					url: window.location.href
+					url: shareUrl
 				})
 			} catch (_err) {
-				// Fallback to copy if share is cancelled
 				handleCopyLink()
 			}
 		} else {
-			// Fallback for browsers that don't support Web Share API
 			handleCopyLink()
 		}
 	}

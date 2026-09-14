@@ -3,8 +3,10 @@
 import { CalendarPlus, Copy, ExternalLink, Share2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { publicEventShareUrl } from '@/lib/public-event-url'
 
 type PublicEventActionsProps = {
+	readonly eventId: number
 	readonly title: string
 	readonly description?: string
 	readonly location?: string
@@ -33,6 +35,7 @@ function escapeIcs(value: string) {
 }
 
 export function PublicEventActions({
+	eventId,
 	title,
 	description,
 	location,
@@ -42,13 +45,10 @@ export function PublicEventActions({
 }: PublicEventActionsProps) {
 	const startStamp = toUtcStamp(startIso)
 	const endStamp = toUtcStamp(endIso)
-
-	function getShareUrl() {
-		return window.location.href
-	}
+	const shareUrl = publicEventShareUrl(eventId)
 
 	function handleCopyLink() {
-		void navigator.clipboard.writeText(getShareUrl())
+		void navigator.clipboard.writeText(shareUrl)
 		toast.success('Link wurde in die Zwischenablage kopiert')
 	}
 
@@ -57,7 +57,7 @@ export function PublicEventActions({
 			try {
 				await navigator.share({
 					title,
-					url: getShareUrl()
+					url: shareUrl
 				})
 				return
 			} catch {
@@ -107,8 +107,10 @@ export function PublicEventActions({
 		if (location) {
 			lines.push(`LOCATION:${escapeIcs(location)}`)
 		}
-		if (eventUrl || typeof window !== 'undefined') {
-			lines.push(`URL:${escapeIcs(eventUrl || getShareUrl())}`)
+		if (eventUrl) {
+			lines.push(`URL:${escapeIcs(eventUrl)}`)
+		} else {
+			lines.push(`URL:${escapeIcs(shareUrl)}`)
 		}
 		lines.push('END:VEVENT', 'END:VCALENDAR')
 

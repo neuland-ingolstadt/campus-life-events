@@ -262,6 +262,7 @@ export default async function PublicEventPage({
 
 				<div className="order-3 mt-12 border-t pt-10 sm:order-2 sm:mt-8 sm:border-0 sm:pt-0">
 					<PublicEventActions
+						eventId={event.id}
 						title={event.title_de}
 						description={event.description_de}
 						location={event.location}

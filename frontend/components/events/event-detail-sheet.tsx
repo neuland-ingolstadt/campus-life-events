@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/responsive-sheet'
 import { formatInCampusTimeZone } from '@/lib/date-time'
 import { deriveEventVisibilityMode } from '@/lib/event-visibility'
+import { publicEventShareUrl } from '@/lib/public-event-url'
 import { cn } from '@/lib/utils'
 
 export type EventSheetMode = 'view' | 'edit' | 'create' | 'duplicate'
@@ -191,10 +192,10 @@ export function EventDetailSheet({
 	const hasPublicPage = Boolean(event?.publish_web && event?.publish_app)
 
 	const shareUrl = useMemo(() => {
-		if (!event || !hasPublicPage || typeof window === 'undefined') {
+		if (!event || !hasPublicPage) {
 			return ''
 		}
-		return `${window.location.origin}/e/${event.id}`
+		return publicEventShareUrl(event.id)
 	}, [event, hasPublicPage])
 
 	const handleShare = useCallback(() => {
