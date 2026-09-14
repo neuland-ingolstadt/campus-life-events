@@ -1,0 +1,10 @@
+{
+  "mcp": {
+    "servers": {
+      "local-campus-life": {
+        "type": "remote",
+        "url": "http://localhost:8080/mcp"
+      }
+    }
+  }
+}

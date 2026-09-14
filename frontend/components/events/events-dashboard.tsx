@@ -13,6 +13,7 @@ import type {
 } from '@tanstack/react-table'
 import { startOfDay } from 'date-fns'
 import dynamic from 'next/dynamic'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
 	useCallback,
 	useDeferredValue,
@@ -22,8 +23,15 @@ import {
 } from 'react'
 import { toast } from 'sonner'
 import { deleteEvent, listEvents, listOrganizers } from '@/client'
-import type { Organizer as ApiOrganizer } from '@/client/types.gen'
+import type {
+	Event as ApiEvent,
+	Organizer as ApiOrganizer
+} from '@/client/types.gen'
 import { DataTable } from '@/components/data-table/data-table'
+import {
+	EventDetailSheet,
+	type EventSheetMode
+} from '@/components/events/event-detail-sheet'
 import { EventsHeader } from '@/components/events/events-header'
 import { EventsMobileList } from '@/components/events/events-mobile-list'
 import { EventsPageShell } from '@/components/events/events-page-shell'
@@ -134,7 +142,12 @@ export function EventsDashboard({
 }: EventsDashboardProps) {
 	'use no memo'
 	const qc = useQueryClient()
+	const router = useRouter()
+	const searchParams = useSearchParams()
 	const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table')
+	const [selectedEvent, setSelectedEvent] = useState<ApiEvent | null>(null)
+	const [sheetMode, setSheetMode] = useState<EventSheetMode>('view')
+	const [sheetOpen, setSheetOpen] = useState(false)
 	const [pagination, setPagination] = useState<PaginationState>({
 		pageIndex: 0,
 		pageSize: 10
@@ -360,15 +373,40 @@ export function EventsDashboard({
 			await qc.invalidateQueries({
 				predicate: (q) => q.queryKey[0] === 'events'
 			})
+			if (selectedEvent?.id === id) {
+				setSheetOpen(false)
+				setSelectedEvent(null)
+			}
 		},
-		[qc]
+		[qc, selectedEvent?.id]
 	)
+
+	const openEvent = useCallback((event: ApiEvent) => {
+		setSelectedEvent(event)
+		setSheetMode('view')
+		setSheetOpen(true)
+	}, [])
+
+	const openCreate = useCallback(() => {
+		setSelectedEvent(null)
+		setSheetMode('create')
+		setSheetOpen(true)
+	}, [])
+
+	useEffect(() => {
+		if (searchParams.get('create') !== '1') {
+			return
+		}
+		if (organizerId === undefined) {
+			return
+		}
+		openCreate()
+		router.replace('/events', { scroll: false })
+	}, [searchParams, organizerId, openCreate, router])
 
 	const columns = useEventColumns({
 		getOrganizerName,
-		organizerId,
-		isAdmin,
-		onDelete
+		organizerId
 	})
 
 	const organizerOptions = useMemo(() => {
@@ -406,6 +444,7 @@ export function EventsDashboard({
 					toast.success('Aktualisierung erfolgreich')
 				}}
 				canCreate={organizerId !== undefined}
+				onCreate={openCreate}
 				canFilterOwn={organizerId !== undefined}
 				ownFilterActive={ownFilterActive}
 				onOwnFilterChange={handleOwnFilterChange}
@@ -416,6 +455,7 @@ export function EventsDashboard({
 					columns={columns}
 					data={events}
 					isLoading={isLoading}
+					onClick={openEvent}
 					enableFilter
 					enablePagination
 					initialPageSize={10}
@@ -434,8 +474,7 @@ export function EventsDashboard({
 							events={rows.map((row) => row.original)}
 							getOrganizerName={getOrganizerName}
 							organizerId={organizerId}
-							isAdmin={isAdmin}
-							onDelete={onDelete}
+							onOpen={openEvent}
 						/>
 					)}
 					filterOptions={{
@@ -472,9 +511,39 @@ export function EventsDashboard({
 				<EventsCalendar
 					events={calendarEvents}
 					organizers={organizersData || []}
-					onDelete={onDelete}
+					organizerId={organizerId}
+					isAdmin={isAdmin}
+					onOpen={openEvent}
 				/>
 			)}
+			<EventDetailSheet
+				event={selectedEvent}
+				open={sheetOpen}
+				onOpenChange={(open) => {
+					setSheetOpen(open)
+					if (!open) {
+						setSelectedEvent(null)
+						setSheetMode('view')
+					}
+				}}
+				mode={sheetMode}
+				onModeChange={setSheetMode}
+				organizerName={
+					selectedEvent ? getOrganizerName(selectedEvent.organizer_id) : ''
+				}
+				isOwnOrganizer={
+					selectedEvent !== null &&
+					organizerId !== undefined &&
+					organizerId === selectedEvent.organizer_id
+				}
+				canManage={
+					selectedEvent !== null &&
+					(isAdmin ||
+						(organizerId !== undefined &&
+							organizerId === selectedEvent.organizer_id))
+				}
+				onDelete={onDelete}
+			/>
 		</EventsPageShell>
 	)
 }

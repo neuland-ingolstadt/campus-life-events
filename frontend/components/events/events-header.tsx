@@ -1,7 +1,6 @@
 'use client'
 
 import { Grid3X3, List, Plus, UserRound } from 'lucide-react'
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -19,6 +18,7 @@ interface EventsHeaderProps {
 	readonly onViewModeChange: (mode: ViewMode) => void
 	readonly onRefresh: () => void
 	readonly canCreate: boolean
+	readonly onCreate?: () => void
 	readonly canFilterOwn: boolean
 	readonly ownFilterActive: boolean
 	readonly onOwnFilterChange: (state: boolean) => void
@@ -32,6 +32,7 @@ export function EventsHeader({
 	onViewModeChange,
 	onRefresh,
 	canCreate,
+	onCreate,
 	canFilterOwn,
 	ownFilterActive,
 	onOwnFilterChange
@@ -97,14 +98,17 @@ export function EventsHeader({
 						Aktualisieren
 					</Button>
 				</AnimateIcon>
-				{canCreate && (
-					<Link href="/events/new">
-						<Button size="sm" className="flex items-center gap-2">
-							<Plus className="h-4 w-4" />
-							Neues Event
-						</Button>
-					</Link>
-				)}
+				{canCreate && onCreate ? (
+					<Button
+						type="button"
+						size="sm"
+						className="flex items-center gap-2"
+						onClick={onCreate}
+					>
+						<Plus className="h-4 w-4" />
+						Neues Event
+					</Button>
+				) : null}
 			</div>
 		</div>
 	)

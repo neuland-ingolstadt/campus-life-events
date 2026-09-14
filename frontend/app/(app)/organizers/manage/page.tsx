@@ -13,6 +13,7 @@ import { CreateOrganizerDialog } from '@/components/create-organizer-dialog'
 import { DataTableColumnHeader } from '@/components/data-table/column-header'
 import { DataTable } from '@/components/data-table/data-table'
 import { EditAccountEmailDialog } from '@/components/edit-account-email-dialog'
+import { InviteStatusBadge } from '@/components/invite-status-badge'
 import { OrganizerKindBadge } from '@/components/organizer-kind-badge'
 import { OrganizerPermissionsDialog } from '@/components/organizer-permissions-dialog'
 import {
@@ -26,7 +27,6 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger
 } from '@/components/ui/alert-dialog'
-import { Badge } from '@/components/ui/badge'
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -40,6 +40,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { me } from '@/lib/auth'
 import { formatInCampusTimeZone } from '@/lib/date-time'
+import { cn } from '@/lib/utils'
 
 export default function ManageOrganizersPage() {
 	const qc = useQueryClient()
@@ -108,26 +109,9 @@ export default function ManageOrganizersPage() {
 				header: ({ column }) => (
 					<DataTableColumnHeader column={column} title="Status" />
 				),
-				cell: ({ row }) => {
-					const status = row.original.invite_status
-					const statusColors = {
-						PENDING: ' bg-yellow-500/20 border border-yellow-600',
-						EXPIRED: ' bg-red-500/20 border border-red-600',
-						COMPLETED: 'bg-green-500/20 border border-green-600'
-					}
-					const statusText = {
-						PENDING: 'Ausstehend',
-						EXPIRED: 'Abgelaufen',
-						COMPLETED: 'Abgeschlossen'
-					}
-					return (
-						<span
-							className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[status]}`}
-						>
-							{statusText[status]}
-						</span>
-					)
-				},
+				cell: ({ row }) => (
+					<InviteStatusBadge status={row.original.invite_status} />
+				),
 				filterFn: (row, _id, value: string[]) => {
 					if (!value?.length) return true
 					return value.includes(row.original.invite_status)
@@ -140,12 +124,16 @@ export default function ManageOrganizersPage() {
 					<DataTableColumnHeader column={column} title="Newsletter" />
 				),
 				cell: ({ row }) => (
-					<Badge
-						variant={row.original.newsletter ? 'default' : 'outline'}
-						className={row.original.newsletter ? '' : 'text-muted-foreground'}
+					<div
+						className={cn(
+							'inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium',
+							row.original.newsletter
+								? 'border-primary/30 bg-primary text-primary-foreground'
+								: 'border-border bg-muted/60 text-foreground'
+						)}
 					>
 						{row.original.newsletter ? 'Erlaubt' : 'Verweigert'}
-					</Badge>
+					</div>
 				),
 				enableSorting: false,
 				size: 140
@@ -259,10 +247,7 @@ export default function ManageOrganizersPage() {
 										</AlertDialogHeader>
 										<AlertDialogFooter>
 											<AlertDialogCancel>Abbrechen</AlertDialogCancel>
-											<AlertDialogAction
-												onClick={() => onDelete(organizer.id)}
-												className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-											>
+											<AlertDialogAction onClick={() => onDelete(organizer.id)}>
 												Löschen
 											</AlertDialogAction>
 										</AlertDialogFooter>

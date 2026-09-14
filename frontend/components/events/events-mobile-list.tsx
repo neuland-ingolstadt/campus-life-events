@@ -1,8 +1,11 @@
 'use client'
 
-import Link from 'next/link'
+import { ChevronRight } from 'lucide-react'
 import type { Event as ApiEvent } from '@/client/types.gen'
-import { EventActionsCell } from '@/components/events/event-actions-cell'
+import {
+	EventOrganizerBadge,
+	EventVisibilityIndicator
+} from '@/components/events/event-status-badges'
 import {
 	Card,
 	CardContent,
@@ -10,32 +13,21 @@ import {
 	CardHeader,
 	CardTitle
 } from '@/components/ui/card'
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger
-} from '@/components/ui/tooltip'
 import { formatInCampusTimeZone } from '@/lib/date-time'
-import {
-	deriveEventVisibilityMode,
-	eventVisibilityLabel,
-	eventVisibilityTooltip
-} from '@/lib/event-visibility'
+import { deriveEventVisibilityMode } from '@/lib/event-visibility'
 
 interface EventsMobileListProps {
 	readonly events: ApiEvent[]
 	readonly getOrganizerName: (organizerId: number) => string
 	readonly organizerId?: number
-	readonly isAdmin: boolean
-	readonly onDelete: (id: number) => Promise<void>
+	readonly onOpen: (event: ApiEvent) => void
 }
 
 export function EventsMobileList({
 	events,
 	getOrganizerName,
 	organizerId,
-	isAdmin,
-	onDelete
+	onOpen
 }: EventsMobileListProps) {
 	if (events.length === 0) {
 		return (
@@ -48,23 +40,33 @@ export function EventsMobileList({
 	return (
 		<ul className="flex flex-col gap-3">
 			{events.map((event) => {
-				const canManage =
-					isAdmin ||
-					(organizerId !== undefined && organizerId === event.organizer_id)
+				const isOwn =
+					organizerId !== undefined && organizerId === event.organizer_id
 				const visibility = deriveEventVisibilityMode(event)
 
 				return (
 					<li key={event.id}>
-						<Card className="gap-0 py-0 shadow-sm overflow-hidden">
+						<Card
+							className="gap-0 py-0 shadow-sm overflow-hidden cursor-pointer transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+							tabIndex={0}
+							onClick={() => onOpen(event)}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault()
+									onOpen(event)
+								}
+							}}
+						>
 							<CardHeader className="px-4 pt-4 pb-2 gap-2 space-y-0">
-								<CardTitle className="text-base font-semibold leading-snug">
-									<Link
-										href={`/events/${event.id}`}
-										className="hover:underline break-words"
-									>
+								<div className="flex items-start gap-2">
+									<CardTitle className="flex-1 text-base font-semibold leading-snug break-words">
 										{event.title_de}
-									</Link>
-								</CardTitle>
+									</CardTitle>
+									<ChevronRight
+										className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+										aria-hidden
+									/>
+								</div>
 								{event.description_de ? (
 									<CardDescription className="line-clamp-2 text-xs">
 										{event.description_de}
@@ -101,29 +103,12 @@ export function EventsMobileList({
 									</div>
 								</div>
 								<div className="flex flex-wrap items-center gap-2">
-									<div className="text-xs font-medium bg-primary/5 text-primary border border-primary/20 rounded-full px-2 py-1 max-w-full break-words">
-										{getOrganizerName(event.organizer_id)}
-									</div>
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<div className="border border-border bg-muted text-foreground rounded-full px-2 py-1 text-xs shrink-0">
-												{eventVisibilityLabel(visibility)}
-											</div>
-										</TooltipTrigger>
-										<TooltipContent>
-											{eventVisibilityTooltip(visibility)}
-										</TooltipContent>
-									</Tooltip>
+									<EventOrganizerBadge
+										name={getOrganizerName(event.organizer_id)}
+										isOwn={isOwn}
+									/>
+									<EventVisibilityIndicator mode={visibility} />
 								</div>
-								{canManage ? (
-									<div className="flex flex-wrap justify-end gap-2 border-t border-border pt-2">
-										<EventActionsCell
-											event={event}
-											canManage={canManage}
-											onDelete={onDelete}
-										/>
-									</div>
-								) : null}
 							</CardContent>
 						</Card>
 					</li>

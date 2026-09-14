@@ -50,3 +50,14 @@ export function eventVisibilityDescription(mode: EventVisibilityMode): string {
 			return 'z. B. Strategiemeeting – nur ihr seht es, andere Vereine nicht.'
 	}
 }
+
+export function eventVisibilityDotClass(mode: EventVisibilityMode): string {
+	switch (mode) {
+		case 'public':
+			return 'bg-emerald-600 dark:bg-emerald-400'
+		case 'internal':
+			return 'bg-amber-600 dark:bg-amber-400'
+		case 'host_only':
+			return 'bg-muted-foreground'
+	}
+}

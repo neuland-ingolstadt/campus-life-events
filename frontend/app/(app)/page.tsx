@@ -20,9 +20,9 @@ import type {
 import { ExternalLink } from '@/components/animate-ui/icons/external-link'
 import { AnimateIcon } from '@/components/animate-ui/icons/icon'
 import { DashboardMcpTeaser } from '@/components/dashboard-mcp-teaser'
+import { EventVisibilityIndicator } from '@/components/events/event-status-badges'
 import { McpAnnounceDialog } from '@/components/mcp-announce-dialog'
 import QuickActions from '@/components/quick-actions'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
 	Card,
@@ -41,6 +41,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { me } from '@/lib/auth'
 import { formatInCampusTimeZone } from '@/lib/date-time'
+import { deriveEventVisibilityMode } from '@/lib/event-visibility'
 
 const upcomingSkeletonKeys = [
 	'upcoming-skeleton-1',
@@ -115,10 +116,10 @@ export default function Dashboard() {
 			description: 'Events, die du erstellt hast und die bevorstehen'
 		},
 		{
-			title: 'Veröffentlicht',
+			title: 'Bewerben',
 			value: userPublishedEvents.length,
 			icon: TrendingUp,
-			description: 'In der App live'
+			description: 'In App / Newsletter'
 		},
 		{
 			title: 'Alle Organisationen',
@@ -200,10 +201,10 @@ export default function Dashboard() {
 						<div className="space-y-4">
 							<div className="flex items-center gap-2">
 								<h3 className="text-lg font-semibold">Übersicht</h3>
-								<Badge variant="secondary" className="ml-auto">
-									<Activity className="h-3 w-3 mr-1" />
+								<div className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/60 px-2 py-1 text-xs font-medium text-foreground">
+									<Activity className="size-3" />
 									Aktivitäten
-								</Badge>
+								</div>
 							</div>
 							<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
 								{stats.map((stat, _index) => (
@@ -268,7 +269,7 @@ export default function Dashboard() {
 											<p className="text-muted-foreground mb-4">
 												Keine anstehenden Events
 											</p>
-											<Link href="/events/new">
+											<Link href="/events?create=1">
 												<Button size="sm">
 													<Plus className="h-4 w-4 mr-2" />
 													Erstelle dein erstes Event
@@ -286,15 +287,9 @@ export default function Dashboard() {
 																	<p className="text-sm font-medium leading-none">
 																		{event.title_de}
 																	</p>
-																	{event.publish_app && (
-																		<Badge
-																			variant="secondary"
-																			className="text-xs"
-																		>
-																			<TrendingUp className="h-3 w-3 mr-1" />
-																			Live
-																		</Badge>
-																	)}
+																	<EventVisibilityIndicator
+																		mode={deriveEventVisibilityMode(event)}
+																	/>
 																</div>
 																<p className="text-sm text-muted-foreground">
 																	{formatInCampusTimeZone(
@@ -333,14 +328,9 @@ export default function Dashboard() {
 																	)}
 																</span>
 															</div>
-															{event.publish_app && (
-																<div className="flex items-center gap-1 mt-2">
-																	<TrendingUp className="h-3 w-3 text-green-600" />
-																	<span className="text-xs text-green-600 font-medium">
-																		Veröffentlicht und live
-																	</span>
-																</div>
-															)}
+															<EventVisibilityIndicator
+																mode={deriveEventVisibilityMode(event)}
+															/>
 														</div>
 													</HoverCardContent>
 												</HoverCard>
@@ -399,11 +389,9 @@ export default function Dashboard() {
 															)}
 														</p>
 													</div>
-													{event.publish_app && (
-														<Badge variant="outline" className="text-xs">
-															Live
-														</Badge>
-													)}
+													<EventVisibilityIndicator
+														mode={deriveEventVisibilityMode(event)}
+													/>
 												</div>
 											))}
 										</div>

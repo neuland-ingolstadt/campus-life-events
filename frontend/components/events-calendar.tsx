@@ -3,27 +3,11 @@
 import moment from 'moment'
 import { Calendar, momentLocalizer } from 'react-big-calendar'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
-import { useQuery } from '@tanstack/react-query'
-import { Pencil, Trash2 } from 'lucide-react'
-import Link from 'next/link'
 import { useCallback } from 'react'
 import type {
 	Event as ApiEvent,
 	Organizer as ApiOrganizer
 } from '@/client/types.gen'
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-	AlertDialogTrigger
-} from '@/components/ui/alert-dialog'
-import { Button } from '@/components/ui/button'
-import { me } from '@/lib/auth'
 
 const localizer = momentLocalizer(moment)
 
@@ -32,140 +16,80 @@ type CalendarEvent = {
 	title: string
 	start: Date
 	end: Date
-	resource: ApiEvent & { organizerName: string }
+	resource: ApiEvent & { organizerName: string; isOwn: boolean }
 }
 
-interface EventComponentProps {
-	event: CalendarEvent
-	organizerId?: number
-	isAdmin: boolean
-	onDelete: (id: number) => Promise<void>
-}
-
-function EventComponent({
-	event,
-	organizerId,
-	isAdmin,
-	onDelete
-}: EventComponentProps) {
-	const isOwnEvent =
-		isAdmin ||
-		(organizerId !== undefined && organizerId === event.resource.organizer_id)
-
+function EventComponent({ event }: { event: CalendarEvent }) {
 	return (
-		<div className="flex flex-col text-white">
-			<div className="font-medium text-xs truncate text-white">
-				{event.title}
-			</div>
-			<div className="text-xs opacity-90 truncate text-white">
+		<div className="flex flex-col leading-tight">
+			<div className="truncate text-xs font-medium">{event.title}</div>
+			<div className="truncate text-[10px] opacity-90">
 				{event.resource.organizerName}
 			</div>
-			{isOwnEvent && (
-				<div className="flex gap-1 mt-1">
-					<Link href={`/events/${event.id}`}>
-						<Button
-							variant="ghost"
-							size="sm"
-							className="h-4 px-1 text-xs hover:bg-white/20 text-white"
-							onClick={(e) => e.stopPropagation()}
-						>
-							<Pencil className="h-3 w-3 " color="lightgrey" />
-						</Button>
-					</Link>
-					<AlertDialog>
-						<AlertDialogTrigger asChild>
-							<Button
-								variant="ghost"
-								size="sm"
-								className="h-4 px-1 text-xs hover:bg-white/20 text-white"
-								onClick={(e) => e.stopPropagation()}
-							>
-								<Trash2 className="h-3 w-3 " color="lightgrey" />
-							</Button>
-						</AlertDialogTrigger>
-						<AlertDialogContent>
-							<AlertDialogHeader>
-								<AlertDialogTitle>Event löschen</AlertDialogTitle>
-								<AlertDialogDescription>
-									Bist du sicher, dass du "{event.title}" löschen möchtest?
-									Diese Aktion kann nicht rückgängig gemacht werden.
-								</AlertDialogDescription>
-							</AlertDialogHeader>
-							<AlertDialogFooter>
-								<AlertDialogCancel>Abbrechen</AlertDialogCancel>
-								<AlertDialogAction
-									onClick={() => onDelete(event.id as number)}
-									className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-								>
-									Löschen
-								</AlertDialogAction>
-							</AlertDialogFooter>
-						</AlertDialogContent>
-					</AlertDialog>
-				</div>
-			)}
 		</div>
 	)
 }
 
 interface EventsCalendarProps {
-	events: ApiEvent[]
-	organizers: ApiOrganizer[]
-	onDelete: (id: number) => Promise<void>
+	readonly events: ApiEvent[]
+	readonly organizers: ApiOrganizer[]
+	readonly organizerId?: number
+	readonly isAdmin: boolean
+	readonly onOpen: (event: ApiEvent) => void
 }
 
 export function EventsCalendar({
 	events,
 	organizers,
-	onDelete
+	organizerId,
+	isAdmin,
+	onOpen
 }: EventsCalendarProps) {
-	const { data: meData } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
-	const organizerId = meData?.organizer_id ?? undefined
-	const isAdmin = meData?.account_type === 'ADMIN'
-
-	// State for calendar view and date
-
 	const getOrganizerName = useCallback(
-		(organizerId: number) => {
-			const organizer = organizers.find(
-				(org: ApiOrganizer) => org.id === organizerId
-			)
+		(id: number) => {
+			const organizer = organizers.find((org: ApiOrganizer) => org.id === id)
 			return organizer?.name || 'Unbekannte Organisation'
 		},
 		[organizers]
 	)
 
-	// Transform events to calendar format
-	const calendarEvents: CalendarEvent[] = events.map((event) => ({
-		id: event.id,
-		title: event.title_de,
-		start: new Date(event.start_date_time),
-		end: new Date(event.end_date_time),
-		resource: {
-			...event,
-			organizerName: getOrganizerName(event.organizer_id)
+	const calendarEvents: CalendarEvent[] = events.map((event) => {
+		const isOwn =
+			isAdmin ||
+			(organizerId !== undefined && organizerId === event.organizer_id)
+
+		return {
+			id: event.id,
+			title: event.title_de,
+			start: new Date(event.start_date_time),
+			end: new Date(event.end_date_time),
+			resource: {
+				...event,
+				organizerName: getOrganizerName(event.organizer_id),
+				isOwn
+			}
 		}
-	}))
+	})
 
 	const eventStyleGetter = (event: CalendarEvent) => {
-		const isOwnEvent =
-			isAdmin ||
-			(organizerId !== undefined && organizerId === event.resource.organizer_id)
+		const isOwn = event.resource.isOwn
 		return {
 			style: {
-				backgroundColor: isOwnEvent ? '#171717' : '#525252',
-				borderColor: isOwnEvent ? '#171717' : '#404040',
-				color: 'white',
-				borderRadius: '4px',
+				backgroundColor: isOwn ? 'var(--primary)' : 'var(--muted-foreground)',
+				borderColor: isOwn ? 'var(--primary)' : 'var(--muted-foreground)',
+				color: isOwn ? 'var(--primary-foreground)' : 'var(--background)',
+				borderRadius: '6px',
 				border: 'none',
 				fontSize: '12px',
-				padding: '2px 4px'
+				padding: '2px 6px',
+				cursor: 'pointer',
+				opacity: isOwn ? 1 : 0.85
 			}
 		}
 	}
 
 	return (
-		<div className="h-[600px] bg-background w-full force-light-theme">
+		<div className="h-[600px] w-full bg-background">
 			<Calendar
 				localizer={localizer}
 				events={calendarEvents}
@@ -174,15 +98,14 @@ export function EventsCalendar({
 				style={{ height: '100%' }}
 				views={['month', 'week', 'day', 'agenda']}
 				popup
+				selectable={false}
+				onSelectEvent={(calendarEvent) => {
+					onOpen(calendarEvent.resource)
+				}}
 				eventPropGetter={eventStyleGetter}
 				components={{
 					event: (props: { event: CalendarEvent }) => (
-						<EventComponent
-							event={props.event}
-							organizerId={organizerId}
-							isAdmin={isAdmin}
-							onDelete={onDelete}
-						/>
+						<EventComponent event={props.event} />
 					)
 				}}
 				messages={{

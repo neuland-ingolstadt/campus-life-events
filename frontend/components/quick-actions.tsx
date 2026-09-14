@@ -29,7 +29,7 @@ export function QuickActions({
 			title: 'Neues Event',
 			description: 'Ein neues Event erstellen',
 			icon: Plus,
-			href: '/events/new',
+			href: '/events?create=1',
 			hideForAdmin: true
 		},
 		{

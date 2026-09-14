@@ -13,6 +13,7 @@ import { DataTableColumnHeader } from '@/components/data-table/column-header'
 import { DataTable } from '@/components/data-table/data-table'
 import { EditAccountEmailDialog } from '@/components/edit-account-email-dialog'
 import { InviteAdminDialog } from '@/components/invite-admin-dialog'
+import { InviteStatusBadge } from '@/components/invite-status-badge'
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -82,27 +83,9 @@ export default function ManageAdminsPage() {
 				header: ({ column }) => (
 					<DataTableColumnHeader column={column} title="Status" />
 				),
-				cell: ({ row }) => {
-					const status = row.original.invite_status
-					const statusColors = {
-						PENDING:
-							'text-yellow-600 bg-yellow-500/20 border border-yellow-600',
-						EXPIRED: 'text-red-600 bg-red-500/20 border border-red-600',
-						COMPLETED: 'text-green-600 bg-green-500/20 border border-green-600'
-					}
-					const statusText = {
-						PENDING: 'Ausstehend',
-						EXPIRED: 'Abgelaufen',
-						COMPLETED: 'Abgeschlossen'
-					}
-					return (
-						<span
-							className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[status]}`}
-						>
-							{statusText[status]}
-						</span>
-					)
-				},
+				cell: ({ row }) => (
+					<InviteStatusBadge status={row.original.invite_status} />
+				),
 				filterFn: (row, _id, value: string[]) => {
 					if (!value?.length) return true
 					return value.includes(row.original.invite_status)

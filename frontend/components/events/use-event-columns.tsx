@@ -1,32 +1,29 @@
 'use client'
 
 import type { ColumnDef } from '@tanstack/react-table'
+import { ChevronRight } from 'lucide-react'
 import { useMemo } from 'react'
 import type { Event as ApiEvent } from '@/client/types.gen'
 import { DataTableColumnHeader } from '@/components/data-table/column-header'
 import { dateRangeFilter } from '@/components/data-table/date-range-filter'
+import {
+	EventOrganizerBadge,
+	EventVisibilityIndicator
+} from '@/components/events/event-status-badges'
 import { formatInCampusTimeZone } from '@/lib/date-time'
 import {
 	deriveEventVisibilityMode,
-	type EventVisibilityMode,
-	eventVisibilityLabel,
-	eventVisibilityTooltip
+	type EventVisibilityMode
 } from '@/lib/event-visibility'
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
-import { EventActionsCell } from './event-actions-cell'
 
 interface UseEventColumnsProps {
 	readonly getOrganizerName: (organizerId: number) => string
 	readonly organizerId?: number
-	readonly isAdmin: boolean
-	readonly onDelete: (id: number) => Promise<void>
 }
 
 export function useEventColumns({
 	getOrganizerName,
-	organizerId,
-	isAdmin,
-	onDelete
+	organizerId
 }: UseEventColumnsProps): ColumnDef<ApiEvent>[] {
 	return useMemo(
 		() => [
@@ -60,7 +57,7 @@ export function useEventColumns({
 							<div className="font-medium">
 								{formatInCampusTimeZone(
 									new Date(row.original.start_date_time),
-									'MMM dd, yyyy'
+									'dd.MM.yyyy'
 								)}
 							</div>
 							<div className="text-xs text-muted-foreground">
@@ -89,7 +86,7 @@ export function useEventColumns({
 							<div className="font-medium">
 								{formatInCampusTimeZone(
 									new Date(row.original.end_date_time),
-									'MMM dd, yyyy'
+									'dd.MM.yyyy'
 								)}
 							</div>
 							<div className="text-xs text-muted-foreground">
@@ -112,11 +109,12 @@ export function useEventColumns({
 					<DataTableColumnHeader column={column} title="Organisation" />
 				),
 				accessorFn: (row) => getOrganizerName(row.organizer_id),
-				cell: ({ getValue }) => (
-					<div className="text-xs font-medium bg-primary/5 text-primary border border-primary/20 rounded-full px-2 py-1 inline-block">
-						{getValue<string>()}
-					</div>
-				),
+				cell: ({ row, getValue }) => {
+					const isOwn =
+						organizerId !== undefined &&
+						organizerId === row.original.organizer_id
+					return <EventOrganizerBadge name={getValue<string>()} isOwn={isOwn} />
+				},
 				sortingFn: 'alphanumeric',
 				filterFn: (row, _id, value: string[]) => {
 					if (!value?.length) return true
@@ -134,18 +132,7 @@ export function useEventColumns({
 				},
 				cell: ({ getValue }) => {
 					const visibility = getValue<EventVisibilityMode>()
-					return (
-						<Tooltip>
-							<TooltipTrigger asChild>
-								<div className="border border-border bg-muted text-foreground rounded-full px-2 py-1 inline-block text-xs">
-									{eventVisibilityLabel(visibility)}
-								</div>
-							</TooltipTrigger>
-							<TooltipContent>
-								{eventVisibilityTooltip(visibility)}
-							</TooltipContent>
-						</Tooltip>
-					)
+					return <EventVisibilityIndicator mode={visibility} />
 				},
 				sortingFn: 'alphanumeric',
 				filterFn: (row, _id, value: string[]) => {
@@ -156,26 +143,21 @@ export function useEventColumns({
 				size: 120
 			},
 			{
-				id: 'actions',
-				header: 'Aktionen',
+				id: 'open',
+				header: () => <span className="sr-only">Öffnen</span>,
 				enableHiding: false,
-				cell: ({ row }) => {
-					const event = row.original
-					const canManage =
-						isAdmin ||
-						(organizerId !== undefined && organizerId === event.organizer_id)
-
-					return (
-						<EventActionsCell
-							event={event}
-							canManage={canManage}
-							onDelete={onDelete}
+				enableSorting: false,
+				cell: () => (
+					<div className="flex justify-end pr-1">
+						<ChevronRight
+							className="size-4 text-muted-foreground"
+							aria-hidden
 						/>
-					)
-				},
-				size: 200
+					</div>
+				),
+				size: 40
 			}
 		],
-		[getOrganizerName, organizerId, isAdmin, onDelete]
+		[getOrganizerName, organizerId]
 	)
 }

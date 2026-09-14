@@ -102,7 +102,9 @@ export function EventForm({
 	event,
 	onSave,
 	isLoading = false,
-	initialValues
+	initialValues,
+	formId,
+	hideSubmitButton = false
 }: {
 	event?: Event | null
 	onSave: (
@@ -110,6 +112,8 @@ export function EventForm({
 	) => Promise<void> | void
 	isLoading?: boolean
 	initialValues?: EventFormOverrides
+	formId?: string
+	hideSubmitButton?: boolean
 }) {
 	const [startDate, setStartDate] = useState<Date>()
 	const [endDate, setEndDate] = useState<Date>()
@@ -360,6 +364,7 @@ export function EventForm({
 	return (
 		<Form {...form}>
 			<form
+				id={formId}
 				onSubmit={form.handleSubmit(onSubmit)}
 				className="flex flex-col gap-6 max-w-5xl"
 			>
@@ -704,15 +709,22 @@ export function EventForm({
 					</div>
 				</div>
 
-				<div className="flex justify-end pt-2">
-					<Button type="submit" disabled={isLoading} size="lg" className="px-8">
-						{isLoading
-							? 'Speichern...'
-							: event
-								? 'Event aktualisieren'
-								: 'Event erstellen'}
-					</Button>
-				</div>
+				{!hideSubmitButton ? (
+					<div className="flex justify-end pt-2">
+						<Button
+							type="submit"
+							disabled={isLoading}
+							size="lg"
+							className="px-8"
+						>
+							{isLoading
+								? 'Speichern...'
+								: event
+									? 'Event aktualisieren'
+									: 'Event erstellen'}
+						</Button>
+					</div>
+				) : null}
 			</form>
 		</Form>
 	)
