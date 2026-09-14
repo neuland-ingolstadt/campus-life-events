@@ -220,7 +220,7 @@
 	.animate-fade-up {
 		animation: fade-up 4s ease-in-out;
 	}
-	
+
 	@keyframes gradient-shift {
 		0% {
 			background-position: 0% 50%;

@@ -1,13 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import {
-	Building2,
-	ChevronDown,
-	Globe2,
-	Lock,
-	SlidersHorizontal
-} from 'lucide-react'
+import { Building2, Globe2, Lock, SlidersHorizontal } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -21,12 +15,16 @@ import type {
 	UpdateEventRequest
 } from '@/client/types.gen'
 import { Button } from '@/components/ui/button'
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger
-} from '@/components/ui/collapsible'
 import DateTimeField from '@/components/ui/datetime-field'
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger
+} from '@/components/ui/dialog'
 import {
 	Form,
 	FormControl,
@@ -46,7 +44,6 @@ import {
 	type EventVisibilityMode,
 	eventVisibilityDescription
 } from '@/lib/event-visibility'
-import { cn } from '@/lib/utils'
 import RequiredLabel from './ui/required-label'
 
 const END_BEFORE_START_ERROR = 'Enddatum darf nicht vor dem Startdatum liegen'
@@ -572,33 +569,26 @@ export function EventForm({
 									Keine Kanäle
 								</div>
 							) : (
-								<Collapsible
-									open={channelsOpen}
-									onOpenChange={setChannelsOpen}
-									className="w-fit"
-								>
-									<CollapsibleTrigger asChild>
+								<Dialog open={channelsOpen} onOpenChange={setChannelsOpen}>
+									<DialogTrigger asChild>
 										<button
 											type="button"
 											className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 										>
 											<SlidersHorizontal className="h-3.5 w-3.5" />
 											Kanäle anpassen
-											<ChevronDown
-												className={cn(
-													'h-3.5 w-3.5 transition-transform',
-													channelsOpen && 'rotate-180'
-												)}
-											/>
 										</button>
-									</CollapsibleTrigger>
-									<CollapsibleContent className="mt-2 w-[min(100%,36rem)] space-y-3 rounded-md border bg-muted/20 p-3">
-										<p className="text-xs text-muted-foreground">
-											Aktiv:{' '}
-											{activeChannelLabels.length > 0
-												? activeChannelLabels.join(' · ')
-												: 'keine'}
-										</p>
+									</DialogTrigger>
+									<DialogContent className="sm:max-w-lg">
+										<DialogHeader>
+											<DialogTitle>Kanäle anpassen</DialogTitle>
+											<DialogDescription>
+												Aktiv:{' '}
+												{activeChannelLabels.length > 0
+													? activeChannelLabels.join(' · ')
+													: 'keine'}
+											</DialogDescription>
+										</DialogHeader>
 										<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
 											<FormField
 												control={form.control}
@@ -702,8 +692,16 @@ export function EventForm({
 												deaktiviert.
 											</p>
 										)}
-									</CollapsibleContent>
-								</Collapsible>
+										<DialogFooter>
+											<Button
+												type="button"
+												onClick={() => setChannelsOpen(false)}
+											>
+												Fertig
+											</Button>
+										</DialogFooter>
+									</DialogContent>
+								</Dialog>
 							)}
 						</div>
 					</div>

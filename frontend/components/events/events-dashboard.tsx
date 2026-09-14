@@ -22,7 +22,7 @@ import {
 	useState
 } from 'react'
 import { toast } from 'sonner'
-import { deleteEvent, listEvents, listOrganizers } from '@/client'
+import { deleteEvent, getEvent, listEvents, listOrganizers } from '@/client'
 import type {
 	Event as ApiEvent,
 	Organizer as ApiOrganizer
@@ -309,18 +309,7 @@ export function EventsDashboard({
 	}, [organizerFilterValues, organizerId])
 
 	useEffect(() => {
-		if (organizerId === undefined) {
-			setColumnFilters((previous) => {
-				if (!previous.some((filter) => filter.id === 'organizer')) {
-					return previous
-				}
-
-				return previous.filter((filter) => filter.id !== 'organizer')
-			})
-			return
-		}
-
-		if (!ownFilterActive) {
+		if (organizerId === undefined || !ownFilterActive) {
 			return
 		}
 
@@ -393,6 +382,12 @@ export function EventsDashboard({
 		setSheetOpen(true)
 	}, [])
 
+	const openDuplicate = useCallback((event: ApiEvent) => {
+		setSelectedEvent(event)
+		setSheetMode('duplicate')
+		setSheetOpen(true)
+	}, [])
+
 	useEffect(() => {
 		if (searchParams.get('create') !== '1') {
 			return
@@ -403,6 +398,48 @@ export function EventsDashboard({
 		openCreate()
 		router.replace('/events', { scroll: false })
 	}, [searchParams, organizerId, openCreate, router])
+
+	useEffect(() => {
+		const duplicateId = Number(searchParams.get('duplicate'))
+		if (!Number.isFinite(duplicateId) || duplicateId <= 0) {
+			return
+		}
+
+		const localMatch =
+			events.find((event) => event.id === duplicateId) ??
+			calendarEvents.find((event) => event.id === duplicateId)
+
+		if (localMatch) {
+			openDuplicate(localMatch)
+			router.replace('/events', { scroll: false })
+			return
+		}
+
+		let cancelled = false
+
+		void (async () => {
+			try {
+				const response = await getEvent({
+					path: { id: duplicateId },
+					throwOnError: true
+				})
+				if (cancelled || !response.data) {
+					return
+				}
+				openDuplicate(response.data)
+				router.replace('/events', { scroll: false })
+			} catch {
+				if (!cancelled) {
+					toast.error('Event zum Duplizieren nicht gefunden')
+					router.replace('/events', { scroll: false })
+				}
+			}
+		})()
+
+		return () => {
+			cancelled = true
+		}
+	}, [searchParams, events, calendarEvents, openDuplicate, router])
 
 	const columns = useEventColumns({
 		getOrganizerName,

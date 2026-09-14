@@ -674,33 +674,33 @@ fn apply_event_filters(
         has_where = true;
     };
 
-    if is_admin {
-        if let Some(organizer_id) = query_params.organizer_id {
-            add_condition(builder);
-            builder.push("e.organizer_id = ").push_bind(organizer_id);
-        }
+	if is_admin {
+		if let Some(organizer_kind) = query_params.organizer_kind {
+			add_condition(builder);
+			builder
+				.push("o.organizer_kind = ")
+				.push_bind(organizer_kind);
+		}
+	} else if let Some(kind) = enforced_organizer_kind {
+		add_condition(builder);
+		builder.push("o.organizer_kind = ").push_bind(kind);
 
-        if let Some(organizer_kind) = query_params.organizer_kind {
-            add_condition(builder);
-            builder
-                .push("o.organizer_kind = ")
-                .push_bind(organizer_kind);
-        }
-    } else if let Some(kind) = enforced_organizer_kind {
-        add_condition(builder);
-        builder.push("o.organizer_kind = ").push_bind(kind);
+		if let Some(viewer_organizer_id) = viewer_organizer_id {
+			add_condition(builder);
+			builder
+				.push("(NOT e.host_only OR e.organizer_id = ")
+				.push_bind(viewer_organizer_id)
+				.push(")");
+		} else {
+			add_condition(builder);
+			builder.push("NOT e.host_only");
+		}
+	}
 
-        if let Some(viewer_organizer_id) = viewer_organizer_id {
-            add_condition(builder);
-            builder
-                .push("(NOT e.host_only OR e.organizer_id = ")
-                .push_bind(viewer_organizer_id)
-                .push(")");
-        } else {
-            add_condition(builder);
-            builder.push("NOT e.host_only");
-        }
-    }
+	if let Some(organizer_id) = query_params.organizer_id {
+		add_condition(builder);
+		builder.push("e.organizer_id = ").push_bind(organizer_id);
+	}
 
     if query_params.upcoming_only.unwrap_or(false) {
         add_condition(builder);

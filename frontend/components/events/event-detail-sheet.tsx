@@ -2,6 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Copy, ExternalLink, Pencil, Share2, Trash2 } from 'lucide-react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -41,7 +42,7 @@ import { formatInCampusTimeZone } from '@/lib/date-time'
 import { deriveEventVisibilityMode } from '@/lib/event-visibility'
 import { cn } from '@/lib/utils'
 
-export type EventSheetMode = 'view' | 'edit' | 'create'
+export type EventSheetMode = 'view' | 'edit' | 'create' | 'duplicate'
 
 type EventDetailSheetProps = {
 	readonly event: ApiEvent | null
@@ -84,18 +85,20 @@ export function EventDetailSheet({
 	onDelete
 }: EventDetailSheetProps) {
 	const qc = useQueryClient()
+	const reducedMotion = useReducedMotion()
 	const [saving, setSaving] = useState(false)
 	const [saveArmed, setSaveArmed] = useState(false)
 
 	const isCreate = mode === 'create'
+	const isDuplicate = mode === 'duplicate' && canManage && event !== null
 	const isEdit = mode === 'edit' && canManage && event !== null
-	const isFormMode = isCreate || isEdit
+	const isFormMode = isCreate || isEdit || isDuplicate
 
 	useEffect(() => {
 		if (!open) {
 			return
 		}
-		if (mode === 'edit' && !canManage) {
+		if ((mode === 'edit' || mode === 'duplicate') && !canManage) {
 			onModeChange('view')
 		}
 	}, [open, canManage, mode, onModeChange])
@@ -115,7 +118,7 @@ export function EventDetailSheet({
 
 	const saveMutation = useMutation({
 		mutationFn: async (values: CreateEventRequest | UpdateEventRequest) => {
-			if (isCreate) {
+			if (isCreate || isDuplicate) {
 				await createEvent({
 					body: values as CreateEventRequest,
 					throwOnError: true
@@ -139,18 +142,22 @@ export function EventDetailSheet({
 				await qc.invalidateQueries({ queryKey: ['event', event.id] })
 			}
 			toast.success(
-				isCreate
-					? 'Event erfolgreich erstellt'
-					: 'Event erfolgreich aktualisiert'
+				isDuplicate
+					? 'Event erfolgreich dupliziert'
+					: isCreate
+						? 'Event erfolgreich erstellt'
+						: 'Event erfolgreich aktualisiert'
 			)
 			onModeChange('view')
 			onOpenChange(false)
 		},
 		onError: () => {
 			toast.error(
-				isCreate
-					? 'Event konnte nicht erstellt werden'
-					: 'Event konnte nicht gespeichert werden'
+				isDuplicate
+					? 'Event konnte nicht dupliziert werden'
+					: isCreate
+						? 'Event konnte nicht erstellt werden'
+						: 'Event konnte nicht gespeichert werden'
 			)
 		}
 	})
@@ -183,126 +190,173 @@ export function EventDetailSheet({
 
 	const hasViewActions = Boolean(event && (event.publish_web || canManage))
 	const isPending = saving || saveMutation.isPending
+	const contentKey = `${mode}-${event?.id ?? 'new'}`
+	const duplicateInitialValues = useMemo(
+		() =>
+			isDuplicate
+				? {
+						start_date_time: undefined as Date | undefined,
+						end_date_time: undefined as Date | undefined
+					}
+				: undefined,
+		[isDuplicate]
+	)
 
 	return (
 		<Sheet open={open} onOpenChange={onOpenChange}>
 			<SheetContent
 				side="right"
 				className={cn(
-					'flex w-full flex-col gap-0 p-0',
+					'flex w-full flex-col gap-0 p-0 transition-[max-width] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]',
 					isFormMode ? 'sm:max-w-2xl md:max-w-3xl' : 'sm:max-w-md md:max-w-lg'
 				)}
 			>
 				{isCreate || event ? (
 					<>
-						<SheetHeader className="border-b pr-12 gap-3">
-							{isCreate ? (
-								<>
-									<SheetTitle className="text-left leading-snug">
-										Neues Event
-									</SheetTitle>
-									<SheetDescription className="text-left">
-										Fülle die Angaben aus, um dein Event zu erstellen.
-									</SheetDescription>
-								</>
-							) : isEdit ? (
-								<>
-									<SheetTitle className="text-left leading-snug">
-										Event bearbeiten
-									</SheetTitle>
-									<SheetDescription className="text-left">
-										Aktualisiere Details und Sichtbarkeit.
-									</SheetDescription>
-								</>
-							) : event ? (
-								<>
-									<div className="space-y-2">
-										<SheetTitle className="text-left leading-snug">
-											{event.title_de}
-										</SheetTitle>
-										{event.title_en && event.title_en !== event.title_de ? (
+						<SheetHeader className="border-b pr-12 gap-3 overflow-hidden">
+							<AnimatePresence mode="wait" initial={false}>
+								<motion.div
+									key={`header-${mode}`}
+									initial={reducedMotion ? false : { opacity: 0 }}
+									animate={{ opacity: 1 }}
+									exit={reducedMotion ? undefined : { opacity: 0 }}
+									transition={{ duration: 0.12 }}
+									className="space-y-3"
+								>
+									{isCreate ? (
+										<>
+											<SheetTitle className="text-left leading-snug">
+												Neues Event
+											</SheetTitle>
 											<SheetDescription className="text-left">
-												{event.title_en}
+												Fülle die Angaben aus, um dein Event zu erstellen.
 											</SheetDescription>
-										) : (
-											<SheetDescription className="sr-only">
-												Eventdetails
+										</>
+									) : isDuplicate ? (
+										<div className="flex items-center gap-2.5">
+											<span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-primary/25 bg-primary text-primary-foreground">
+												<Copy className="size-3.5" />
+											</span>
+											<div className="min-w-0">
+												<SheetTitle className="text-left leading-snug">
+													Event duplizieren
+												</SheetTitle>
+												<SheetDescription className="text-left">
+													Kopie von „{event?.title_de}“ – setze neue Termine.
+												</SheetDescription>
+											</div>
+										</div>
+									) : isEdit ? (
+										<>
+											<SheetTitle className="text-left leading-snug">
+												Event bearbeiten
+											</SheetTitle>
+											<SheetDescription className="text-left">
+												Aktualisiere Details und Sichtbarkeit.
 											</SheetDescription>
-										)}
-									</div>
-									<div className="flex flex-wrap items-center gap-2">
-										<EventOrganizerBadge
-											name={organizerName}
-											isOwn={isOwnOrganizer}
-										/>
-										{visibility ? (
-											<EventVisibilityIndicator mode={visibility} />
-										) : null}
-									</div>
-								</>
-							) : null}
+										</>
+									) : event ? (
+										<>
+											<div className="space-y-2">
+												<SheetTitle className="text-left leading-snug">
+													{event.title_de}
+												</SheetTitle>
+												{event.title_en && event.title_en !== event.title_de ? (
+													<SheetDescription className="text-left">
+														{event.title_en}
+													</SheetDescription>
+												) : (
+													<SheetDescription className="sr-only">
+														Eventdetails
+													</SheetDescription>
+												)}
+											</div>
+											<div className="flex flex-wrap items-center gap-2">
+												<EventOrganizerBadge
+													name={organizerName}
+													isOwn={isOwnOrganizer}
+												/>
+												{visibility ? (
+													<EventVisibilityIndicator mode={visibility} />
+												) : null}
+											</div>
+										</>
+									) : null}
+								</motion.div>
+							</AnimatePresence>
 						</SheetHeader>
 
 						<div className="flex-1 overflow-y-auto px-4 py-4">
-							{isFormMode ? (
-								<EventForm
-									key={isCreate ? 'create' : `edit-${event?.id}`}
-									formId="event-sheet-form"
-									hideSubmitButton
-									event={isCreate ? null : event}
-									onSave={onSave}
-									isLoading={isPending}
-								/>
-							) : event ? (
-								<dl className="space-y-4">
-									<DetailRow label="Start">
-										<span className="tabular-nums">
-											{formatInCampusTimeZone(
-												new Date(event.start_date_time),
-												'dd.MM.yyyy HH:mm'
-											)}
-										</span>
-									</DetailRow>
-									<DetailRow label="Ende">
-										<span className="tabular-nums">
-											{formatInCampusTimeZone(
-												new Date(event.end_date_time),
-												'dd.MM.yyyy HH:mm'
-											)}
-										</span>
-									</DetailRow>
-									{event.location ? (
-										<DetailRow label="Ort">{event.location}</DetailRow>
+							<AnimatePresence mode="wait" initial={false}>
+								<motion.div
+									key={contentKey}
+									initial={reducedMotion ? false : { opacity: 0 }}
+									animate={{ opacity: 1 }}
+									exit={reducedMotion ? undefined : { opacity: 0 }}
+									transition={{ duration: 0.12 }}
+								>
+									{isFormMode ? (
+										<EventForm
+											key={contentKey}
+											formId="event-sheet-form"
+											hideSubmitButton
+											event={isCreate ? null : event}
+											initialValues={duplicateInitialValues}
+											onSave={onSave}
+											isLoading={isPending}
+										/>
+									) : event ? (
+										<dl className="space-y-4">
+											<DetailRow label="Start">
+												<span className="tabular-nums">
+													{formatInCampusTimeZone(
+														new Date(event.start_date_time),
+														'dd.MM.yyyy HH:mm'
+													)}
+												</span>
+											</DetailRow>
+											<DetailRow label="Ende">
+												<span className="tabular-nums">
+													{formatInCampusTimeZone(
+														new Date(event.end_date_time),
+														'dd.MM.yyyy HH:mm'
+													)}
+												</span>
+											</DetailRow>
+											{event.location ? (
+												<DetailRow label="Ort">{event.location}</DetailRow>
+											) : null}
+											{event.event_url ? (
+												<DetailRow label="Link">
+													<a
+														href={event.event_url}
+														target="_blank"
+														rel="noopener noreferrer"
+														className="inline-flex items-center gap-1 text-primary underline-offset-2 hover:underline break-all"
+													>
+														{event.event_url}
+														<ExternalLink className="size-3.5 shrink-0" />
+													</a>
+												</DetailRow>
+											) : null}
+											{event.description_de ? (
+												<DetailRow label="Beschreibung">
+													<p className="whitespace-pre-wrap text-sm leading-relaxed">
+														{event.description_de}
+													</p>
+												</DetailRow>
+											) : null}
+											{event.description_en ? (
+												<DetailRow label="Beschreibung (EN)">
+													<p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+														{event.description_en}
+													</p>
+												</DetailRow>
+											) : null}
+										</dl>
 									) : null}
-									{event.event_url ? (
-										<DetailRow label="Link">
-											<a
-												href={event.event_url}
-												target="_blank"
-												rel="noopener noreferrer"
-												className="inline-flex items-center gap-1 text-primary underline-offset-2 hover:underline break-all"
-											>
-												{event.event_url}
-												<ExternalLink className="size-3.5 shrink-0" />
-											</a>
-										</DetailRow>
-									) : null}
-									{event.description_de ? (
-										<DetailRow label="Beschreibung">
-											<p className="whitespace-pre-wrap text-sm leading-relaxed">
-												{event.description_de}
-											</p>
-										</DetailRow>
-									) : null}
-									{event.description_en ? (
-										<DetailRow label="Description">
-											<p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
-												{event.description_en}
-											</p>
-										</DetailRow>
-									) : null}
-								</dl>
-							) : null}
+								</motion.div>
+							</AnimatePresence>
 						</div>
 
 						{!isFormMode && event && hasViewActions ? (
@@ -339,11 +393,14 @@ export function EventDetailSheet({
 									) : null}
 									{canManage ? (
 										<>
-											<Button asChild variant="outline" size="sm">
-												<Link href={`/events/${event.id}/duplicate`}>
-													<Copy className="size-3.5" />
-													Duplizieren
-												</Link>
+											<Button
+												type="button"
+												variant="outline"
+												size="sm"
+												onClick={() => onModeChange('duplicate')}
+											>
+												<Copy className="size-3.5" />
+												Duplizieren
 											</Button>
 											<AlertDialog>
 												<AlertDialogTrigger asChild>
@@ -409,9 +466,11 @@ export function EventDetailSheet({
 								>
 									{isPending
 										? 'Speichern...'
-										: isCreate
-											? 'Event erstellen'
-											: 'Event aktualisieren'}
+										: isDuplicate
+											? 'Kopie erstellen'
+											: isCreate
+												? 'Event erstellen'
+												: 'Event aktualisieren'}
 								</Button>
 							</SheetFooter>
 						) : null}
