@@ -238,7 +238,7 @@ export function EventDetailSheet({
 			>
 				{isCreate || event ? (
 					<>
-						<ResponsiveSheetHeader className="border-b pr-12 gap-3 overflow-hidden">
+						<ResponsiveSheetHeader className="shrink-0 border-b pr-12 gap-3 overflow-hidden">
 							<AnimatePresence mode="wait" initial={false}>
 								<motion.div
 									key={`header-${mode}`}
@@ -311,7 +311,7 @@ export function EventDetailSheet({
 							</AnimatePresence>
 						</ResponsiveSheetHeader>
 
-						<div className="relative flex-1 overflow-x-hidden overflow-y-auto">
+						<div className="relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
 							{isFormMode ? (
 								<div
 									ref={formModeFocusRef}

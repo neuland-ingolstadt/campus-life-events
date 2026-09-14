@@ -121,7 +121,11 @@ function ResponsiveSheetHeader({
 
 	return (
 		<Comp
-			className={cn(isMobile && 'gap-1.5 p-4 text-left md:text-left', className)}
+			className={cn(
+				'shrink-0',
+				isMobile && 'gap-1.5 p-4 text-left md:text-left',
+				className
+			)}
 			{...props}
 		/>
 	)
@@ -134,7 +138,7 @@ function ResponsiveSheetFooter({
 	const { isMobile } = useResponsiveSheet()
 	const Comp = isMobile ? DrawerFooter : SheetFooter
 
-	return <Comp className={className} {...props} />
+	return <Comp className={cn('shrink-0', className)} {...props} />
 }
 
 function ResponsiveSheetTitle({
