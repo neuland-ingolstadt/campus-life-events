@@ -188,13 +188,14 @@ export function EventDetailSheet({
 	}
 
 	const visibility = event ? deriveEventVisibilityMode(event) : null
+	const hasPublicPage = Boolean(event?.publish_web && event?.publish_app)
 
 	const shareUrl = useMemo(() => {
-		if (!event || typeof window === 'undefined') {
+		if (!event || !hasPublicPage || typeof window === 'undefined') {
 			return ''
 		}
 		return `${window.location.origin}/e/${event.id}`
-	}, [event])
+	}, [event, hasPublicPage])
 
 	const handleShare = useCallback(() => {
 		if (!shareUrl || typeof navigator === 'undefined') {
@@ -204,7 +205,7 @@ export function EventDetailSheet({
 		toast.success('Öffentlicher Link wurde in die Zwischenablage kopiert.')
 	}, [shareUrl])
 
-	const hasViewActions = Boolean(event && (event.publish_web || canManage))
+	const hasViewActions = Boolean(event && (hasPublicPage || canManage))
 	const isPending = saving || saveMutation.isPending
 	const contentKey = `${mode}-${event?.id ?? 'new'}`
 	const duplicateInitialValues = useMemo(
@@ -429,7 +430,7 @@ export function EventDetailSheet({
 									</Button>
 								) : null}
 								<div className="flex w-full flex-wrap gap-2">
-									{event.publish_web ? (
+									{hasPublicPage ? (
 										<>
 											<Button asChild variant="outline" size="sm">
 												<Link href={`/e/${event.id}`} target="_blank">
