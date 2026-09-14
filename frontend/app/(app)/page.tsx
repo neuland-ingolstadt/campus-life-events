@@ -1,41 +1,39 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { addDays, startOfDay } from 'date-fns'
 import {
-	Activity,
 	AlertTriangle,
-	BarChart3,
 	Calendar,
+	ChevronRight,
 	Clock,
 	Plus,
 	TrendingUp,
 	Users
 } from 'lucide-react'
 import Link from 'next/link'
-import { listEvents, listOrganizers } from '@/client'
+import { useCallback, useMemo, useState } from 'react'
+import { deleteEvent, listEvents, listOrganizers } from '@/client'
 import type {
 	Event as ApiEvent,
 	Organizer as ApiOrganizer
 } from '@/client/types.gen'
-import { ExternalLink } from '@/components/animate-ui/icons/external-link'
-import { AnimateIcon } from '@/components/animate-ui/icons/icon'
 import { DashboardMcpTeaser } from '@/components/dashboard-mcp-teaser'
+import {
+	EventDetailSheet,
+	type EventSheetMode
+} from '@/components/events/event-detail-sheet'
 import { EventVisibilityIndicator } from '@/components/events/event-status-badges'
 import { McpAnnounceDialog } from '@/components/mcp-announce-dialog'
 import QuickActions from '@/components/quick-actions'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
 	Card,
 	CardContent,
-	CardDescription,
 	CardHeader,
 	CardTitle
 } from '@/components/ui/card'
-import {
-	HoverCard,
-	HoverCardContent,
-	HoverCardTrigger
-} from '@/components/ui/hover-card'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -43,18 +41,15 @@ import { me } from '@/lib/auth'
 import { formatInCampusTimeZone } from '@/lib/date-time'
 import { deriveEventVisibilityMode } from '@/lib/event-visibility'
 
-const upcomingSkeletonKeys = [
-	'upcoming-skeleton-1',
-	'upcoming-skeleton-2',
-	'upcoming-skeleton-3'
-]
-const recentSkeletonKeys = [
-	'recent-skeleton-1',
-	'recent-skeleton-2',
-	'recent-skeleton-3'
+const weekSkeletonKeys = [
+	'week-skeleton-1',
+	'week-skeleton-2',
+	'week-skeleton-3',
+	'week-skeleton-4'
 ]
 
 export default function Dashboard() {
+	const qc = useQueryClient()
 	const { data: user } = useQuery({ queryKey: ['auth', 'me'], queryFn: me })
 	const { data: events = [], isLoading: eventsLoading } = useQuery<ApiEvent[]>({
 		queryKey: ['events'],
@@ -74,46 +69,83 @@ export default function Dashboard() {
 		}
 	})
 
-	const now = new Date()
-	const allEvents = events
+	const [selectedEvent, setSelectedEvent] = useState<ApiEvent | null>(null)
+	const [sheetMode, setSheetMode] = useState<EventSheetMode>('view')
+	const [sheetOpen, setSheetOpen] = useState(false)
+
+	const now = useMemo(() => new Date(), [])
 	const organizerList = organizers
 	const isAdmin = user?.account_type === 'ADMIN'
+	const organizerId = user?.organizer_id ?? undefined
 
-	// Get current user's organizer profile
 	const currentUserOrganizer = organizerList.find(
 		(o) => o.id === user?.organizer_id
 	)
 
-	// Check if organizer profile is incomplete
 	const isProfileIncomplete =
 		currentUserOrganizer &&
 		((!currentUserOrganizer.description_de &&
 			!currentUserOrganizer.description_en) ||
 			!currentUserOrganizer.website_url)
 
-	// Get user's events
-	const userEvents = allEvents.filter(
-		(e) => e.organizer_id === user?.organizer_id
-	)
+	const userEvents = events.filter((e) => e.organizer_id === user?.organizer_id)
 	const userUpcomingEvents = userEvents.filter(
 		(e) => new Date(e.start_date_time) > now
 	)
 	const userPublishedEvents = userEvents.filter((e) => e.publish_app)
 
-	// Quick actions moved to dedicated component
+	const thisWeekEvents = useMemo(() => {
+		const weekEnd = addDays(startOfDay(now), 7)
+		return userUpcomingEvents
+			.filter((event) => new Date(event.start_date_time) <= weekEnd)
+			.sort(
+				(a, b) =>
+					new Date(a.start_date_time).getTime() -
+					new Date(b.start_date_time).getTime()
+			)
+			.slice(0, 5)
+	}, [userUpcomingEvents, now])
+
+	const getOrganizerName = useCallback(
+		(id: number) => {
+			const organizer = organizerList.find((org) => org.id === id)
+			return organizer?.name || 'Unbekannte Organisation'
+		},
+		[organizerList]
+	)
+
+	const openEvent = useCallback((event: ApiEvent) => {
+		setSelectedEvent(event)
+		setSheetMode('view')
+		setSheetOpen(true)
+	}, [])
+
+	const openCreate = useCallback(() => {
+		setSelectedEvent(null)
+		setSheetMode('create')
+		setSheetOpen(true)
+	}, [])
+
+	const onDelete = useCallback(
+		async (id: number) => {
+			await deleteEvent({ path: { id } })
+			await qc.invalidateQueries({
+				predicate: (q) => q.queryKey[0] === 'events'
+			})
+			if (selectedEvent?.id === id) {
+				setSheetOpen(false)
+				setSelectedEvent(null)
+			}
+		},
+		[qc, selectedEvent?.id]
+	)
 
 	const stats = [
 		{
-			title: 'Deine Events',
-			value: userEvents.length || 0,
-			icon: Calendar,
-			description: 'Events, die du erstellt hast'
-		},
-		{
-			title: 'Anstehende Events',
+			title: 'Anstehend',
 			value: userUpcomingEvents.length,
 			icon: Clock,
-			description: 'Events, die du erstellt hast und die bevorstehen'
+			description: 'Kommende eigene Events'
 		},
 		{
 			title: 'Bewerben',
@@ -122,10 +154,16 @@ export default function Dashboard() {
 			description: 'In App / Newsletter'
 		},
 		{
-			title: 'Alle Organisationen',
+			title: 'Deine Events',
+			value: userEvents.length || 0,
+			icon: Calendar,
+			description: 'Gesamt'
+		},
+		{
+			title: 'Organisationen',
 			value: organizerList.length,
 			icon: Users,
-			description: 'Alle Organisationen'
+			description: 'Im System'
 		}
 	]
 
@@ -156,32 +194,22 @@ export default function Dashboard() {
 					)}
 				</div>
 
-				{isProfileIncomplete && (
-					<div className="rounded-lg border border-orange-200 bg-orange-50 p-4 dark:border-amber-800 dark:bg-amber-950">
-						<div className="flex items-start gap-3">
-							<AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400 mt-0.5 flex-shrink-0" />
-							<div className="flex-1">
-								<h3 className="text-sm font-medium text-orange-800 dark:text-orange-200">
-									Organisationsprofil vervollständigen
-								</h3>
-								<p className="mt-1 text-sm text-orange-700 dark:text-orange-300">
-									Deine Organisation ist noch nicht vollständig. Bitte fülle
-									alle Felder aus, um dein Profil zu vervollständigen.
-								</p>
-								<div className="mt-3">
-									<Link href="/organizers">
-										<Button size="sm">
-											<ExternalLink className="h-3 w-3 mr-1" />
-											Bearbeiten
-										</Button>
-									</Link>
-								</div>
-							</div>
-						</div>
-					</div>
-				)}
+				{isProfileIncomplete ? (
+					<Alert className="border-amber-500/40 bg-amber-500/10 text-foreground [&>svg]:text-amber-700 dark:[&>svg]:text-amber-400">
+						<AlertTriangle />
+						<AlertTitle>Organisationsprofil vervollständigen</AlertTitle>
+						<AlertDescription className="gap-3">
+							<p>
+								Beschreibung oder Website fehlen noch. Vervollständige dein
+								Profil, damit andere Vereine euch besser finden.
+							</p>
+							<Button asChild size="sm" className="mt-1 w-fit">
+								<Link href="/organizers">Profil bearbeiten</Link>
+							</Button>
+						</AlertDescription>
+					</Alert>
+				) : null}
 
-				{/* Quick Actions */}
 				<div className="space-y-3">
 					<h3 className="text-lg font-semibold">Schnellaktionen</h3>
 					<QuickActions userEventsCount={userEvents.length} isAdmin={isAdmin} />
@@ -199,15 +227,9 @@ export default function Dashboard() {
 				) : (
 					<>
 						<div className="space-y-4">
-							<div className="flex items-center gap-2">
-								<h3 className="text-lg font-semibold">Übersicht</h3>
-								<div className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/60 px-2 py-1 text-xs font-medium text-foreground">
-									<Activity className="size-3" />
-									Aktivitäten
-								</div>
-							</div>
+							<h3 className="text-lg font-semibold">Übersicht</h3>
 							<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-								{stats.map((stat, _index) => (
+								{stats.map((stat) => (
 									<Card
 										key={stat.title}
 										className="transition-colors hover:bg-muted/50"
@@ -219,16 +241,12 @@ export default function Dashboard() {
 											<stat.icon className="h-4 w-4 text-primary" />
 										</CardHeader>
 										<CardContent>
-											<div className="flex items-center">
-												<div className="text-2xl font-bold text-primary">
-													{stat.value}
-												</div>
+											<div className="text-2xl font-bold text-primary">
+												{stat.value}
 											</div>
-											<div className="space-y-2">
-												<p className="text-xs text-muted-foreground">
-													{stat.description}
-												</p>
-											</div>
+											<p className="text-xs text-muted-foreground">
+												{stat.description}
+											</p>
 										</CardContent>
 									</Card>
 								))}
@@ -237,171 +255,120 @@ export default function Dashboard() {
 
 						<Separator className="my-6" />
 
-						{/* Your Events */}
-						<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-							<Card className="col-span-4 border-primary/20">
-								<CardHeader>
-									<div className="flex items-center justify-between">
-										<div>
-											<CardTitle className="flex items-center gap-2">
-												<Calendar className="h-5 w-5 text-primary" />
-												Deine anstehenden Events
-											</CardTitle>
-											<CardDescription>
-												Events, die du erstellt hast und die bevorstehen
-											</CardDescription>
-										</div>
-									</div>
-								</CardHeader>
-								<CardContent>
-									{eventsLoading ? (
-										<div className="space-y-3">
-											{upcomingSkeletonKeys.map((key) => (
-												<div key={key} className="space-y-2">
-													<Skeleton className="h-4 w-3/4" />
-													<Skeleton className="h-3 w-1/2" />
-												</div>
-											))}
-										</div>
-									) : userUpcomingEvents.length === 0 ? (
-										<div className="text-center py-8">
-											<Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-											<p className="text-muted-foreground mb-4">
-												Keine anstehenden Events
-											</p>
-											<Link href="/events?create=1">
-												<Button size="sm">
-													<Plus className="h-4 w-4 mr-2" />
-													Erstelle dein erstes Event
-												</Button>
-											</Link>
-										</div>
-									) : (
-										<div className="space-y-3">
-											{userUpcomingEvents.slice(0, 5).map((event) => (
-												<HoverCard key={event.id}>
-													<HoverCardTrigger asChild>
-														<div className="flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50">
-															<div className="space-y-1">
-																<div className="flex items-center gap-2">
-																	<p className="text-sm font-medium leading-none">
-																		{event.title_de}
-																	</p>
-																	<EventVisibilityIndicator
-																		mode={deriveEventVisibilityMode(event)}
-																	/>
-																</div>
-																<p className="text-sm text-muted-foreground">
-																	{formatInCampusTimeZone(
-																		new Date(event.start_date_time),
-																		'PPpp'
-																	)}
-																</p>
-															</div>
-															<div className="flex items-center gap-2">
-																<Link href={`/events/${event.id}`}>
-																	<AnimateIcon animateOnHover>
-																		<Button size="sm" variant="ghost">
-																			<ExternalLink className="h-3 w-3" />
-																		</Button>
-																	</AnimateIcon>
-																</Link>
-															</div>
-														</div>
-													</HoverCardTrigger>
-													<HoverCardContent className="w-80">
-														<div className="space-y-2">
-															<h4 className="font-semibold text-sm">
-																{event.title_de}
-															</h4>
-															<p className="text-xs text-muted-foreground">
-																{event.title_en
-																	? event.title_en
-																	: 'Kein englischer Titel'}
-															</p>
-															<div className="flex items-center gap-2">
-																<Clock className="h-3 w-3 text-muted-foreground" />
-																<span className="text-xs">
-																	{formatInCampusTimeZone(
-																		new Date(event.start_date_time),
-																		'PPpp'
-																	)}
-																</span>
-															</div>
-															<EventVisibilityIndicator
-																mode={deriveEventVisibilityMode(event)}
-															/>
-														</div>
-													</HoverCardContent>
-												</HoverCard>
-											))}
-										</div>
-									)}
-								</CardContent>
-							</Card>
+						<section className="space-y-4">
+							<div className="flex flex-wrap items-end justify-between gap-3">
+								<div>
+									<h3 className="text-lg font-semibold">Diese Woche</h3>
+									<p className="text-sm text-muted-foreground">
+										Deine nächsten Events in den kommenden sieben Tagen
+									</p>
+								</div>
+								{organizerId !== undefined ? (
+									<Button type="button" size="sm" onClick={openCreate}>
+										<Plus className="size-4" />
+										Neues Event
+									</Button>
+								) : null}
+							</div>
 
-							<Card className="col-span-3 border-primary/20">
-								<CardHeader>
-									<div className="flex items-center justify-between">
-										<div>
-											<CardTitle className="flex items-center gap-2">
-												<Activity className="h-5 w-5 text-primary" />
-												Aktivitäten
-											</CardTitle>
-											<CardDescription>
-												Deine letzten Events und Updates
-											</CardDescription>
-										</div>
+							{eventsLoading ? (
+								<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+									{weekSkeletonKeys.map((key) => (
+										<Skeleton key={key} className="h-28 w-full rounded-lg" />
+									))}
+								</div>
+							) : thisWeekEvents.length === 0 ? (
+								<div className="flex flex-col items-center justify-center rounded-lg border border-dashed px-6 py-12 text-center">
+									<Calendar className="mb-3 size-10 text-muted-foreground" />
+									<p className="text-sm font-medium">
+										Keine Events in dieser Woche
+									</p>
+									<p className="mt-1 max-w-sm text-sm text-muted-foreground">
+										Lege ein Event an oder schau in der Übersicht nach späteren
+										Terminen.
+									</p>
+									<div className="mt-4 flex flex-wrap justify-center gap-2">
+										{organizerId !== undefined ? (
+											<Button type="button" size="sm" onClick={openCreate}>
+												<Plus className="size-4" />
+												Event erstellen
+											</Button>
+										) : null}
+										<Button asChild size="sm" variant="outline">
+											<Link href="/events">Zur Eventübersicht</Link>
+										</Button>
 									</div>
-								</CardHeader>
-								<CardContent>
-									{eventsLoading ? (
-										<div className="space-y-3">
-											{recentSkeletonKeys.map((key) => (
-												<div key={key} className="space-y-2">
-													<Skeleton className="h-3 w-full" />
-													<Skeleton className="h-2 w-1/3" />
+								</div>
+							) : (
+								<ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+									{thisWeekEvents.map((event) => (
+										<li key={event.id}>
+											<button
+												type="button"
+												onClick={() => openEvent(event)}
+												className="flex h-full w-full flex-col gap-3 rounded-lg border bg-card p-4 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+											>
+												<div className="flex items-start justify-between gap-2">
+													<p className="line-clamp-2 text-sm font-medium leading-snug">
+														{event.title_de}
+													</p>
+													<ChevronRight
+														className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+														aria-hidden
+													/>
 												</div>
-											))}
-										</div>
-									) : userEvents.length === 0 ? (
-										<div className="text-center py-6">
-											<BarChart3 className="h-8 w-8 text-muted-foreground mx-auto mb-4" />
-											<p className="text-sm text-muted-foreground">
-												Noch keine Events
-											</p>
-										</div>
-									) : (
-										<div className="space-y-3">
-											{userEvents.slice(0, 4).map((event) => (
-												<div
-													key={event.id}
-													className="flex items-center justify-between p-2 rounded border transition-colors duration-200"
-												>
-													<div className="space-y-1">
-														<p className="text-sm font-medium leading-none line-clamp-1">
-															{event.title_de}
-														</p>
-														<p className="text-xs text-muted-foreground">
-															{formatInCampusTimeZone(
-																new Date(event.start_date_time),
-																'MMM d, yyyy'
-															)}
-														</p>
-													</div>
+												<div className="mt-auto space-y-2">
+													<p className="text-xs text-muted-foreground tabular-nums">
+														{formatInCampusTimeZone(
+															new Date(event.start_date_time),
+															'EEE, dd.MM. · HH:mm'
+														)}
+													</p>
 													<EventVisibilityIndicator
 														mode={deriveEventVisibilityMode(event)}
 													/>
 												</div>
-											))}
-										</div>
-									)}
-								</CardContent>
-							</Card>
-						</div>
+											</button>
+										</li>
+									))}
+								</ul>
+							)}
+						</section>
 					</>
 				)}
 			</div>
+
+			<EventDetailSheet
+				event={selectedEvent}
+				open={sheetOpen}
+				onOpenChange={(open) => {
+					setSheetOpen(open)
+					if (!open) {
+						setSelectedEvent(null)
+						setSheetMode('view')
+					}
+				}}
+				mode={sheetMode}
+				onModeChange={setSheetMode}
+				organizerName={
+					selectedEvent
+						? getOrganizerName(selectedEvent.organizer_id)
+						: currentUserOrganizer?.name || ''
+				}
+				isOwnOrganizer={
+					selectedEvent !== null &&
+					organizerId !== undefined &&
+					organizerId === selectedEvent.organizer_id
+				}
+				canManage={
+					sheetMode === 'create' ||
+					(selectedEvent !== null &&
+						(isAdmin ||
+							(organizerId !== undefined &&
+								organizerId === selectedEvent.organizer_id)))
+				}
+				onDelete={onDelete}
+			/>
 		</div>
 	)
 }
