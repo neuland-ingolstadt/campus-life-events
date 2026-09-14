@@ -405,6 +405,17 @@ export function EventsDashboard({
 	}, [searchParams, organizerId, openCreate, router])
 
 	useEffect(() => {
+		if (searchParams.get('own') !== '1') {
+			return
+		}
+		if (organizerId === undefined) {
+			return
+		}
+		handleOwnFilterChange(true)
+		router.replace('/events', { scroll: false })
+	}, [searchParams, organizerId, handleOwnFilterChange, router])
+
+	useEffect(() => {
 		const duplicateId = Number(searchParams.get('duplicate'))
 		if (!Number.isFinite(duplicateId) || duplicateId <= 0) {
 			return

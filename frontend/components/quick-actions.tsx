@@ -38,7 +38,7 @@ export function QuickActions({
 				? 'Zur Eventübersicht wechseln'
 				: `${userEventsCount} gesamt`,
 			icon: Calendar,
-			href: '/events'
+			href: isAdmin ? '/events' : '/events?own=1'
 		},
 		{
 			title: isAdmin ? 'Adminbereich' : 'Organisationsprofil',
