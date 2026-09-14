@@ -120,10 +120,10 @@ export default function Dashboard() {
 		})
 	}, [nextUpEvent, now])
 
-	const thisWeekEvents = useMemo(() => {
-		const weekEnd = addDays(startOfDay(now), 7)
+	const nextTwoWeeksEvents = useMemo(() => {
+		const twoWeeksEnd = addDays(startOfDay(now), 14)
 		return userUpcomingEvents
-			.filter((event) => new Date(event.start_date_time) <= weekEnd)
+			.filter((event) => new Date(event.start_date_time) <= twoWeeksEnd)
 			.slice(0, 5)
 	}, [userUpcomingEvents, now])
 
@@ -371,9 +371,11 @@ export default function Dashboard() {
 						<section className="space-y-4">
 							<div className="flex flex-wrap items-end justify-between gap-3">
 								<div>
-									<h3 className="text-lg font-semibold">Diese Woche</h3>
+									<h3 className="text-lg font-semibold">
+										Die nächsten zwei Wochen
+									</h3>
 									<p className="text-sm text-muted-foreground">
-										Deine nächsten Events in den kommenden sieben Tagen
+										Deine nächsten Events in den kommenden 14 Tagen
 									</p>
 								</div>
 								{organizerId !== undefined ? (
@@ -390,11 +392,11 @@ export default function Dashboard() {
 										<Skeleton key={key} className="h-28 w-full rounded-lg" />
 									))}
 								</div>
-							) : thisWeekEvents.length === 0 ? (
+							) : nextTwoWeeksEvents.length === 0 ? (
 								<div className="flex flex-col items-center justify-center rounded-lg border border-dashed px-6 py-12 text-center">
 									<Calendar className="mb-3 size-10 text-muted-foreground" />
 									<p className="text-sm font-medium">
-										Keine Events in dieser Woche
+										Keine Events in den nächsten zwei Wochen
 									</p>
 									<p className="mt-1 max-w-sm text-sm text-muted-foreground">
 										Lege ein Event an oder schau in der Übersicht nach späteren
@@ -414,7 +416,7 @@ export default function Dashboard() {
 								</div>
 							) : (
 								<ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-									{thisWeekEvents.map((event) => (
+									{nextTwoWeeksEvents.map((event) => (
 										<li key={event.id}>
 											<button
 												type="button"
