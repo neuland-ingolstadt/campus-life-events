@@ -32,6 +32,7 @@ import {
 	EventDetailSheet,
 	type EventSheetMode
 } from '@/components/events/event-detail-sheet'
+import { EventsEmptyState } from '@/components/events/events-empty-state'
 import { EventsHeader } from '@/components/events/events-header'
 import { EventsMobileList } from '@/components/events/events-mobile-list'
 import { EventsPageShell } from '@/components/events/events-page-shell'
@@ -497,6 +498,7 @@ export function EventsDashboard({
 					data={events}
 					isLoading={isLoading}
 					onClick={openEvent}
+					emptyContent={<EventsEmptyState />}
 					enableFilter
 					enablePagination
 					initialPageSize={10}

@@ -53,6 +53,7 @@ type DataTableProps<TData, TValue> = {
 	manualPagination?: boolean
 	manualSorting?: boolean
 	isLoading?: boolean
+	emptyContent?: ReactNode
 	renderMobileRows?: (args: { rows: Row<TData>[] }) => ReactNode
 } & (
 	| {
@@ -113,6 +114,7 @@ export function DataTable<TData, TValue>({
 	manualPagination = false,
 	manualSorting = false,
 	isLoading = false,
+	emptyContent,
 	renderMobileRows
 }: DataTableProps<TData, TValue>) {
 	'use no memo'
@@ -320,9 +322,11 @@ export function DataTable<TData, TValue>({
 							<TableRow>
 								<TableCell
 									colSpan={columns.length}
-									className="h-24 text-center"
+									className={
+										emptyContent ? 'p-0 text-center' : 'h-24 text-center'
+									}
 								>
-									Keine Einträge.
+									{emptyContent ?? 'Keine Einträge.'}
 								</TableCell>
 							</TableRow>
 						)}

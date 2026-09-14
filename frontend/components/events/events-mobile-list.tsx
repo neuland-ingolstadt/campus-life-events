@@ -6,6 +6,7 @@ import {
 	EventOrganizerBadge,
 	EventVisibilityIndicator
 } from '@/components/events/event-status-badges'
+import { EventsEmptyState } from '@/components/events/events-empty-state'
 import {
 	Card,
 	CardContent,
@@ -31,8 +32,8 @@ export function EventsMobileList({
 }: EventsMobileListProps) {
 	if (events.length === 0) {
 		return (
-			<div className="rounded-md border flex min-h-24 items-center justify-center text-muted-foreground text-sm">
-				Keine Einträge.
+			<div className="rounded-md border">
+				<EventsEmptyState />
 			</div>
 		)
 	}
