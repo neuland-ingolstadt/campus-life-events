@@ -13,6 +13,7 @@ import { CAMPUS_TIME_ZONE } from '@/lib/date-time'
 type PublicEvent = {
 	id: number
 	organizer_id: number
+	organizer_name: string
 	title_de: string
 	title_en: string
 	description_de?: string
@@ -208,58 +209,58 @@ export default async function PublicEventPage({
 			</header>
 
 			<main className="relative z-10 mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-10 sm:px-6 sm:py-14">
-				<section className="space-y-8">
-					<div className="space-y-4">
-						<p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-							Öffentliches Event
-						</p>
-						<div className="space-y-2">
-							<h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
-								{event.title_de}
-							</h1>
-							{showEnglishTitle ? (
-								<p className="text-lg text-muted-foreground sm:text-xl">
-									{event.title_en}
+				<section className="order-1 space-y-4">
+					<p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+						{event.organizer_name}
+					</p>
+					<div className="space-y-2">
+						<h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
+							{event.title_de}
+						</h1>
+						{showEnglishTitle ? (
+							<p className="text-lg text-muted-foreground sm:text-xl">
+								{event.title_en}
+							</p>
+						) : null}
+					</div>
+
+					<div className="space-y-3 pt-2 text-base sm:text-lg">
+						<div className="flex items-start gap-3">
+							<CalendarDays className="mt-1 size-5 shrink-0 text-muted-foreground" />
+							<div className="min-w-0">
+								<p className="font-medium tabular-nums">{startLabel}</p>
+								<p className="text-sm text-muted-foreground tabular-nums sm:text-base">
+									bis {endLabel}
+									<span className="text-muted-foreground/80">
+										{' '}
+										· Europe/Berlin
+									</span>
 								</p>
-							) : null}
+							</div>
 						</div>
 
-						<div className="space-y-3 pt-2 text-base sm:text-lg">
+						{event.location ? (
 							<div className="flex items-start gap-3">
-								<CalendarDays className="mt-1 size-5 shrink-0 text-muted-foreground" />
+								<MapPin className="mt-1 size-5 shrink-0 text-muted-foreground" />
 								<div className="min-w-0">
-									<p className="font-medium tabular-nums">{startLabel}</p>
-									<p className="text-sm text-muted-foreground tabular-nums sm:text-base">
-										bis {endLabel}
-										<span className="text-muted-foreground/80">
-											{' '}
-											· Europe/Berlin
-										</span>
+									<a
+										href={mapsUrl(event.location)}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="font-medium underline-offset-4 hover:underline"
+									>
+										{event.location}
+									</a>
+									<p className="text-sm text-muted-foreground">
+										In Maps öffnen
 									</p>
 								</div>
 							</div>
-
-							{event.location ? (
-								<div className="flex items-start gap-3">
-									<MapPin className="mt-1 size-5 shrink-0 text-muted-foreground" />
-									<div className="min-w-0">
-										<a
-											href={mapsUrl(event.location)}
-											target="_blank"
-											rel="noopener noreferrer"
-											className="font-medium underline-offset-4 hover:underline"
-										>
-											{event.location}
-										</a>
-										<p className="text-sm text-muted-foreground">
-											In Maps öffnen
-										</p>
-									</div>
-								</div>
-							) : null}
-						</div>
+						) : null}
 					</div>
+				</section>
 
+				<div className="order-3 mt-12 border-t pt-10 sm:order-2 sm:mt-8 sm:border-0 sm:pt-0">
 					<PublicEventActions
 						title={event.title_de}
 						description={event.description_de}
@@ -268,10 +269,10 @@ export default async function PublicEventPage({
 						startIso={event.start_date_time}
 						endIso={event.end_date_time}
 					/>
-				</section>
+				</div>
 
 				{(event.description_de || event.description_en) && (
-					<section className="mt-12 space-y-6 border-t pt-10">
+					<section className="order-2 mt-12 space-y-6 border-t pt-10 sm:order-3">
 						{event.description_de ? (
 							<div className="space-y-3">
 								<h2 className="text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground">
@@ -296,7 +297,7 @@ export default async function PublicEventPage({
 				)}
 
 				{organizer ? (
-					<section className="mt-12 space-y-4 border-t pt-10">
+					<section className="order-2 mt-12 space-y-4 border-t pt-10 sm:order-4">
 						<h2 className="text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground">
 							Veranstalter
 						</h2>
