@@ -1,6 +1,6 @@
 'use client'
 
-import { CalendarPlus, Copy, ExternalLink, Share2 } from 'lucide-react'
+import { CalendarPlus, ExternalLink, Share2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { publicEventShareUrl } from '@/lib/public-event-url'
@@ -138,10 +138,6 @@ export function PublicEventActions({
 			<Button type="button" variant="outline" onClick={handleNativeShare}>
 				<Share2 className="size-4" />
 				Teilen
-			</Button>
-			<Button type="button" variant="outline" onClick={handleCopyLink}>
-				<Copy className="size-4" />
-				Link kopieren
 			</Button>
 			{eventUrl ? (
 				<Button type="button" variant="outline" asChild>

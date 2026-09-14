@@ -8,6 +8,7 @@ import NeulandPalm from '@/components/neuland-palm'
 import { PublicEventActions } from '@/components/public-event-actions'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { UnifiedFooter } from '@/components/unified-footer'
+import { isValidRoom, locationUrl } from '@/lib/campus-room'
 import { CAMPUS_TIME_ZONE } from '@/lib/date-time'
 
 type PublicEvent = {
@@ -73,10 +74,6 @@ function formatCampus(date: string, pattern: string) {
 	return formatInTimeZone(new Date(date), CAMPUS_TIME_ZONE, pattern, {
 		locale: de
 	})
-}
-
-function mapsUrl(location: string) {
-	return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`
 }
 
 function sameDay(startIso: string, endIso: string) {
@@ -244,7 +241,7 @@ export default async function PublicEventPage({
 								<MapPin className="mt-1 size-5 shrink-0 text-muted-foreground" />
 								<div className="min-w-0">
 									<a
-										href={mapsUrl(event.location)}
+										href={locationUrl(event.location)}
 										target="_blank"
 										rel="noopener noreferrer"
 										className="font-medium underline-offset-4 hover:underline"
@@ -252,7 +249,9 @@ export default async function PublicEventPage({
 										{event.location}
 									</a>
 									<p className="text-sm text-muted-foreground">
-										In Maps öffnen
+										{isValidRoom(event.location)
+											? 'In Campus-Karte öffnen'
+											: 'In Maps öffnen'}
 									</p>
 								</div>
 							</div>
