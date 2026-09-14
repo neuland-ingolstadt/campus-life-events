@@ -21,13 +21,13 @@ import {
 } from '@/components/events/event-status-badges'
 import { Button } from '@/components/ui/button'
 import {
-	Sheet,
-	SheetContent,
-	SheetDescription,
-	SheetFooter,
-	SheetHeader,
-	SheetTitle
-} from '@/components/ui/sheet'
+	ResponsiveSheet,
+	ResponsiveSheetContent,
+	ResponsiveSheetDescription,
+	ResponsiveSheetFooter,
+	ResponsiveSheetHeader,
+	ResponsiveSheetTitle
+} from '@/components/ui/responsive-sheet'
 import { formatInCampusTimeZone } from '@/lib/date-time'
 import { deriveEventVisibilityMode } from '@/lib/event-visibility'
 import { cn } from '@/lib/utils'
@@ -223,8 +223,12 @@ export function EventDetailSheet({
 		: { duration: 0.16, ease: [0.16, 1, 0.3, 1] as const }
 
 	return (
-		<Sheet open={open} onOpenChange={onOpenChange}>
-			<SheetContent
+		<ResponsiveSheet
+			open={open}
+			onOpenChange={onOpenChange}
+			handleOnly={isFormMode}
+		>
+			<ResponsiveSheetContent
 				side="right"
 				onOpenAutoFocus={(event) => event.preventDefault()}
 				className={cn(
@@ -234,7 +238,7 @@ export function EventDetailSheet({
 			>
 				{isCreate || event ? (
 					<>
-						<SheetHeader className="border-b pr-12 gap-3 overflow-hidden">
+						<ResponsiveSheetHeader className="border-b pr-12 gap-3 overflow-hidden">
 							<AnimatePresence mode="wait" initial={false}>
 								<motion.div
 									key={`header-${mode}`}
@@ -246,12 +250,12 @@ export function EventDetailSheet({
 								>
 									{isCreate ? (
 										<>
-											<SheetTitle className="text-left leading-snug">
+											<ResponsiveSheetTitle className="text-left leading-snug">
 												Neues Event
-											</SheetTitle>
-											<SheetDescription className="text-left">
+											</ResponsiveSheetTitle>
+											<ResponsiveSheetDescription className="text-left">
 												Fülle die Angaben aus, um dein Event zu erstellen.
-											</SheetDescription>
+											</ResponsiveSheetDescription>
 										</>
 									) : isDuplicate ? (
 										<div className="flex items-center gap-2.5">
@@ -259,37 +263,37 @@ export function EventDetailSheet({
 												<Copy className="size-3.5" />
 											</span>
 											<div className="min-w-0">
-												<SheetTitle className="text-left leading-snug">
+												<ResponsiveSheetTitle className="text-left leading-snug">
 													Event duplizieren
-												</SheetTitle>
-												<SheetDescription className="text-left">
+												</ResponsiveSheetTitle>
+												<ResponsiveSheetDescription className="text-left">
 													Kopie von „{event?.title_de}“ – setze neue Termine.
-												</SheetDescription>
+												</ResponsiveSheetDescription>
 											</div>
 										</div>
 									) : isEdit ? (
 										<>
-											<SheetTitle className="text-left leading-snug">
+											<ResponsiveSheetTitle className="text-left leading-snug">
 												Event bearbeiten
-											</SheetTitle>
-											<SheetDescription className="text-left">
+											</ResponsiveSheetTitle>
+											<ResponsiveSheetDescription className="text-left">
 												Aktualisiere Details und Sichtbarkeit.
-											</SheetDescription>
+											</ResponsiveSheetDescription>
 										</>
 									) : event ? (
 										<>
 											<div className="space-y-2">
-												<SheetTitle className="text-left leading-snug">
+												<ResponsiveSheetTitle className="text-left leading-snug">
 													{event.title_de}
-												</SheetTitle>
+												</ResponsiveSheetTitle>
 												{event.title_en && event.title_en !== event.title_de ? (
-													<SheetDescription className="text-left">
+													<ResponsiveSheetDescription className="text-left">
 														{event.title_en}
-													</SheetDescription>
+													</ResponsiveSheetDescription>
 												) : (
-													<SheetDescription className="sr-only">
+													<ResponsiveSheetDescription className="sr-only">
 														Eventdetails
-													</SheetDescription>
+													</ResponsiveSheetDescription>
 												)}
 											</div>
 											<div className="flex flex-wrap items-center gap-2">
@@ -305,7 +309,7 @@ export function EventDetailSheet({
 									) : null}
 								</motion.div>
 							</AnimatePresence>
-						</SheetHeader>
+						</ResponsiveSheetHeader>
 
 						<div className="relative flex-1 overflow-x-hidden overflow-y-auto">
 							{isFormMode ? (
@@ -413,7 +417,7 @@ export function EventDetailSheet({
 						</div>
 
 						{!isFormMode && event && hasViewActions ? (
-							<SheetFooter className="border-t gap-3 sm:flex-col sm:space-x-0">
+							<ResponsiveSheetFooter className="border-t gap-3 sm:flex-col sm:space-x-0">
 								{canManage ? (
 									<Button
 										type="button"
@@ -468,11 +472,11 @@ export function EventDetailSheet({
 										</>
 									) : null}
 								</div>
-							</SheetFooter>
+							</ResponsiveSheetFooter>
 						) : null}
 
 						{isFormMode ? (
-							<SheetFooter className="border-t flex-row gap-2 sm:justify-between">
+							<ResponsiveSheetFooter className="border-t flex-row gap-2 sm:justify-between">
 								<Button
 									type="button"
 									variant="outline"
@@ -505,11 +509,11 @@ export function EventDetailSheet({
 												? 'Event erstellen'
 												: 'Event aktualisieren'}
 								</Button>
-							</SheetFooter>
+							</ResponsiveSheetFooter>
 						) : null}
 					</>
 				) : null}
-			</SheetContent>
-		</Sheet>
+			</ResponsiveSheetContent>
+		</ResponsiveSheet>
 	)
 }

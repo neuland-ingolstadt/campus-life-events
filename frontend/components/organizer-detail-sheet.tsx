@@ -15,13 +15,13 @@ import { OrganizerKindBadge } from '@/components/organizer-kind-badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
-	Sheet,
-	SheetContent,
-	SheetDescription,
-	SheetFooter,
-	SheetHeader,
-	SheetTitle
-} from '@/components/ui/sheet'
+	ResponsiveSheet,
+	ResponsiveSheetContent,
+	ResponsiveSheetDescription,
+	ResponsiveSheetFooter,
+	ResponsiveSheetHeader,
+	ResponsiveSheetTitle
+} from '@/components/ui/responsive-sheet'
 import { formatInCampusTimeZone } from '@/lib/date-time'
 import { cn } from '@/lib/utils'
 
@@ -174,8 +174,12 @@ export function OrganizerDetailSheet({
 	)
 
 	return (
-		<Sheet open={open} onOpenChange={onOpenChange}>
-			<SheetContent
+		<ResponsiveSheet
+			open={open}
+			onOpenChange={onOpenChange}
+			handleOnly={isFormMode}
+		>
+			<ResponsiveSheetContent
 				side="right"
 				onOpenAutoFocus={(event) => event.preventDefault()}
 				className={cn(
@@ -185,7 +189,7 @@ export function OrganizerDetailSheet({
 			>
 				{organizer ? (
 					<>
-						<SheetHeader className="gap-3 overflow-hidden border-b pr-12">
+						<ResponsiveSheetHeader className="gap-3 overflow-hidden border-b pr-12">
 							<AnimatePresence mode="wait" initial={false}>
 								<motion.div
 									key={`header-${mode}`}
@@ -197,12 +201,12 @@ export function OrganizerDetailSheet({
 								>
 									{isEdit ? (
 										<>
-											<SheetTitle className="text-left leading-snug">
+											<ResponsiveSheetTitle className="text-left leading-snug">
 												Organisation bearbeiten
-											</SheetTitle>
-											<SheetDescription className="text-left">
+											</ResponsiveSheetTitle>
+											<ResponsiveSheetDescription className="text-left">
 												Aktualisiere Profil, Beschreibungen und Links.
-											</SheetDescription>
+											</ResponsiveSheetDescription>
 										</>
 									) : (
 										<div className="flex items-start gap-3">
@@ -212,12 +216,12 @@ export function OrganizerDetailSheet({
 												</AvatarFallback>
 											</Avatar>
 											<div className="min-w-0 space-y-2">
-												<SheetTitle className="text-left leading-snug">
+												<ResponsiveSheetTitle className="text-left leading-snug">
 													{organizer.name}
-												</SheetTitle>
-												<SheetDescription className="sr-only">
+												</ResponsiveSheetTitle>
+												<ResponsiveSheetDescription className="sr-only">
 													Organisationsdetails
-												</SheetDescription>
+												</ResponsiveSheetDescription>
 												<div className="flex flex-wrap items-center gap-2">
 													<OrganizerKindBadge
 														kind={organizer.organizer_kind}
@@ -234,7 +238,7 @@ export function OrganizerDetailSheet({
 									)}
 								</motion.div>
 							</AnimatePresence>
-						</SheetHeader>
+						</ResponsiveSheetHeader>
 
 						<div className="relative flex-1 overflow-x-hidden overflow-y-auto">
 							{isFormMode ? (
@@ -356,7 +360,7 @@ export function OrganizerDetailSheet({
 						</div>
 
 						{!isFormMode && hasViewActions ? (
-							<SheetFooter className="gap-3 border-t sm:flex-col sm:space-x-0">
+							<ResponsiveSheetFooter className="gap-3 border-t sm:flex-col sm:space-x-0">
 								{canEdit ? (
 									<Button
 										type="button"
@@ -405,11 +409,11 @@ export function OrganizerDetailSheet({
 										</Button>
 									) : null}
 								</div>
-							</SheetFooter>
+							</ResponsiveSheetFooter>
 						) : null}
 
 						{isFormMode ? (
-							<SheetFooter className="flex-row gap-2 border-t sm:justify-between">
+							<ResponsiveSheetFooter className="flex-row gap-2 border-t sm:justify-between">
 								<Button
 									type="button"
 									variant="outline"
@@ -430,11 +434,11 @@ export function OrganizerDetailSheet({
 								>
 									{isPending ? 'Speichern...' : 'Organisation aktualisieren'}
 								</Button>
-							</SheetFooter>
+							</ResponsiveSheetFooter>
 						) : null}
 					</>
 				) : null}
-			</SheetContent>
-		</Sheet>
+			</ResponsiveSheetContent>
+		</ResponsiveSheet>
 	)
 }
