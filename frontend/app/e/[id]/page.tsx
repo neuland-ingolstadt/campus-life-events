@@ -250,7 +250,7 @@ export default async function PublicEventPage({
 									</a>
 									<p className="text-sm text-muted-foreground">
 										{isValidRoom(event.location)
-											? 'In Campus-Karte öffnen'
+											? 'In Neuland Next öffnen'
 											: 'In Maps öffnen'}
 									</p>
 								</div>
