@@ -22,7 +22,12 @@ import {
 	useState
 } from 'react'
 import { toast } from 'sonner'
-import { getEvent, listEvents, listOrganizers } from '@/client'
+import {
+	getEvent,
+	listEvents,
+	listOrganizers,
+	listRecreationCandidates
+} from '@/client'
 import type {
 	Event as ApiEvent,
 	Organizer as ApiOrganizer
@@ -270,6 +275,16 @@ export function EventsDashboard({
 		}
 	})
 
+	const { data: recreationCandidatesData } = useQuery({
+		queryKey: ['events', 'recreation-candidates', organizerId],
+		enabled: organizerId !== undefined,
+		queryFn: async () => {
+			const response = await listRecreationCandidates({ throwOnError: true })
+			return response.data
+		}
+	})
+	const recreationCandidates = recreationCandidatesData?.items ?? []
+
 	const organizersData = useMemo(() => organizersRaw, [organizersRaw])
 
 	const getOrganizerName = useCallback(
@@ -393,6 +408,18 @@ export function EventsDashboard({
 		setSheetOpen(true)
 	}, [])
 
+	const openRecreate = useCallback(
+		(eventId: number) => {
+			const candidate = recreationCandidates.find(
+				(item) => item.event.id === eventId
+			)
+			if (candidate) {
+				openDuplicate(candidate.event)
+			}
+		},
+		[openDuplicate, recreationCandidates]
+	)
+
 	useEffect(() => {
 		if (searchParams.get('create') !== '1') {
 			return
@@ -498,6 +525,8 @@ export function EventsDashboard({
 				}}
 				canCreate={organizerId !== undefined}
 				onCreate={openCreate}
+				recreationCandidates={recreationCandidates}
+				onRecreate={openRecreate}
 				canFilterOwn={organizerId !== undefined}
 				ownFilterActive={ownFilterActive}
 				onOwnFilterChange={handleOwnFilterChange}

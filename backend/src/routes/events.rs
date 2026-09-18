@@ -20,7 +20,10 @@ use crate::{
     error::AppError,
     event_sort::push_event_order_by_clause,
     models::{AccountType, AuditType, Event, EventWithOrganizer, Organizer, OrganizerKind},
-    responses::{ErrorResponse, NewsletterDataResponse, PaginatedEventsResponse},
+    responses::{
+        ErrorResponse, NewsletterDataResponse, PaginatedEventsResponse, RecreationCandidate,
+        RecreationCandidatesResponse,
+    },
 };
 
 use super::shared::{
@@ -674,33 +677,33 @@ fn apply_event_filters(
         has_where = true;
     };
 
-	if is_admin {
-		if let Some(organizer_kind) = query_params.organizer_kind {
-			add_condition(builder);
-			builder
-				.push("o.organizer_kind = ")
-				.push_bind(organizer_kind);
-		}
-	} else if let Some(kind) = enforced_organizer_kind {
-		add_condition(builder);
-		builder.push("o.organizer_kind = ").push_bind(kind);
+    if is_admin {
+        if let Some(organizer_kind) = query_params.organizer_kind {
+            add_condition(builder);
+            builder
+                .push("o.organizer_kind = ")
+                .push_bind(organizer_kind);
+        }
+    } else if let Some(kind) = enforced_organizer_kind {
+        add_condition(builder);
+        builder.push("o.organizer_kind = ").push_bind(kind);
 
-		if let Some(viewer_organizer_id) = viewer_organizer_id {
-			add_condition(builder);
-			builder
-				.push("(NOT e.host_only OR e.organizer_id = ")
-				.push_bind(viewer_organizer_id)
-				.push(")");
-		} else {
-			add_condition(builder);
-			builder.push("NOT e.host_only");
-		}
-	}
+        if let Some(viewer_organizer_id) = viewer_organizer_id {
+            add_condition(builder);
+            builder
+                .push("(NOT e.host_only OR e.organizer_id = ")
+                .push_bind(viewer_organizer_id)
+                .push(")");
+        } else {
+            add_condition(builder);
+            builder.push("NOT e.host_only");
+        }
+    }
 
-	if let Some(organizer_id) = query_params.organizer_id {
-		add_condition(builder);
-		builder.push("e.organizer_id = ").push_bind(organizer_id);
-	}
+    if let Some(organizer_id) = query_params.organizer_id {
+        add_condition(builder);
+        builder.push("e.organizer_id = ").push_bind(organizer_id);
+    }
 
     if query_params.upcoming_only.unwrap_or(false) {
         add_condition(builder);
@@ -747,6 +750,145 @@ fn apply_event_filters(
             .push_bind(format!("%{query}%"))
             .push(")");
     }
+}
+
+const RECREATION_CANDIDATES_LIMIT: i64 = 5;
+
+fn sort_recreation_candidates(items: &mut [RecreationCandidate]) {
+    items.sort_by(|a, b| {
+        b.occurrence_count
+            .cmp(&a.occurrence_count)
+            .then_with(|| b.last_start_date_time.cmp(&a.last_start_date_time))
+            .then_with(|| b.event.id.cmp(&a.event.id))
+    });
+}
+
+pub(crate) async fn list_recreation_candidates_for_organizer(
+    state: &AppState,
+    organizer_id: i64,
+) -> Result<Vec<RecreationCandidate>, AppError> {
+    let rows = sqlx::query!(
+        r#"
+        WITH groups AS (
+            SELECT
+                lower(btrim(title_de)) AS title_key,
+                COUNT(*)::bigint AS occurrence_count,
+                MAX(start_date_time) AS last_start_date_time
+            FROM events
+            WHERE organizer_id = $1
+              AND end_date_time < NOW()
+            GROUP BY lower(btrim(title_de))
+            HAVING COUNT(*) >= 2
+        ),
+        picked AS (
+            SELECT DISTINCT ON (lower(btrim(e.title_de)))
+                e.id,
+                e.organizer_id,
+                e.title_de,
+                e.title_en,
+                e.description_de,
+                e.description_en,
+                e.start_date_time,
+                e.end_date_time,
+                e.event_url,
+                e.location,
+                e.publish_app,
+                e.publish_newsletter,
+                e.publish_in_ical,
+                e.publish_web,
+                e.host_only,
+                e.created_at,
+                e.updated_at,
+                g.occurrence_count,
+                g.last_start_date_time
+            FROM events e
+            INNER JOIN groups g ON lower(btrim(e.title_de)) = g.title_key
+            WHERE e.organizer_id = $1
+              AND e.end_date_time < NOW()
+            ORDER BY lower(btrim(e.title_de)), e.start_date_time DESC, e.id DESC
+        )
+        SELECT
+            id,
+            organizer_id,
+            title_de,
+            title_en,
+            description_de,
+            description_en,
+            start_date_time,
+            end_date_time,
+            event_url,
+            location,
+            publish_app,
+            publish_newsletter,
+            publish_in_ical,
+            publish_web,
+            host_only,
+            created_at,
+            updated_at,
+            occurrence_count,
+            last_start_date_time
+        FROM picked
+        ORDER BY occurrence_count DESC, last_start_date_time DESC, id DESC
+        LIMIT $2
+        "#,
+        organizer_id,
+        RECREATION_CANDIDATES_LIMIT
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    let mut items: Vec<RecreationCandidate> = rows
+        .into_iter()
+        .map(|row| RecreationCandidate {
+            event: Event {
+                id: row.id,
+                organizer_id: row.organizer_id,
+                title_de: row.title_de,
+                title_en: row.title_en,
+                description_de: row.description_de,
+                description_en: row.description_en,
+                start_date_time: row.start_date_time,
+                end_date_time: row.end_date_time,
+                event_url: row.event_url,
+                location: row.location,
+                publish_app: row.publish_app,
+                publish_newsletter: row.publish_newsletter,
+                publish_in_ical: row.publish_in_ical,
+                publish_web: row.publish_web,
+                host_only: row.host_only,
+                created_at: row.created_at,
+                updated_at: row.updated_at,
+            },
+            occurrence_count: row.occurrence_count.unwrap_or(0),
+            last_start_date_time: row.last_start_date_time.unwrap_or(row.start_date_time),
+        })
+        .collect();
+
+    sort_recreation_candidates(&mut items);
+    Ok(items)
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/events/recreation-candidates",
+    tag = "Events",
+    responses(
+        (status = 200, description = "Recurring past events suggested for recreation", body = RecreationCandidatesResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    )
+)]
+#[instrument(skip(state, headers))]
+pub(crate) async fn list_recreation_candidates(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Json<RecreationCandidatesResponse>, AppError> {
+    let user = current_user_from_headers(&headers, &state).await?;
+    let organizer_id = user
+        .organizer_id()
+        .ok_or_else(|| AppError::unauthorized("organizer account required"))?;
+
+    let items = list_recreation_candidates_for_organizer(&state, organizer_id).await?;
+    Ok(Json(RecreationCandidatesResponse { items }))
 }
 
 #[utoipa::path(
@@ -984,10 +1126,64 @@ async fn invalidate_public_event_caches(state: &AppState) {
 pub(crate) fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(list_events).post(create_event))
+        .route("/recreation-candidates", get(list_recreation_candidates))
         .route("/newsletter-data", get(get_newsletter_data))
         .route("/newsletter-preview", post(send_newsletter_preview))
         .route(
             "/{id}",
             get(get_event).put(update_event).delete(delete_event),
         )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::TimeZone;
+
+    fn candidate(id: i64, occurrence_count: i64, last_start: DateTime<Utc>) -> RecreationCandidate {
+        RecreationCandidate {
+            event: Event {
+                id,
+                organizer_id: 1,
+                title_de: format!("Event {id}"),
+                title_en: format!("Event {id}"),
+                description_de: None,
+                description_en: None,
+                start_date_time: last_start,
+                end_date_time: last_start + Duration::hours(2),
+                event_url: None,
+                location: None,
+                publish_app: true,
+                publish_newsletter: true,
+                publish_in_ical: true,
+                publish_web: true,
+                host_only: false,
+                created_at: last_start,
+                updated_at: last_start,
+            },
+            occurrence_count,
+            last_start_date_time: last_start,
+        }
+    }
+
+    #[test]
+    fn ranks_by_occurrence_then_recency() {
+        let t1 = Utc.with_ymd_and_hms(2026, 1, 1, 12, 0, 0).unwrap();
+        let t2 = Utc.with_ymd_and_hms(2026, 2, 1, 12, 0, 0).unwrap();
+        let t3 = Utc.with_ymd_and_hms(2026, 3, 1, 12, 0, 0).unwrap();
+
+        let mut items = vec![
+            candidate(1, 2, t3),
+            candidate(2, 5, t1),
+            candidate(3, 5, t2),
+            candidate(4, 3, t2),
+        ];
+
+        sort_recreation_candidates(&mut items);
+
+        assert_eq!(
+            items.iter().map(|item| item.event.id).collect::<Vec<_>>(),
+            vec![3, 2, 4, 1]
+        );
+    }
 }

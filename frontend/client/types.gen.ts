@@ -306,6 +306,16 @@ export type PublicOrganizerResponse = {
     website_url?: string | null;
 };
 
+export type RecreationCandidate = {
+    event: Event;
+    last_start_date_time: string;
+    occurrence_count: number;
+};
+
+export type RecreationCandidatesResponse = {
+    items: Array<RecreationCandidate>;
+};
+
 export type RequestPasswordResetRequest = {
     email: string;
 };
@@ -968,6 +978,31 @@ export type SendNewsletterPreviewResponses = {
 };
 
 export type SendNewsletterPreviewResponse = SendNewsletterPreviewResponses[keyof SendNewsletterPreviewResponses];
+
+export type ListRecreationCandidatesData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/events/recreation-candidates';
+};
+
+export type ListRecreationCandidatesErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+};
+
+export type ListRecreationCandidatesError = ListRecreationCandidatesErrors[keyof ListRecreationCandidatesErrors];
+
+export type ListRecreationCandidatesResponses = {
+    /**
+     * Recurring past events suggested for recreation
+     */
+    200: RecreationCandidatesResponse;
+};
+
+export type ListRecreationCandidatesResponse = ListRecreationCandidatesResponses[keyof ListRecreationCandidatesResponses];
 
 export type DeleteEventData = {
     body?: never;

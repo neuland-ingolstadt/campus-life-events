@@ -149,3 +149,15 @@ pub struct OrganizerWithStatsResponse {
     pub active_events_count: i64,
     pub activity_score: f64,
 }
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct RecreationCandidate {
+    pub event: Event,
+    pub occurrence_count: i64,
+    pub last_start_date_time: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct RecreationCandidatesResponse {
+    pub items: Vec<RecreationCandidate>,
+}

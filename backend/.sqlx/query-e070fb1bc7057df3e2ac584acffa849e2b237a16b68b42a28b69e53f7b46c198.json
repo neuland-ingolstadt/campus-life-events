@@ -1,0 +1,235 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        WITH groups AS (\n            SELECT\n                lower(btrim(title_de)) AS title_key,\n                COUNT(*)::bigint AS occurrence_count,\n                MAX(start_date_time) AS last_start_date_time\n            FROM events\n            WHERE organizer_id = $1\n              AND end_date_time < NOW()\n            GROUP BY lower(btrim(title_de))\n            HAVING COUNT(*) >= 2\n        ),\n        picked AS (\n            SELECT DISTINCT ON (lower(btrim(e.title_de)))\n                e.id,\n                e.organizer_id,\n                e.title_de,\n                e.title_en,\n                e.description_de,\n                e.description_en,\n                e.start_date_time,\n                e.end_date_time,\n                e.event_url,\n                e.location,\n                e.publish_app,\n                e.publish_newsletter,\n                e.publish_in_ical,\n                e.publish_web,\n                e.host_only,\n                e.created_at,\n                e.updated_at,\n                g.occurrence_count,\n                g.last_start_date_time\n            FROM events e\n            INNER JOIN groups g ON lower(btrim(e.title_de)) = g.title_key\n            WHERE e.organizer_id = $1\n              AND e.end_date_time < NOW()\n            ORDER BY lower(btrim(e.title_de)), e.start_date_time DESC, e.id DESC\n        )\n        SELECT\n            id,\n            organizer_id,\n            title_de,\n            title_en,\n            description_de,\n            description_en,\n            start_date_time,\n            end_date_time,\n            event_url,\n            location,\n            publish_app,\n            publish_newsletter,\n            publish_in_ical,\n            publish_web,\n            host_only,\n            created_at,\n            updated_at,\n            occurrence_count,\n            last_start_date_time\n        FROM picked\n        ORDER BY occurrence_count DESC, last_start_date_time DESC, id DESC\n        LIMIT $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "organizer_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "organizer_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "title_de",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "title_de"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "title_en",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "title_en"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "description_de",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "description_de"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "description_en",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "description_en"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "start_date_time",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "start_date_time"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "end_date_time",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "end_date_time"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "event_url",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "event_url"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "location",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "location"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "publish_app",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "publish_app"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "publish_newsletter",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "publish_newsletter"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "publish_in_ical",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "publish_in_ical"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "publish_web",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "publish_web"
+          }
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "host_only",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "host_only"
+          }
+        }
+      },
+      {
+        "ordinal": 15,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 16,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "events",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 17,
+        "name": "occurrence_count",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 18,
+        "name": "last_start_date_time",
+        "type_info": "Timestamptz",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null,
+      null
+    ]
+  },
+  "hash": "e070fb1bc7057df3e2ac584acffa849e2b237a16b68b42a28b69e53f7b46c198"
+}
