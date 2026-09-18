@@ -1,7 +1,13 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Building2, Globe2, Lock, SlidersHorizontal } from 'lucide-react'
+import {
+	Building2,
+	CheckCircle2,
+	Globe2,
+	Lock,
+	SlidersHorizontal
+} from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -39,6 +45,7 @@ import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning'
+import { isValidRoom } from '@/lib/campus-room'
 import {
 	deriveEventVisibilityMode,
 	type EventVisibilityMode,
@@ -505,19 +512,39 @@ export function EventForm({
 						<FormField
 							control={form.control}
 							name="location"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Veranstaltungsort</FormLabel>
-									<FormControl>
-										<Input
-											placeholder="z.B. Hörsaal A, Raum 101, Online"
-											{...field}
-										/>
-									</FormControl>
-
-									<FormMessage />
-								</FormItem>
-							)}
+							render={({ field }) => {
+								const linkableRoom = Boolean(
+									field.value && isValidRoom(field.value)
+								)
+								return (
+									<FormItem>
+										<FormLabel>Veranstaltungsort</FormLabel>
+										<FormControl>
+											<div className="relative">
+												<Input
+													placeholder="z.B. G215, Hörsaal A, Online"
+													className={linkableRoom ? 'pr-9' : undefined}
+													{...field}
+												/>
+												{linkableRoom ? (
+													<span
+														className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3"
+														aria-hidden
+													>
+														<CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
+													</span>
+												) : null}
+											</div>
+										</FormControl>
+										{linkableRoom ? (
+											<FormDescription className="text-emerald-700 dark:text-emerald-400">
+												Raum wird in Neuland Next verlinkt
+											</FormDescription>
+										) : null}
+										<FormMessage />
+									</FormItem>
+								)
+							}}
 						/>
 
 						<div className="space-y-3">
