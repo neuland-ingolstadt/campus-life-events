@@ -68,25 +68,6 @@ export function PublicEventActions({
 		handleCopyLink()
 	}
 
-	function handleGoogleCalendar() {
-		const params = new URLSearchParams({
-			action: 'TEMPLATE',
-			text: title,
-			dates: `${startStamp}/${endStamp}`
-		})
-		if (description) {
-			params.set('details', description)
-		}
-		if (location) {
-			params.set('location', location)
-		}
-		window.open(
-			`https://calendar.google.com/calendar/render?${params.toString()}`,
-			'_blank',
-			'noopener,noreferrer'
-		)
-	}
-
 	function handleDownloadIcs() {
 		const lines = [
 			'BEGIN:VCALENDAR',
@@ -127,26 +108,26 @@ export function PublicEventActions({
 
 	return (
 		<div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-			<Button type="button" onClick={handleGoogleCalendar}>
-				<CalendarPlus className="size-4" />
-				Google Kalender
-			</Button>
-			<Button type="button" variant="outline" onClick={handleDownloadIcs}>
-				<CalendarPlus className="size-4" />
-				Apple / Outlook (.ics)
-			</Button>
-			<Button type="button" variant="outline" onClick={handleNativeShare}>
-				<Share2 className="size-4" />
-				Teilen
-			</Button>
 			{eventUrl ? (
-				<Button type="button" variant="outline" asChild>
+				<Button type="button" asChild>
 					<a href={eventUrl} target="_blank" rel="noopener noreferrer">
 						Weitere Infos
 						<ExternalLink className="size-4" />
 					</a>
 				</Button>
 			) : null}
+			<Button
+				type="button"
+				variant={eventUrl ? 'outline' : 'default'}
+				onClick={handleDownloadIcs}
+			>
+				<CalendarPlus className="size-4" />
+				Zum Kalender hinzufügen
+			</Button>
+			<Button type="button" variant="outline" onClick={handleNativeShare}>
+				<Share2 className="size-4" />
+				Teilen
+			</Button>
 		</div>
 	)
 }

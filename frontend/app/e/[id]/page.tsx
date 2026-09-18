@@ -1,11 +1,12 @@
 import { de } from 'date-fns/locale'
 import { formatInTimeZone } from 'date-fns-tz'
-import { CalendarDays, ExternalLink, MapPin } from 'lucide-react'
+import { CalendarDays, MapPin } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import NeulandPalm from '@/components/neuland-palm'
 import { PublicEventActions } from '@/components/public-event-actions'
+import { PublicOrganizerFooter } from '@/components/public-organizer-footer'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { UnifiedFooter } from '@/components/unified-footer'
 import { isValidRoom, locationUrl } from '@/lib/campus-room'
@@ -67,6 +68,38 @@ async function getPublicOrganizer(id: number): Promise<PublicOrganizer | null> {
 		return response.json()
 	} catch {
 		return null
+	}
+}
+
+async function getRelatedPublicEvents(
+	organizerId: number,
+	excludeEventId: number
+): Promise<PublicEvent[]> {
+	try {
+		const params = new URLSearchParams({
+			organizer_id: String(organizerId),
+			upcoming_only: 'true',
+			limit: '8',
+			sort: 'start_date_time',
+			direction: 'asc'
+		})
+		const response = await fetch(
+			`${backendUrl}/api/v1/public/events?${params}`,
+			{
+				cache: 'no-store'
+			}
+		)
+
+		if (!response.ok) {
+			return []
+		}
+
+		const events = (await response.json()) as PublicEvent[]
+		return events
+			.filter((item) => item.id !== excludeEventId && item.publish_web)
+			.slice(0, 5)
+	} catch {
+		return []
 	}
 }
 
@@ -164,9 +197,14 @@ export default async function PublicEventPage({
 		notFound()
 	}
 
-	const organizer = event.organizer_id
-		? await getPublicOrganizer(event.organizer_id)
-		: null
+	const [organizer, relatedEvents] = await Promise.all([
+		event.organizer_id
+			? getPublicOrganizer(event.organizer_id)
+			: Promise.resolve(null),
+		event.organizer_id
+			? getRelatedPublicEvents(event.organizer_id, event.id)
+			: Promise.resolve([])
+	])
 
 	const showEnglishTitle =
 		Boolean(event.title_en) && event.title_en !== event.title_de
@@ -296,58 +334,19 @@ export default async function PublicEventPage({
 					</section>
 				)}
 
-				{organizer ? (
-					<section className="order-2 mt-12 space-y-4 border-t pt-10 sm:order-4">
-						<h2 className="text-sm font-medium uppercase tracking-[0.14em] text-muted-foreground">
-							Veranstalter
-						</h2>
-						<div className="space-y-3">
-							<p className="text-xl font-semibold tracking-tight">
-								{organizer.name}
-							</p>
-							{organizer.description_de ? (
-								<p className="text-sm leading-relaxed text-muted-foreground">
-									{organizer.description_de}
-								</p>
-							) : organizer.description_en ? (
-								<p className="text-sm leading-relaxed text-muted-foreground">
-									{organizer.description_en}
-								</p>
-							) : null}
-							{organizer.location ? (
-								<p className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-									<MapPin className="size-3.5 shrink-0" />
-									{organizer.location}
-								</p>
-							) : null}
-							{(organizer.website_url || organizer.instagram_url) && (
-								<div className="flex flex-wrap gap-x-4 gap-y-2 pt-1 text-sm">
-									{organizer.website_url ? (
-										<a
-											href={organizer.website_url}
-											target="_blank"
-											rel="noopener noreferrer"
-											className="inline-flex items-center gap-1.5 font-medium underline-offset-4 hover:underline"
-										>
-											Website
-											<ExternalLink className="size-3.5" />
-										</a>
-									) : null}
-									{organizer.instagram_url ? (
-										<a
-											href={organizer.instagram_url}
-											target="_blank"
-											rel="noopener noreferrer"
-											className="inline-flex items-center gap-1.5 font-medium underline-offset-4 hover:underline"
-										>
-											Instagram
-											<ExternalLink className="size-3.5" />
-										</a>
-									) : null}
-								</div>
-							)}
-						</div>
-					</section>
+				{organizer || relatedEvents.length > 0 ? (
+					<div className="order-4 sm:order-4">
+						<PublicOrganizerFooter
+							name={organizer?.name ?? event.organizer_name}
+							description={
+								organizer?.description_de || organizer?.description_en
+							}
+							location={organizer?.location}
+							websiteUrl={organizer?.website_url}
+							instagramUrl={organizer?.instagram_url}
+							events={relatedEvents}
+						/>
+					</div>
 				) : null}
 			</main>
 
