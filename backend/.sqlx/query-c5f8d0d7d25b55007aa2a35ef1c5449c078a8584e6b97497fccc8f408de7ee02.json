@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT btrim(location) AS \"location!\"\n        FROM events\n        WHERE organizer_id = $1\n          AND location IS NOT NULL\n          AND btrim(location) <> ''\n        GROUP BY btrim(location)\n        ORDER BY COUNT(*) DESC, MAX(start_date_time) DESC\n        LIMIT $2\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "location!",
+        "type_info": "Text",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "c5f8d0d7d25b55007aa2a35ef1c5449c078a8584e6b97497fccc8f408de7ee02"
+}

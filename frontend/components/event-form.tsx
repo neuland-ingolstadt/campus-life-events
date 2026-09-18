@@ -3,7 +3,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
 	Building2,
-	CheckCircle2,
 	Globe2,
 	Lock,
 	SlidersHorizontal
@@ -20,6 +19,7 @@ import type {
 	Event,
 	UpdateEventRequest
 } from '@/client/types.gen'
+import { LocationCombobox } from '@/components/events/location-combobox'
 import { ScheduleOverlapHint } from '@/components/events/schedule-overlap-hint'
 import { Button } from '@/components/ui/button'
 import DateTimeField from '@/components/ui/datetime-field'
@@ -526,21 +526,12 @@ export function EventForm({
 									<FormItem>
 										<FormLabel>Veranstaltungsort</FormLabel>
 										<FormControl>
-											<div className="relative">
-												<Input
-													placeholder="z.B. G215, Hörsaal A, Online"
-													className={linkableRoom ? 'pr-9' : undefined}
-													{...field}
-												/>
-												{linkableRoom ? (
-													<span
-														className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3"
-														aria-hidden
-													>
-														<CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
-													</span>
-												) : null}
-											</div>
+											<LocationCombobox
+												value={field.value ?? ''}
+												onChange={field.onChange}
+												onBlur={field.onBlur}
+												name={field.name}
+											/>
 										</FormControl>
 										{linkableRoom ? (
 											<FormDescription className="text-emerald-700 dark:text-emerald-400">

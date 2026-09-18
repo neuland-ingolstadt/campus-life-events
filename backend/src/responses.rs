@@ -161,3 +161,8 @@ pub struct RecreationCandidate {
 pub struct RecreationCandidatesResponse {
     pub items: Vec<RecreationCandidate>,
 }
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct LocationSuggestionsResponse {
+    pub items: Vec<String>,
+}

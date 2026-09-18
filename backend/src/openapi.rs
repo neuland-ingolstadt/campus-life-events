@@ -15,11 +15,11 @@ use crate::{
     },
     responses::{
         AccountEmailUpdatedResponse, ApiTokenCreatedResponse, ApiTokenSummaryResponse,
-        AuthUserResponse, ErrorResponse, HealthResponse, NewsletterDataResponse,
-        OAuthSessionSummaryResponse, OrganizerWithStatsResponse, PaginatedEventsResponse,
-        PasswordResetRequestResponse, PublicEventResponse, PublicOrganizerResponse,
-        RecreationCandidate, RecreationCandidatesResponse, SetupTokenInfoResponse,
-        SetupTokenResponse,
+        AuthUserResponse, ErrorResponse, HealthResponse, LocationSuggestionsResponse,
+        NewsletterDataResponse, OAuthSessionSummaryResponse, OrganizerWithStatsResponse,
+        PaginatedEventsResponse, PasswordResetRequestResponse, PublicEventResponse,
+        PublicOrganizerResponse, RecreationCandidate, RecreationCandidatesResponse,
+        SetupTokenInfoResponse, SetupTokenResponse,
     },
     routes,
 };
@@ -57,6 +57,7 @@ use crate::{
         routes::admin::update_organizer_permissions,
         routes::events::list_events,
         routes::events::list_recreation_candidates,
+        routes::events::list_location_suggestions,
         routes::events::create_event,
         routes::events::get_event,
         routes::events::update_event,
@@ -131,6 +132,7 @@ use crate::{
         PaginatedEventsResponse,
         RecreationCandidate,
         RecreationCandidatesResponse,
+        LocationSuggestionsResponse,
         PublicEventResponse, PublicOrganizerResponse,
         InviteStatus,
         OrganizerKind

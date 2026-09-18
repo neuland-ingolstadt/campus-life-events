@@ -192,6 +192,10 @@ export type ListPublicOrganizersQuery = {
     organizer_kind?: null | OrganizerKind;
 };
 
+export type LocationSuggestionsResponse = {
+    items: Array<string>;
+};
+
 export type LoginRequest = {
     email: string;
     password: string;
@@ -918,6 +922,31 @@ export type CreateEventResponses = {
 };
 
 export type CreateEventResponse = CreateEventResponses[keyof CreateEventResponses];
+
+export type ListLocationSuggestionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/events/location-suggestions';
+};
+
+export type ListLocationSuggestionsErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+};
+
+export type ListLocationSuggestionsError = ListLocationSuggestionsErrors[keyof ListLocationSuggestionsErrors];
+
+export type ListLocationSuggestionsResponses = {
+    /**
+     * Past event locations for the current organizer
+     */
+    200: LocationSuggestionsResponse;
+};
+
+export type ListLocationSuggestionsResponse = ListLocationSuggestionsResponses[keyof ListLocationSuggestionsResponses];
 
 export type GetNewsletterDataData = {
     body?: never;

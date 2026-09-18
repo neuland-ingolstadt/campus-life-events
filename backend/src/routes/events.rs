@@ -21,8 +21,8 @@ use crate::{
     event_sort::push_event_order_by_clause,
     models::{AccountType, AuditType, Event, EventWithOrganizer, Organizer, OrganizerKind},
     responses::{
-        ErrorResponse, NewsletterDataResponse, PaginatedEventsResponse, RecreationCandidate,
-        RecreationCandidatesResponse,
+        ErrorResponse, LocationSuggestionsResponse, NewsletterDataResponse,
+        PaginatedEventsResponse, RecreationCandidate, RecreationCandidatesResponse,
     },
 };
 
@@ -902,6 +902,55 @@ pub(crate) async fn list_recreation_candidates(
     Ok(Json(RecreationCandidatesResponse { items }))
 }
 
+const LOCATION_SUGGESTIONS_LIMIT: i64 = 30;
+
+pub(crate) async fn list_location_suggestions_for_organizer(
+    state: &AppState,
+    organizer_id: i64,
+) -> Result<Vec<String>, AppError> {
+    let rows = sqlx::query!(
+        r#"
+        SELECT btrim(location) AS "location!"
+        FROM events
+        WHERE organizer_id = $1
+          AND location IS NOT NULL
+          AND btrim(location) <> ''
+        GROUP BY btrim(location)
+        ORDER BY COUNT(*) DESC, MAX(start_date_time) DESC
+        LIMIT $2
+        "#,
+        organizer_id,
+        LOCATION_SUGGESTIONS_LIMIT
+    )
+    .fetch_all(&state.db)
+    .await?;
+
+    Ok(rows.into_iter().map(|row| row.location).collect())
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/events/location-suggestions",
+    tag = "Events",
+    responses(
+        (status = 200, description = "Past event locations for the current organizer", body = LocationSuggestionsResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse)
+    )
+)]
+#[instrument(skip(state, headers))]
+pub(crate) async fn list_location_suggestions(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Json<LocationSuggestionsResponse>, AppError> {
+    let user = current_user_from_headers(&headers, &state).await?;
+    let organizer_id = user
+        .organizer_id()
+        .ok_or_else(|| AppError::unauthorized("organizer account required"))?;
+
+    let items = list_location_suggestions_for_organizer(&state, organizer_id).await?;
+    Ok(Json(LocationSuggestionsResponse { items }))
+}
+
 #[utoipa::path(
     post,
     path = "/api/v1/events",
@@ -1138,6 +1187,7 @@ pub(crate) fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(list_events).post(create_event))
         .route("/recreation-candidates", get(list_recreation_candidates))
+        .route("/location-suggestions", get(list_location_suggestions))
         .route("/newsletter-data", get(get_newsletter_data))
         .route("/newsletter-preview", post(send_newsletter_preview))
         .route(
