@@ -1,18 +1,12 @@
 'use client'
 
-import { ChevronDown, Grid3X3, List, Plus, UserRound } from 'lucide-react'
-import { useState } from 'react'
+import { Grid3X3, List, Plus, UserRound } from 'lucide-react'
 import type { RecreationCandidate } from '@/client/types.gen'
+import { RecreationSuggestionsMenu } from '@/components/events/recreation-suggestions-menu'
 import { Button } from '@/components/ui/button'
-import {
-	HoverCard,
-	HoverCardContent,
-	HoverCardTrigger
-} from '@/components/ui/hover-card'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { formatInCampusTimeZone } from '@/lib/date-time'
 import { AnimateIcon } from '../animate-ui/icons/icon'
 import { RefreshCw } from '../animate-ui/icons/refresh-cw'
 
@@ -50,7 +44,6 @@ export function EventsHeader({
 	onOwnFilterChange
 }: EventsHeaderProps) {
 	const ownSwitchId = `${tableId}-own-filter-switch`
-	const [recreationMenuOpen, setRecreationMenuOpen] = useState(false)
 	const showRecreationMenu =
 		canCreate && recreationCandidates.length > 0 && onRecreate !== undefined
 
@@ -126,62 +119,10 @@ export function EventsHeader({
 							Neues Event
 						</Button>
 						{showRecreationMenu ? (
-							<HoverCard
-								open={recreationMenuOpen}
-								onOpenChange={setRecreationMenuOpen}
-								openDelay={80}
-								closeDelay={120}
-							>
-								<HoverCardTrigger asChild>
-									<Button
-										type="button"
-										size="sm"
-										className="rounded-l-none border-l border-primary-foreground/20 px-2"
-										aria-label="Erneut anlegen"
-										aria-expanded={recreationMenuOpen}
-										onClick={() => setRecreationMenuOpen((current) => !current)}
-									>
-										<ChevronDown className="h-4 w-4" />
-									</Button>
-								</HoverCardTrigger>
-								<HoverCardContent
-									align="end"
-									sideOffset={6}
-									className="w-80 p-1"
-								>
-									<p className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-										Erneut anlegen
-									</p>
-									<ul className="flex flex-col gap-0.5">
-										{recreationCandidates.map((candidate) => {
-											const lastStart = formatInCampusTimeZone(
-												candidate.last_start_date_time,
-												'dd.MM.yyyy'
-											)
-											return (
-												<li key={candidate.event.id}>
-													<button
-														type="button"
-														className="flex w-full flex-col items-start gap-0.5 rounded-sm px-2 py-2 text-left text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:outline-none"
-														onClick={() => {
-															setRecreationMenuOpen(false)
-															onRecreate(candidate.event.id)
-														}}
-													>
-														<span className="line-clamp-2 font-medium">
-															{candidate.event.title_de}
-														</span>
-														<span className="text-xs text-muted-foreground">
-															{candidate.occurrence_count}× · zuletzt{' '}
-															{lastStart}
-														</span>
-													</button>
-												</li>
-											)
-										})}
-									</ul>
-								</HoverCardContent>
-							</HoverCard>
+							<RecreationSuggestionsMenu
+								candidates={recreationCandidates}
+								onRecreate={onRecreate}
+							/>
 						) : null}
 					</div>
 				) : null}
