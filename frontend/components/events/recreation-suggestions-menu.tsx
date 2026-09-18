@@ -59,7 +59,7 @@ export function RecreationSuggestionsMenu({
 				collisionPadding={16}
 				className="w-[min(18.5rem,calc(100vw-2rem))] !border-0 !bg-transparent !p-0 !shadow-none"
 			>
-				<ul className="flex flex-col gap-2">
+				<ul className="flex flex-col gap-1">
 					{candidates.map((candidate, index) => {
 						const lastStart = formatInCampusTimeZone(
 							candidate.last_start_date_time,
@@ -81,7 +81,7 @@ export function RecreationSuggestionsMenu({
 										duration: 0.2,
 										ease: [0.22, 1, 0.36, 1]
 									}}
-									className="flex w-full flex-col items-stretch gap-1 rounded-xl border bg-popover px-4 py-3 text-left shadow-md transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+									className="flex w-full flex-col items-stretch gap-1 rounded-lg border border-foreground/20 bg-background px-4 py-2.5 text-left transition-colors hover:border-foreground/35 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 									onClick={() => {
 										setOpen(false)
 										onRecreate(candidate.event.id)
