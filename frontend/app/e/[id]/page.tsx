@@ -277,21 +277,21 @@ export default async function PublicEventPage({
 						{event.location ? (
 							<div className="flex items-start gap-3">
 								<MapPin className="mt-1 size-5 shrink-0 text-muted-foreground" />
-								<div className="min-w-0">
-									<a
-										href={locationUrl(event.location)}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="font-medium underline-offset-4 hover:underline"
-									>
+								<a
+									href={locationUrl(event.location)}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="min-w-0 group"
+								>
+									<p className="font-medium underline-offset-4 group-hover:underline">
 										{event.location}
-									</a>
-									<p className="text-sm text-muted-foreground">
+									</p>
+									<p className="text-sm text-muted-foreground underline-offset-4 group-hover:underline">
 										{isValidRoom(event.location)
 											? 'In Neuland Next öffnen'
 											: 'In Maps öffnen'}
 									</p>
-								</div>
+								</a>
 							</div>
 						) : null}
 					</div>
