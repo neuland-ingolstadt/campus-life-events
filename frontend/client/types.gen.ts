@@ -172,6 +172,8 @@ export type ListEventsQuery = {
     offset?: number | null;
     organizer_id?: number | null;
     organizer_kind?: null | OrganizerKind;
+    overlaps_end?: string | null;
+    overlaps_start?: string | null;
     query?: string | null;
     sort?: null | EventSort;
     starts_from?: string | null;
@@ -875,6 +877,8 @@ export type ListEventsData = {
         visibility?: EventVisibility;
         starts_from?: string;
         starts_to?: string;
+        overlaps_start?: string;
+        overlaps_end?: string;
         sort?: EventSort;
         direction?: SortDirection;
     };
@@ -1288,6 +1292,8 @@ export type ListPublicEventsData = {
         visibility?: EventVisibility;
         starts_from?: string;
         starts_to?: string;
+        overlaps_start?: string;
+        overlaps_end?: string;
         sort?: EventSort;
         direction?: SortDirection;
     };

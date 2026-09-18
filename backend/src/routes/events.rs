@@ -720,6 +720,17 @@ fn apply_event_filters(
         builder.push("e.start_date_time <= ").push_bind(starts_to);
     }
 
+    if let (Some(overlaps_start), Some(overlaps_end)) =
+        (query_params.overlaps_start, query_params.overlaps_end)
+    {
+        add_condition(builder);
+        builder
+            .push("e.start_date_time < ")
+            .push_bind(overlaps_end)
+            .push(" AND e.end_date_time > ")
+            .push_bind(overlaps_start);
+    }
+
     if let Some(visibility) = &query_params.visibility {
         add_condition(builder);
         builder.push(match visibility {

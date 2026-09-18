@@ -154,6 +154,8 @@ pub struct ListEventsQuery {
     pub visibility: Option<EventVisibility>,
     pub starts_from: Option<DateTime<Utc>>,
     pub starts_to: Option<DateTime<Utc>>,
+    pub overlaps_start: Option<DateTime<Utc>>,
+    pub overlaps_end: Option<DateTime<Utc>>,
     pub sort: Option<EventSort>,
     pub direction: Option<SortDirection>,
 }

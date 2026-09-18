@@ -20,6 +20,7 @@ import type {
 	Event,
 	UpdateEventRequest
 } from '@/client/types.gen'
+import { ScheduleOverlapHint } from '@/components/events/schedule-overlap-hint'
 import { Button } from '@/components/ui/button'
 import DateTimeField from '@/components/ui/datetime-field'
 import {
@@ -440,6 +441,11 @@ export function EventForm({
 							)}
 						</div>
 					</div>
+					<ScheduleOverlapHint
+						start={startDate}
+						end={endDate}
+						excludeEventId={event?.id}
+					/>
 				</div>
 
 				<div>
