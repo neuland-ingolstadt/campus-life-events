@@ -1,7 +1,7 @@
 const NEULAND_MAP_ORIGIN = 'https://web.neuland.app'
 
 export function isValidRoom(room: string): boolean {
-	return /^[A-Za-z]{1,2}U?\d{2,3}$/.test(room.trim())
+	return /^[A-Za-z]{1,2}U?\d{3}$/.test(room.trim())
 }
 
 export function neulandMapRoomUrl(room: string): string {
