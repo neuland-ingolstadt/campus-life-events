@@ -57,7 +57,7 @@ export function EventsHeader({
 			</div>
 			<div className="flex min-w-0 flex-wrap items-center justify-start gap-2 lg:justify-end">
 				{canFilterOwn && (
-					<div className="flex items-center gap-2 rounded-md border px-3 py-2">
+					<div className="flex h-8 items-center gap-2 rounded-md border px-3">
 						<UserRound className="h-4 w-4 text-muted-foreground" aria-hidden />
 						<Label htmlFor={ownSwitchId} className="text-sm font-medium">
 							Meine Events
@@ -72,25 +72,26 @@ export function EventsHeader({
 				)}
 				<ToggleGroup
 					type="single"
+					size="sm"
 					value={viewMode}
 					onValueChange={(value) => {
 						if (value === 'table' || value === 'calendar') {
 							onViewModeChange(value)
 						}
 					}}
-					className="border rounded-md"
+					className="h-8 border rounded-md"
 				>
 					<ToggleGroupItem
 						value="table"
 						aria-label="Tabellenansicht"
-						className="cursor-pointer"
+						className="h-full cursor-pointer"
 					>
 						<List className="h-4 w-4" />
 					</ToggleGroupItem>
 					<ToggleGroupItem
 						value="calendar"
 						aria-label="Kalenderansicht"
-						className="cursor-pointer"
+						className="h-full cursor-pointer"
 					>
 						<Grid3X3 className="h-4 w-4" />
 					</ToggleGroupItem>
