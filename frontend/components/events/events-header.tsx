@@ -48,8 +48,8 @@ export function EventsHeader({
 		canCreate && recreationCandidates.length > 0 && onRecreate !== undefined
 
 	return (
-		<div className="flex min-w-0 max-w-full flex-col justify-between gap-4 lg:flex-row lg:items-center">
-			<div className="min-w-0">
+		<div className="flex min-w-0 max-w-full flex-col justify-between gap-3 lg:flex-row lg:items-center lg:gap-4">
+			<div className="hidden min-w-0 lg:block">
 				<h2 className="text-balance break-words text-3xl font-bold tracking-tight">
 					{heading}
 				</h2>
@@ -57,10 +57,10 @@ export function EventsHeader({
 			</div>
 			<div className="flex min-w-0 flex-wrap items-center justify-start gap-2 lg:justify-end">
 				{canFilterOwn && (
-					<div className="flex h-8 items-center gap-2 rounded-md border px-3">
+					<div className="flex h-8 items-center gap-1.5 rounded-md border px-2.5 sm:gap-2 sm:px-3">
 						<UserRound className="h-4 w-4 text-muted-foreground" aria-hidden />
 						<Label htmlFor={ownSwitchId} className="text-sm font-medium">
-							Meine Events
+							Eigene
 						</Label>
 						<Switch
 							id={ownSwitchId}
@@ -102,14 +102,15 @@ export function EventsHeader({
 						variant="outline"
 						size="sm"
 						onClick={onRefresh}
+						aria-label="Aktualisieren"
 						className="flex items-center gap-2"
 					>
 						<RefreshCw className="h-4 w-4" />
-						Aktualisieren
+						<span className="hidden sm:inline">Aktualisieren</span>
 					</Button>
 				</AnimateIcon>
 				{canCreate && onCreate ? (
-					<div className="flex items-stretch">
+					<div className="ml-auto flex items-stretch sm:ml-0">
 						<Button
 							type="button"
 							size="sm"
@@ -117,7 +118,8 @@ export function EventsHeader({
 							onClick={onCreate}
 						>
 							<Plus className="h-4 w-4" />
-							Neues Event
+							<span className="sm:hidden">Neu</span>
+							<span className="hidden sm:inline">Neues Event</span>
 						</Button>
 						{showRecreationMenu ? (
 							<RecreationSuggestionsMenu

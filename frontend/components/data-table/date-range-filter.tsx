@@ -76,7 +76,7 @@ export function DataTableDateRangeFilter<TData, TValue>({
 					variant="outline"
 					size="sm"
 					className={cn(
-						'h-8 border-dashed relative',
+						'h-8 shrink-0 border-dashed relative',
 						hasFilter && 'border-solid'
 					)}
 				>

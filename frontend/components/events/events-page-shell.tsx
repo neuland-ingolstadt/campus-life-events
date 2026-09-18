@@ -28,7 +28,7 @@ export function EventsPageShell({
 					<h1 className="truncate text-lg font-semibold">{title}</h1>
 				</div>
 			</header>
-			<div className="min-w-0 max-w-full flex-1 space-y-6 p-4 pt-6 md:p-8">
+			<div className="min-w-0 max-w-full flex-1 space-y-4 p-4 pt-4 md:space-y-6 md:p-8 md:pt-8">
 				{children}
 			</div>
 		</div>
