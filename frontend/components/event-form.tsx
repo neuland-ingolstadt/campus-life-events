@@ -1,12 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import {
-	Building2,
-	Globe2,
-	Lock,
-	SlidersHorizontal
-} from 'lucide-react'
+import { Building2, Globe2, Lock, SlidersHorizontal } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
