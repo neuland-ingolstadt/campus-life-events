@@ -10,7 +10,7 @@ use crate::{
         UpdateOrganizerPermissionsRequest, UpdateOrganizerRequest,
     },
     models::{
-        AdminWithInvite, AuditLogEntry, Event, InviteStatus, Organizer, OrganizerKind,
+        AdminWithInvite, AuditLogEntry, AuditSource, Event, InviteStatus, Organizer, OrganizerKind,
         OrganizerWithInvite,
     },
     responses::{
@@ -135,7 +135,8 @@ use crate::{
         LocationSuggestionsResponse,
         PublicEventResponse, PublicOrganizerResponse,
         InviteStatus,
-        OrganizerKind
+        OrganizerKind,
+        AuditSource
     )),
     tags(
         (name = "Health", description = "Service availability"),

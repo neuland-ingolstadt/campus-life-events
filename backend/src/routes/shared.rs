@@ -7,7 +7,7 @@ use crate::{
     api_token,
     app_state::AppState,
     error::AppError,
-    models::{AccountType, OrganizerKind},
+    models::{AccountType, AuditSource, OrganizerKind},
 };
 
 pub(crate) use crate::authed_user::AuthedUser;
@@ -83,6 +83,7 @@ pub(crate) async fn current_user_from_headers(
         account_id: row.id,
         account_type: row.account_type,
         organizer_id: row.organizer_id,
+        audit_source: AuditSource::Ui,
     })
 }
 

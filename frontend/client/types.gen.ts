@@ -46,9 +46,12 @@ export type AuditLogEntry = {
     new_data?: unknown;
     old_data?: unknown;
     organizer_id: number;
+    source: AuditSource;
     type: AuditType;
     user_id?: number | null;
 };
+
+export type AuditSource = 'UI' | 'MCP' | 'API';
 
 export type AuditType = 'CREATE' | 'UPDATE' | 'DELETE';
 

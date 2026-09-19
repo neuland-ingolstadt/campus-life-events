@@ -40,7 +40,7 @@ pub(crate) async fn list_audit_logs(
         }
     }
     let mut builder = QueryBuilder::<Postgres>::new(
-        "SELECT id, event_id, organizer_id, user_id, type, at, old_data, new_data FROM audit_log",
+        "SELECT id, event_id, organizer_id, user_id, type, source, at, old_data, new_data FROM audit_log",
     );
 
     let mut any = false;

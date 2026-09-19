@@ -1,10 +1,11 @@
-use crate::models::AccountType;
+use crate::models::{AccountType, AuditSource};
 
 #[derive(Clone, Debug)]
 pub(crate) struct AuthedUser {
     pub(crate) account_id: i64,
     pub(crate) account_type: AccountType,
     pub(crate) organizer_id: Option<i64>,
+    pub(crate) audit_source: AuditSource,
 }
 
 impl AuthedUser {

@@ -1,0 +1,2 @@
+ALTER TABLE audit_log DROP COLUMN IF EXISTS source;
+DROP TYPE IF EXISTS audit_source;

@@ -19,7 +19,9 @@ use crate::{
     },
     error::AppError,
     event_sort::push_event_order_by_clause,
-    models::{AccountType, AuditType, Event, EventWithOrganizer, Organizer, OrganizerKind},
+    models::{
+        AccountType, AuditSource, AuditType, Event, EventWithOrganizer, Organizer, OrganizerKind,
+    },
     responses::{
         ErrorResponse, LocationSuggestionsResponse, NewsletterDataResponse,
         PaginatedEventsResponse, RecreationCandidate, RecreationCandidatesResponse,
@@ -122,6 +124,7 @@ pub(crate) async fn create_event_with_user(
         event.id,
         event.organizer_id,
         user.account_id,
+        user.audit_source,
         AuditType::Create,
         None,
         Some(&event),
@@ -349,6 +352,7 @@ pub(crate) async fn update_event_with_user(
         updated_event.id,
         updated_event.organizer_id,
         user.account_id,
+        user.audit_source,
         AuditType::Update,
         Some(&existing_event),
         Some(&updated_event),
@@ -410,6 +414,7 @@ pub(crate) async fn delete_event_with_user(
         existing_event.id,
         existing_event.organizer_id,
         user.account_id,
+        user.audit_source,
         AuditType::Delete,
         Some(&existing_event),
         None,
@@ -1135,11 +1140,13 @@ fn build_newsletter_subject(next_week_start: DateTime<Utc>) -> String {
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn record_audit(
     transaction: &mut Transaction<'_, Postgres>,
     event_id: i64,
     organizer_id: i64,
     user_id: i64,
+    source: AuditSource,
     audit_type: AuditType,
     old_data: Option<&Event>,
     new_data: Option<&Event>,
@@ -1155,13 +1162,14 @@ async fn record_audit(
 
     sqlx::query!(
         r#"
-        INSERT INTO audit_log (event_id, organizer_id, user_id, type, old_data, new_data)
-        VALUES ($1, $2, $3, $4::audit_type, $5, $6)
+        INSERT INTO audit_log (event_id, organizer_id, user_id, type, source, old_data, new_data)
+        VALUES ($1, $2, $3, $4::audit_type, $5::audit_source, $6, $7)
         "#,
         event_id,
         organizer_id,
         user_id,
         audit_type as AuditType,
+        source as AuditSource,
         old_json,
         new_json
     )

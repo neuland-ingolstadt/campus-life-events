@@ -2,7 +2,12 @@ use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 use hmac::{Hmac, KeyInit, Mac};
 use sha2::Sha256;
 
-use crate::{app_state::AppState, authed_user::AuthedUser, error::AppError, models::AccountType};
+use crate::{
+    app_state::AppState,
+    authed_user::AuthedUser,
+    error::AppError,
+    models::{AccountType, AuditSource},
+};
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -80,5 +85,6 @@ pub async fn authed_user_from_bearer(
         account_id: row.account_id,
         account_type: row.account_type,
         organizer_id: row.organizer_id,
+        audit_source: AuditSource::Api,
     })
 }

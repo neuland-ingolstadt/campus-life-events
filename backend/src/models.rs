@@ -50,6 +50,28 @@ pub enum AuditType {
     Delete,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type, ToSchema)]
+#[sqlx(type_name = "audit_source", rename_all = "SCREAMING_SNAKE_CASE")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum AuditSource {
+    Ui,
+    Mcp,
+    Api,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
+pub struct AuditLogEntry {
+    pub id: i64,
+    pub event_id: i64,
+    pub organizer_id: i64,
+    pub user_id: Option<i64>,
+    pub r#type: AuditType,
+    pub source: AuditSource,
+    pub at: DateTime<Utc>,
+    pub old_data: Option<Value>,
+    pub new_data: Option<Value>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Event {
     pub id: i64,
@@ -92,18 +114,6 @@ pub struct EventWithOrganizer {
     pub updated_at: DateTime<Utc>,
     pub organizer_name: String,
     pub organizer_website: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
-pub struct AuditLogEntry {
-    pub id: i64,
-    pub event_id: i64,
-    pub organizer_id: i64,
-    pub user_id: Option<i64>,
-    pub r#type: AuditType,
-    pub at: DateTime<Utc>,
-    pub old_data: Option<Value>,
-    pub new_data: Option<Value>,
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
