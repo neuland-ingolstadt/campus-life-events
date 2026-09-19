@@ -2,38 +2,16 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import {
-	Bar,
-	BarChart,
-	CartesianGrid,
-	Cell,
-	Label,
-	Line,
-	LineChart,
-	Pie,
-	PieChart,
-	PolarGrid,
-	PolarRadiusAxis,
-	RadialBar,
-	RadialBarChart,
-	XAxis,
-	YAxis
-} from 'recharts'
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts'
 import { listAuditLogs, listEvents, listOrganizers } from '@/client'
 import type {
 	Event as ApiEvent,
 	Organizer as ApiOrganizer,
 	AuditLogEntry
 } from '@/client/types.gen'
+import { AuditDetailsModal } from '@/components/audit-details-modal'
 import { DataTableColumnHeader } from '@/components/data-table/column-header'
 import { DataTable } from '@/components/data-table/data-table'
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle
-} from '@/components/ui/card'
 import {
 	ChartContainer,
 	ChartLegend,
@@ -41,7 +19,6 @@ import {
 	ChartTooltip,
 	ChartTooltipContent
 } from '@/components/ui/chart'
-import { Input } from '@/components/ui/input'
 import {
 	Select,
 	SelectContent,
@@ -58,9 +35,21 @@ const COLORS = {
 	DELETE: 'var(--chart-5)'
 } as const
 
+function formatAuditType(type: AuditLogEntry['type']) {
+	switch (type) {
+		case 'CREATE':
+			return 'Erstellt'
+		case 'UPDATE':
+			return 'Aktualisiert'
+		case 'DELETE':
+			return 'Gelöscht'
+		default:
+			return type
+	}
+}
+
 export default function AnalyticsPage() {
 	const [days, setDays] = useState(30)
-	const [search, setSearch] = useState('')
 
 	const { data: auditLogs = [] } = useQuery<AuditLogEntry[]>({
 		queryKey: ['audit-logs', days],
@@ -93,27 +82,20 @@ export default function AnalyticsPage() {
 		() => new Map(organizers.map((o) => [o.id, o.name])),
 		[organizers]
 	)
+	const auditById = useMemo(
+		() => new Map(auditLogs.map((entry) => [entry.id, entry])),
+		[auditLogs]
+	)
 
-	const since = new Date()
-	since.setDate(since.getDate() - days)
+	const since = useMemo(() => {
+		const value = new Date()
+		value.setDate(value.getDate() - days)
+		return value
+	}, [days])
 
 	const filtered = useMemo(() => {
-		let rows = auditLogs.filter((r) => new Date(r.at) >= since)
-		if (search.trim()) {
-			const q = search.toLowerCase()
-			rows = rows.filter((r) => {
-				const ev = events.find((e) => e.id === r.event_id)
-				const orgName = orgMap.get(r.organizer_id) ?? ''
-				return (
-					String(r.event_id).includes(q) ||
-					ev?.title_de?.toLowerCase().includes(q) ||
-					ev?.title_en?.toLowerCase().includes(q) ||
-					orgName.toLowerCase().includes(q)
-				)
-			})
-		}
-		return rows
-	}, [auditLogs, since, search, events, orgMap])
+		return auditLogs.filter((r) => new Date(r.at) >= since)
+	}, [auditLogs, since])
 
 	const timeline = useMemo(() => {
 		const buckets = new Map<
@@ -122,8 +104,9 @@ export default function AnalyticsPage() {
 		>()
 		for (const r of filtered) {
 			const d = formatInCampusTimeZone(new Date(r.at), 'yyyy-MM-dd')
-			if (!buckets.has(d))
+			if (!buckets.has(d)) {
 				buckets.set(d, { date: d, CREATE: 0, UPDATE: 0, DELETE: 0 })
+			}
 			const bucket = buckets.get(d)
 			if (!bucket) continue
 			bucket[r.type] += 1
@@ -157,19 +140,10 @@ export default function AnalyticsPage() {
 				title: events.find((e) => e.id === id)?.title_de || `Event Nr. ${id}`
 			}))
 			.sort((a, b) => b.count - a.count)
-			.slice(0, 10)
+			.slice(0, 8)
 	}, [filtered, events])
 
 	const total = filtered.length
-
-	const byTypeData = useMemo(
-		() =>
-			(Object.keys(byType) as Array<keyof typeof byType>).map((k) => ({
-				name: k,
-				value: byType[k]
-			})),
-		[byType]
-	)
 
 	const auditRows = useMemo(
 		() =>
@@ -188,375 +162,239 @@ export default function AnalyticsPage() {
 
 	type AuditRow = (typeof auditRows)[number]
 
+	const kpis = [
+		{ key: 'total', label: 'Änderungen', value: total },
+		{ key: 'create', label: 'Erstellt', value: byType.CREATE },
+		{ key: 'update', label: 'Aktualisiert', value: byType.UPDATE },
+		{ key: 'delete', label: 'Gelöscht', value: byType.DELETE }
+	] as const
+
 	return (
-		<div className="flex flex-col min-h-screen">
-			<header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/80 backdrop-blur-md px-4">
+		<div className="flex min-h-screen flex-col">
+			<header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 px-4">
 				<SidebarTrigger className="-ml-1" />
 				<div className="flex items-center gap-2">
 					<h1 className="text-lg font-semibold">Analysen</h1>
 				</div>
 			</header>
 
-			<div className="flex-1 space-y-6 p-4 md:p-8 pt-6">
-				<div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-					<div className="min-w-0">
-						<h2 className="break-words text-3xl font-bold tracking-tight">
-							Analysen
-						</h2>
-						<p className="text-sm text-muted-foreground">
-							Einblicke aus dem Audit-Log der letzten {days} Tage
+			<div className="mb-12 flex-1 space-y-8 p-4 pt-6 md:p-8">
+				<div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+					<div>
+						<h2 className="text-3xl font-bold tracking-tight">Analysen</h2>
+						<p className="mt-1 text-muted-foreground">
+							Aktivität aus dem Audit-Log der letzten {days} Tage
 						</p>
 					</div>
-					<div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center lg:w-auto">
-						<Input
-							placeholder="Events/Organisationen suchen"
-							value={search}
-							onChange={(e) => setSearch(e.target.value)}
-							className="w-full min-w-0 sm:w-[220px]"
-						/>
-						<Select
-							value={String(days)}
-							onValueChange={(v) => setDays(parseInt(v, 10))}
-						>
-							<SelectTrigger className="w-full sm:w-[140px]">
-								<SelectValue placeholder="Zeitraum" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="7">Letzte 7 Tage</SelectItem>
-								<SelectItem value="14">Letzte 14 Tage</SelectItem>
-								<SelectItem value="30">Letzte 30 Tage</SelectItem>
-								<SelectItem value="90">Letzte 90 Tage</SelectItem>
-							</SelectContent>
-						</Select>
-					</div>
+					<Select
+						value={String(days)}
+						onValueChange={(v) => setDays(parseInt(v, 10))}
+					>
+						<SelectTrigger className="w-full sm:w-[150px]">
+							<SelectValue placeholder="Zeitraum" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="7">Letzte 7 Tage</SelectItem>
+							<SelectItem value="14">Letzte 14 Tage</SelectItem>
+							<SelectItem value="30">Letzte 30 Tage</SelectItem>
+							<SelectItem value="90">Letzte 90 Tage</SelectItem>
+						</SelectContent>
+					</Select>
 				</div>
 
-				{/* KPI gauges */}
-				<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-					{[
-						{
-							key: 'total',
-							title: 'Änderungen gesamt',
-							value: total
-						},
-						{
-							key: 'create',
-							title: 'Erstellungen',
-							value: byType.CREATE || 0
-						},
-						{
-							key: 'update',
-							title: 'Aktualisierungen',
-							value: byType.UPDATE || 0
-						},
-						{
-							key: 'delete',
-							title: 'Löschungen',
-							value: byType.DELETE || 0
-						}
-					].map((kpi) => (
-						<Card key={kpi.key} className="flex flex-col">
-							<CardHeader className="items-center pb-0">
-								<CardTitle className="text-center line-clamp-1">
-									{kpi.title}
-								</CardTitle>
-								<CardDescription>Letzte {days} Tage</CardDescription>
-							</CardHeader>
-							<CardContent className="flex-1 pb-0">
+				<section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+					{kpis.map((kpi) => (
+						<div
+							key={kpi.key}
+							className="flex flex-col justify-between rounded-lg border bg-card p-5"
+						>
+							<p className="text-sm font-medium">{kpi.label}</p>
+							<p className="mt-4 text-3xl font-bold tracking-tight tabular-nums">
+								{kpi.value.toLocaleString('de-DE')}
+							</p>
+						</div>
+					))}
+				</section>
+
+				<section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-start">
+					<div className="space-y-3">
+						<div>
+							<h3 className="text-lg font-semibold">Aktivität</h3>
+							<p className="text-sm text-muted-foreground">
+								Tägliche Änderungen nach Typ
+							</p>
+						</div>
+						<div className="rounded-lg border bg-card p-4 sm:p-5">
+							{timeline.length === 0 ? (
+								<p className="py-16 text-center text-sm text-muted-foreground">
+									Keine Aktivität in diesem Zeitraum.
+								</p>
+							) : (
 								<ChartContainer
 									config={{
-										value: {
-											label: kpi.title,
-											theme: { light: 'var(--chart-1)', dark: 'var(--chart-1)' }
-										}
+										CREATE: { label: 'Erstellt', color: COLORS.CREATE },
+										UPDATE: { label: 'Aktualisiert', color: COLORS.UPDATE },
+										DELETE: { label: 'Gelöscht', color: COLORS.DELETE }
 									}}
-									className="mx-auto aspect-square max-h-[220px]"
+									className="h-72 w-full"
 								>
-									<RadialBarChart
-										data={[
-											{
-												key: 'value',
-												value: kpi.value,
-												fill: 'var(--color-value)'
+									<LineChart data={timeline} margin={{ left: 4, right: 8 }}>
+										<CartesianGrid vertical={false} />
+										<XAxis
+											dataKey="date"
+											tickFormatter={(v) =>
+												formatInCampusTimeZone(new Date(v), 'dd.MM.')
 											}
-										]}
-										endAngle={100}
-										innerRadius={70}
-										outerRadius={120}
-									>
-										<PolarGrid
-											gridType="circle"
-											radialLines={false}
-											stroke="none"
-											className="first:fill-muted last:fill-background"
-											polarRadius={[86, 74]}
-										/>
-										<RadialBar
-											dataKey="value"
-											fill="var(--color-value)"
-											background
-										/>
-										<PolarRadiusAxis
-											tick={false}
 											tickLine={false}
 											axisLine={false}
-										>
-											<Label
-												content={({ viewBox }) => {
-													if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
-														return (
-															<text
-																x={viewBox.cx}
-																y={viewBox.cy}
-																textAnchor="middle"
-																dominantBaseline="middle"
-															>
-																<tspan
-																	x={viewBox.cx}
-																	y={viewBox.cy}
-																	className="fill-foreground text-3xl font-bold"
-																>
-																	{kpi.value.toLocaleString()}
-																</tspan>
-																<tspan
-																	x={viewBox.cx}
-																	y={(viewBox.cy || 0) + 20}
-																	className="fill-muted-foreground"
-																>
-																	{kpi.title}
-																</tspan>
-															</text>
-														)
-													}
-												}}
-											/>
-										</PolarRadiusAxis>
-									</RadialBarChart>
+										/>
+										<YAxis
+											allowDecimals={false}
+											tickLine={false}
+											axisLine={false}
+											width={28}
+										/>
+										<ChartTooltip content={<ChartTooltipContent />} />
+										<ChartLegend content={<ChartLegendContent />} />
+										<Line
+											type="monotone"
+											dataKey="CREATE"
+											stroke="var(--color-CREATE)"
+											strokeWidth={2}
+											dot={false}
+										/>
+										<Line
+											type="monotone"
+											dataKey="UPDATE"
+											stroke="var(--color-UPDATE)"
+											strokeWidth={2}
+											dot={false}
+										/>
+										<Line
+											type="monotone"
+											dataKey="DELETE"
+											stroke="var(--color-DELETE)"
+											strokeWidth={2}
+											dot={false}
+										/>
+									</LineChart>
 								</ChartContainer>
-							</CardContent>
-						</Card>
-					))}
-				</div>
+							)}
+						</div>
+					</div>
 
-				{/* Top 4 gauge stats removed */}
+					<div className="space-y-3">
+						<div>
+							<h3 className="text-lg font-semibold">Häufig geändert</h3>
+							<p className="text-sm text-muted-foreground">
+								Events mit den meisten Einträgen
+							</p>
+						</div>
+						<div className="rounded-lg border bg-card p-4 sm:p-5">
+							{byEvent.length === 0 ? (
+								<p className="py-8 text-center text-sm text-muted-foreground">
+									Noch nichts zu zeigen.
+								</p>
+							) : (
+								<ol className="space-y-3">
+									{byEvent.map((item, index) => (
+										<li
+											key={item.id}
+											className="flex items-baseline justify-between gap-3"
+										>
+											<div className="flex min-w-0 items-baseline gap-2.5">
+												<span className="w-4 shrink-0 text-xs tabular-nums text-muted-foreground">
+													{index + 1}
+												</span>
+												<span className="truncate text-sm font-medium">
+													{item.title}
+												</span>
+											</div>
+											<span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+												{item.count}
+											</span>
+										</li>
+									))}
+								</ol>
+							)}
+						</div>
+					</div>
+				</section>
 
-				<div className="grid gap-6 lg:grid-cols-2">
-					{/* Timeline line chart */}
-					<Card>
-						<CardHeader>
-							<CardTitle>Veränderungen im Zeitverlauf</CardTitle>
-							<CardDescription>
-								Tägliche Anzahl nach Typ gruppiert
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<ChartContainer
-								config={{
-									CREATE: { label: 'Erstellen', color: COLORS.CREATE },
-									UPDATE: { label: 'Bearbeiten', color: COLORS.UPDATE },
-									DELETE: { label: 'Löschen', color: COLORS.DELETE }
-								}}
-								className="h-72 aspect-square mx-auto"
-							>
-								<LineChart data={timeline} margin={{ left: 8, right: 8 }}>
-									<CartesianGrid vertical={false} />
-									<XAxis
-										dataKey="date"
-										tickFormatter={(v) =>
-											formatInCampusTimeZone(new Date(v), 'MM/dd')
-										}
-										tickLine={false}
-										axisLine={false}
-									/>
-									<YAxis
-										allowDecimals={false}
-										tickLine={false}
-										axisLine={false}
-									/>
-									<ChartTooltip content={<ChartTooltipContent />} />
-									<ChartLegend content={<ChartLegendContent />} />
-									<Line
-										type="monotone"
-										dataKey="CREATE"
-										stroke="var(--color-CREATE)"
-										strokeWidth={2}
-										dot={false}
-									/>
-									<Line
-										type="monotone"
-										dataKey="UPDATE"
-										stroke="var(--color-UPDATE)"
-										strokeWidth={2}
-										dot={false}
-									/>
-									<Line
-										type="monotone"
-										dataKey="DELETE"
-										stroke="var(--color-DELETE)"
-										strokeWidth={2}
-										dot={false}
-									/>
-								</LineChart>
-							</ChartContainer>
-						</CardContent>
-					</Card>
-
-					{/* Top changed events */}
-					<Card>
-						<CardHeader>
-							<CardTitle>Meist geänderte Events</CardTitle>
-							<CardDescription>Meiste Aktivität im Zeitraum</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<ChartContainer
-								config={{
-									count: {
-										label: 'Änderungen',
-										theme: {
-											light: 'var(--chart-1)',
-											dark: 'var(--chart-1)'
-										}
-									}
-								}}
-								className="h-72"
-							>
-								<BarChart data={byEvent} margin={{ left: 8, right: 8 }}>
-									<CartesianGrid vertical={false} />
-									<XAxis
-										dataKey="title"
-										tickLine={false}
-										axisLine={false}
-										interval={0}
-										angle={-20}
-										height={70}
-										tick={{ fontSize: 10 }}
-									/>
-									<YAxis
-										allowDecimals={false}
-										tickLine={false}
-										axisLine={false}
-									/>
-									<ChartTooltip content={<ChartTooltipContent />} />
-									<Bar dataKey="count" fill="var(--color-count)" radius={4} />
-								</BarChart>
-							</ChartContainer>
-						</CardContent>
-					</Card>
-				</div>
-
-				{/* Distribution by type (fancy pie chart) */}
-				<div className="grid gap-6 lg:grid-cols-3">
-					<Card className="lg:col-span-1">
-						<CardHeader>
-							<CardTitle>Verteilung nach Typ</CardTitle>
-							<CardDescription>
-								Erstellen / Bearbeiten / Löschen
-							</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<ChartContainer
-								config={{
-									CREATE: { label: 'Erstellen', color: COLORS.CREATE },
-									UPDATE: { label: 'Bearbeiten', color: COLORS.UPDATE },
-									DELETE: { label: 'Löschen', color: COLORS.DELETE }
-								}}
-								className="h-72 aspect-square mx-auto"
-							>
-								<PieChart>
-									<Pie
-										data={byTypeData}
-										dataKey="value"
-										nameKey="name"
-										cx="50%"
-										cy="50%"
-										innerRadius={50}
-										outerRadius={80}
-										paddingAngle={2}
-										stroke="none"
-									>
-										{byTypeData.map((entry) => (
-											<Cell
-												key={entry.name}
-												fill={`var(--color-${entry.name})`}
-											/>
-										))}
-									</Pie>
-									<ChartTooltip
-										content={<ChartTooltipContent nameKey="name" />}
-									/>
-									<ChartLegend
-										content={<ChartLegendContent nameKey="name" />}
-									/>
-								</PieChart>
-							</ChartContainer>
-						</CardContent>
-					</Card>
-
-					{/* Audit logs table */}
-					<Card className="lg:col-span-2">
-						<CardHeader>
-							<CardTitle>Audit-Log</CardTitle>
-							<CardDescription>Einträge im gewählten Zeitraum</CardDescription>
-						</CardHeader>
-						<CardContent>
-							<DataTable<AuditRow, unknown>
-								tableId="analytics-audit"
-								columns={[
-									{
-										accessorKey: 'at',
-										header: ({ column }) => (
-											<DataTableColumnHeader
-												column={column}
-												title="Zeitpunkt"
-											/>
-										),
-										cell: ({ row }) => (
-											<span>
+				<section className="space-y-3">
+					<div>
+						<h3 className="text-lg font-semibold">Audit-Log</h3>
+						<p className="text-sm text-muted-foreground">
+							{auditRows.length.toLocaleString('de-DE')} Einträge im gewählten
+							Zeitraum
+						</p>
+					</div>
+					<div className="rounded-lg border bg-card p-4 sm:p-5">
+						<DataTable<AuditRow, unknown>
+							tableId="analytics-audit"
+							columns={[
+								{
+									accessorKey: 'at',
+									header: ({ column }) => (
+										<DataTableColumnHeader column={column} title="Zeitpunkt" />
+									),
+									cell: ({ row }) => {
+										const entry = auditById.get(row.original.id)
+										const label = (
+											<span className="tabular-nums">
 												{formatInCampusTimeZone(
 													row.original.at,
 													'dd.MM.yyyy HH:mm'
 												)}
 											</span>
 										)
-									},
-									{
-										accessorKey: 'type',
-										header: ({ column }) => (
-											<DataTableColumnHeader column={column} title="Typ" />
-										),
-										cell: ({ row }) => (
-											<span>
-												{row.original.type === 'CREATE'
-													? 'Create'
-													: row.original.type === 'UPDATE'
-														? 'Update'
-														: 'Delete'}
-											</span>
-										)
-									},
-									{
-										accessorKey: 'eventTitle',
-										header: ({ column }) => (
-											<DataTableColumnHeader column={column} title="Event" />
-										)
-									},
-									{
-										accessorKey: 'organizer',
-										header: ({ column }) => (
-											<DataTableColumnHeader
-												column={column}
-												title="Organisation"
-											/>
+										if (!entry) {
+											return label
+										}
+										return (
+											<AuditDetailsModal
+												entry={entry}
+												organizerName={row.original.organizer}
+											>
+												<button
+													type="button"
+													className="rounded-sm text-left underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+												>
+													{label}
+												</button>
+											</AuditDetailsModal>
 										)
 									}
-								]}
-								data={auditRows}
-								enablePagination
-								initialPageSize={10}
-							/>
-						</CardContent>
-					</Card>
-				</div>
+								},
+								{
+									accessorKey: 'type',
+									header: ({ column }) => (
+										<DataTableColumnHeader column={column} title="Typ" />
+									),
+									cell: ({ row }) => formatAuditType(row.original.type)
+								},
+								{
+									accessorKey: 'eventTitle',
+									header: ({ column }) => (
+										<DataTableColumnHeader column={column} title="Event" />
+									)
+								},
+								{
+									accessorKey: 'organizer',
+									header: ({ column }) => (
+										<DataTableColumnHeader
+											column={column}
+											title="Organisation"
+										/>
+									)
+								}
+							]}
+							data={auditRows}
+							enablePagination
+							initialPageSize={10}
+						/>
+					</div>
+				</section>
 			</div>
 		</div>
 	)
