@@ -27,6 +27,11 @@ import {
 	SelectTrigger,
 	SelectValue
 } from '@/components/ui/select'
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger
+} from '@/components/ui/tooltip'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
 
@@ -37,6 +42,8 @@ export type DateTimeFieldProps = {
 	required?: boolean
 	description?: string
 	className?: string
+	disabled?: boolean
+	disabledHint?: string
 }
 
 const HOURS = Array.from({ length: 24 }, (_, index) =>
@@ -62,10 +69,12 @@ function parseTimeParts(timeString: string) {
 
 function TimeSelects({
 	value,
-	onValueChange
+	onValueChange,
+	disabled = false
 }: {
 	value: string
 	onValueChange: (value: string | null) => void
+	disabled?: boolean
 }) {
 	const { hour, minute } = parseTimeParts(value || '00:00')
 
@@ -73,6 +82,7 @@ function TimeSelects({
 		<div className="grid min-w-0 grid-cols-2 gap-2">
 			<Select
 				value={hour}
+				disabled={disabled}
 				onValueChange={(nextHour) => {
 					onValueChange(`${nextHour}:${minute}`)
 				}}
@@ -93,6 +103,7 @@ function TimeSelects({
 			</Select>
 			<Select
 				value={minute}
+				disabled={disabled}
 				onValueChange={(nextMinute) => {
 					onValueChange(`${hour}:${nextMinute}`)
 				}}
@@ -121,7 +132,9 @@ export default function DateTimeField({
 	onValueChange,
 	required = false,
 	description,
-	className
+	className,
+	disabled = false,
+	disabledHint
 }: DateTimeFieldProps) {
 	const isMobile = useIsMobile()
 	const [open, setOpen] = useState(false)
@@ -137,6 +150,12 @@ export default function DateTimeField({
 		}
 	}, [value])
 
+	useEffect(() => {
+		if (disabled) {
+			setOpen(false)
+		}
+	}, [disabled])
+
 	const dateButtonLabel = useMemo(() => {
 		return localDate
 			? format(localDate, 'PPP', { locale: de })
@@ -144,6 +163,9 @@ export default function DateTimeField({
 	}, [localDate])
 
 	const handleDateSelect = (date?: Date) => {
+		if (disabled) {
+			return
+		}
 		setLocalDate(date)
 		setOpen(false)
 		if (!date) {
@@ -161,6 +183,9 @@ export default function DateTimeField({
 	}
 
 	const handleTimeChange = (newTime: string | null) => {
+		if (disabled) {
+			return
+		}
 		const timeStr = newTime || ''
 		setTimeString(timeStr)
 		if (!localDate || !timeStr) {
@@ -176,6 +201,7 @@ export default function DateTimeField({
 		<Button
 			type="button"
 			variant="outline"
+			disabled={disabled}
 			className={cn(
 				'w-full min-w-0 justify-between',
 				!localDate && 'text-muted-foreground'
@@ -195,6 +221,57 @@ export default function DateTimeField({
 		/>
 	)
 
+	const controls = (
+		<div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+			{isMobile ? (
+				<Drawer
+					open={open}
+					onOpenChange={(next) => {
+						if (disabled) {
+							return
+						}
+						setOpen(next)
+					}}
+				>
+					<DrawerTrigger asChild>{dateButton}</DrawerTrigger>
+					<DrawerContent className="z-[60]">
+						<DrawerHeader>
+							<DrawerTitle>{label}</DrawerTitle>
+						</DrawerHeader>
+						<div className="flex justify-center px-4 pb-6">{calendar}</div>
+					</DrawerContent>
+				</Drawer>
+			) : (
+				<Popover
+					open={open}
+					onOpenChange={(next) => {
+						if (disabled) {
+							return
+						}
+						setOpen(next)
+					}}
+					modal
+				>
+					<PopoverTrigger asChild>{dateButton}</PopoverTrigger>
+					<PopoverContent
+						className="z-[60] w-auto p-0"
+						align="start"
+						collisionPadding={16}
+					>
+						{calendar}
+					</PopoverContent>
+				</Popover>
+			)}
+			<div className="min-w-0">
+				<TimeSelects
+					value={timeString}
+					onValueChange={handleTimeChange}
+					disabled={disabled}
+				/>
+			</div>
+		</div>
+	)
+
 	return (
 		<div className={cn('min-w-0 space-y-2', className)}>
 			<div className="flex items-center justify-between">
@@ -202,33 +279,16 @@ export default function DateTimeField({
 					{label} {required ? <RequiredLabel /> : null}
 				</FormLabel>
 			</div>
-			<div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
-				{isMobile ? (
-					<Drawer open={open} onOpenChange={setOpen}>
-						<DrawerTrigger asChild>{dateButton}</DrawerTrigger>
-						<DrawerContent className="z-[60]">
-							<DrawerHeader>
-								<DrawerTitle>{label}</DrawerTitle>
-							</DrawerHeader>
-							<div className="flex justify-center px-4 pb-6">{calendar}</div>
-						</DrawerContent>
-					</Drawer>
-				) : (
-					<Popover open={open} onOpenChange={setOpen} modal>
-						<PopoverTrigger asChild>{dateButton}</PopoverTrigger>
-						<PopoverContent
-							className="z-[60] w-auto p-0"
-							align="start"
-							collisionPadding={16}
-						>
-							{calendar}
-						</PopoverContent>
-					</Popover>
-				)}
-				<div className="min-w-0">
-					<TimeSelects value={timeString} onValueChange={handleTimeChange} />
-				</div>
-			</div>
+			{disabled && disabledHint ? (
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<div className="min-w-0">{controls}</div>
+					</TooltipTrigger>
+					<TooltipContent side="top">{disabledHint}</TooltipContent>
+				</Tooltip>
+			) : (
+				controls
+			)}
 			{description ? <FormDescription>{description}</FormDescription> : null}
 		</div>
 	)

@@ -627,6 +627,7 @@ export function EventsDashboard({
 								organizerId === selectedEvent.organizer_id)))
 				}
 				onDelete={onDelete}
+				onSaved={setSelectedEvent}
 			/>
 		</EventsPageShell>
 	)

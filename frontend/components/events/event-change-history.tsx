@@ -104,7 +104,7 @@ function EntryBody({
 					{single ? (
 						<p className="text-xs leading-relaxed text-muted-foreground">
 							<span className="text-foreground/80">{single.from}</span>
-							<span className="mx-1.5 text-border">→</span>
+							<span className="mx-1.5 text-muted-foreground">→</span>
 							<span className="text-foreground/80">{single.to}</span>
 						</p>
 					) : null}
@@ -136,7 +136,7 @@ function EntryBody({
 								</p>
 								<p className="text-xs leading-relaxed text-muted-foreground">
 									<span className="text-foreground/80">{change.from}</span>
-									<span className="mx-1.5 text-border">→</span>
+									<span className="mx-1.5 text-muted-foreground">→</span>
 									<span className="text-foreground/80">{change.to}</span>
 								</p>
 							</li>
@@ -178,6 +178,7 @@ export function EventChangeHistory({
 	const { data: entries = [], isLoading } = useQuery<AuditLogEntry[]>({
 		queryKey: ['audit-logs', 'event', eventId],
 		enabled,
+		refetchOnMount: 'always',
 		queryFn: async () => {
 			const response = await listAuditLogs({
 				query: { event_id: eventId, limit: 50 },

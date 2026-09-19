@@ -486,6 +486,7 @@ export default function Dashboard() {
 								organizerId === selectedEvent.organizer_id)))
 				}
 				onDelete={onDelete}
+				onSaved={setSelectedEvent}
 			/>
 		</div>
 	)

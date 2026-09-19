@@ -120,6 +120,19 @@ export function EventForm({
 	const [channelsOpen, setChannelsOpen] = useState(false)
 	const endAutoFilledRef = useRef(false)
 
+	const isEditingExisting = Boolean(event) && initialValues === undefined
+	const now = Date.now()
+	const startLocked = Boolean(
+		isEditingExisting &&
+			event?.start_date_time &&
+			new Date(event.start_date_time).getTime() <= now
+	)
+	const endLocked = Boolean(
+		isEditingExisting &&
+			event?.end_date_time &&
+			new Date(event.end_date_time).getTime() < now
+	)
+
 	const form = useForm<EventFormValues>({
 		resolver: zodResolver(eventSchema),
 		defaultValues: {
@@ -201,6 +214,9 @@ export function EventForm({
 	)
 
 	const handleStartDateChange = (value?: Date) => {
+		if (startLocked) {
+			return
+		}
 		setStartDate(value)
 		if (value) {
 			form.clearErrors('start_date_time')
@@ -220,6 +236,9 @@ export function EventForm({
 	}
 
 	const handleEndDateChange = (value?: Date) => {
+		if (endLocked) {
+			return
+		}
 		endAutoFilledRef.current = false
 		setEndDate(value)
 		if (value) {
@@ -319,14 +338,14 @@ export function EventForm({
 		const startDateTime = startDate || values.start_date_time
 		const endDateTime = endDate || values.end_date_time
 
-		if (!startDateTime || !endDateTime) {
-			if (!startDateTime) {
+		if ((!startLocked && !startDateTime) || (!endLocked && !endDateTime)) {
+			if (!startLocked && !startDateTime) {
 				form.setError('start_date_time', {
 					type: 'manual',
 					message: 'Startdatum ist erforderlich'
 				})
 			}
-			if (!endDateTime) {
+			if (!endLocked && !endDateTime) {
 				form.setError('end_date_time', {
 					type: 'manual',
 					message: 'Enddatum ist erforderlich'
@@ -337,21 +356,30 @@ export function EventForm({
 
 		form.clearErrors(['start_date_time', 'end_date_time'])
 
-		const payload = {
-			...values,
-			start_date_time: (startDateTime instanceof Date
-				? startDateTime
-				: new Date(startDateTime)
-			).toISOString(),
-			end_date_time: (endDateTime instanceof Date
-				? endDateTime
-				: new Date(endDateTime)
-			).toISOString(),
+		const payload: CreateEventRequest | UpdateEventRequest = {
+			title_de: values.title_de,
+			title_en: values.title_en,
+			description_de: values.description_de || undefined,
+			description_en: values.description_en || undefined,
 			event_url: values.event_url || undefined,
 			location: values.location || undefined,
-			description_de: values.description_de || undefined,
-			description_en: values.description_en || undefined
-		} as CreateEventRequest | UpdateEventRequest
+			publish_app: values.publish_app,
+			publish_newsletter: values.publish_newsletter,
+			publish_in_ical: values.publish_in_ical,
+			publish_web: values.publish_web,
+			host_only: values.host_only
+		}
+
+		if (!startLocked && startDateTime) {
+			payload.start_date_time = (
+				startDateTime instanceof Date ? startDateTime : new Date(startDateTime)
+			).toISOString()
+		}
+		if (!endLocked && endDateTime) {
+			payload.end_date_time = (
+				endDateTime instanceof Date ? endDateTime : new Date(endDateTime)
+			).toISOString()
+		}
 
 		await onSave(payload)
 		form.reset({
@@ -415,6 +443,10 @@ export function EventForm({
 								required
 								value={startDate}
 								onValueChange={handleStartDateChange}
+								disabled={startLocked}
+								disabledHint={
+									endLocked ? 'Vergangenes Event' : 'Event läuft bereits'
+								}
 							/>
 							{form.formState.errors.start_date_time && (
 								<p className="text-sm text-destructive">
@@ -428,6 +460,8 @@ export function EventForm({
 								required
 								value={endDate}
 								onValueChange={handleEndDateChange}
+								disabled={endLocked}
+								disabledHint="Vergangenes Event"
 							/>
 							{form.formState.errors.end_date_time && (
 								<p className="text-sm text-destructive">
@@ -436,11 +470,13 @@ export function EventForm({
 							)}
 						</div>
 					</div>
-					<ScheduleOverlapHint
-						start={startDate}
-						end={endDate}
-						excludeEventId={event?.id}
-					/>
+					{endLocked ? null : (
+						<ScheduleOverlapHint
+							start={startDate}
+							end={endDate}
+							excludeEventId={event?.id}
+						/>
+					)}
 				</div>
 
 				<div>

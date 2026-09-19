@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/responsive-sheet'
 import { formatInCampusTimeZone } from '@/lib/date-time'
 import { deriveEventVisibilityMode } from '@/lib/event-visibility'
+import { patchEventInQueryCaches } from '@/lib/patch-event-query-caches'
 import { publicEventShareUrl } from '@/lib/public-event-url'
 import { cn } from '@/lib/utils'
 
@@ -46,6 +47,7 @@ type EventDetailSheetProps = {
 	readonly isOwnOrganizer: boolean
 	readonly canManage: boolean
 	readonly onDelete: (event: ApiEvent) => void | Promise<void>
+	readonly onSaved?: (event: ApiEvent) => void
 }
 
 function DetailRow({
@@ -74,7 +76,8 @@ export function EventDetailSheet({
 	organizerName,
 	isOwnOrganizer,
 	canManage,
-	onDelete
+	onDelete,
+	onSaved
 }: EventDetailSheetProps) {
 	const qc = useQueryClient()
 	const reducedMotion = useReducedMotion()
@@ -129,33 +132,43 @@ export function EventDetailSheet({
 	const saveMutation = useMutation({
 		mutationFn: async (values: CreateEventRequest | UpdateEventRequest) => {
 			if (isCreate || isDuplicate) {
-				await createEvent({
+				const response = await createEvent({
 					body: values as CreateEventRequest,
 					throwOnError: true
 				})
-				return
+				return { kind: 'create' as const, event: response.data ?? null }
 			}
 			if (!event) {
-				return
+				return { kind: 'update' as const, event: null }
 			}
-			await updateEvent({
+			const response = await updateEvent({
 				path: { id: event.id },
 				body: values as UpdateEventRequest,
 				throwOnError: true
 			})
+			return { kind: 'update' as const, event: response.data ?? null }
 		},
-		onSuccess: async () => {
+		onSuccess: async (result) => {
+			if (result.event) {
+				patchEventInQueryCaches(qc, result.event)
+				onSaved?.(result.event)
+			}
+
+			const eventId = result.event?.id ?? event?.id
+
 			await qc.invalidateQueries({
 				predicate: (q) => q.queryKey[0] === 'events'
 			})
-			if (event) {
-				await qc.invalidateQueries({ queryKey: ['event', event.id] })
-				await qc.invalidateQueries({
-					queryKey: ['audit-logs', 'event', event.id]
+			if (eventId !== undefined) {
+				await qc.invalidateQueries({ queryKey: ['event', eventId] })
+				await qc.refetchQueries({
+					queryKey: ['audit-logs', 'event', eventId],
+					type: 'all'
 				})
 			}
+			await qc.invalidateQueries({ queryKey: ['public-events'] })
 
-			const celebrate = isCreate || isDuplicate
+			const celebrate = result.kind === 'create'
 			if (celebrate && !reducedMotion) {
 				setShowSuccess(true)
 				await new Promise((resolve) => window.setTimeout(resolve, 900))
@@ -163,14 +176,16 @@ export function EventDetailSheet({
 			}
 
 			toast.success(
-				isDuplicate
-					? 'Event erfolgreich dupliziert'
-					: isCreate
-						? 'Event erfolgreich erstellt'
-						: 'Event erfolgreich aktualisiert'
+				result.kind === 'create'
+					? isDuplicate
+						? 'Event erfolgreich dupliziert'
+						: 'Event erfolgreich erstellt'
+					: 'Event erfolgreich aktualisiert'
 			)
 			onModeChange('view')
-			onOpenChange(false)
+			if (result.kind === 'create') {
+				onOpenChange(false)
+			}
 		},
 		onError: () => {
 			toast.error(

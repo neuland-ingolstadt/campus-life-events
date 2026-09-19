@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { me } from '@/lib/auth'
 import { scheduleOptimisticEventDelete } from '@/lib/optimistic-event-delete'
+import { patchEventInQueryCaches } from '@/lib/patch-event-query-caches'
 
 export default function EditEventPage() {
 	const router = useRouter()
@@ -70,11 +71,14 @@ export default function EditEventPage() {
 	async function onSave(values: UpdateEventRequest) {
 		setSaving(true)
 		try {
-			await updateEvent({
+			const response = await updateEvent({
 				path: { id },
 				body: values,
 				throwOnError: true
 			})
+			if (response.data) {
+				patchEventInQueryCaches(qc, response.data)
+			}
 			await qc.invalidateQueries({ queryKey: ['events'] })
 			await qc.invalidateQueries({ queryKey: ['event', id] })
 			toast.success('Event erfolgreich aktualisiert')
