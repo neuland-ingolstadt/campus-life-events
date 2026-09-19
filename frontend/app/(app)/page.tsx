@@ -20,6 +20,7 @@ import type {
 	Event as ApiEvent,
 	Organizer as ApiOrganizer
 } from '@/client/types.gen'
+import { ActivityHeatmap } from '@/components/activity-heatmap'
 import { DashboardMcpTeaser } from '@/components/dashboard-mcp-teaser'
 import {
 	EventDetailSheet,
@@ -451,6 +452,8 @@ export default function Dashboard() {
 						</section>
 					</>
 				)}
+
+				<ActivityHeatmap />
 			</div>
 
 			<EventDetailSheet
