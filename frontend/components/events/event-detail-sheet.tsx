@@ -15,6 +15,7 @@ import type {
 } from '@/client/types.gen'
 import { PartyPopper } from '@/components/animate-ui/icons/party-popper'
 import { EventForm } from '@/components/event-form'
+import { EventChangeHistory } from '@/components/events/event-change-history'
 import {
 	EventOrganizerBadge,
 	EventVisibilityIndicator
@@ -149,6 +150,9 @@ export function EventDetailSheet({
 			})
 			if (event) {
 				await qc.invalidateQueries({ queryKey: ['event', event.id] })
+				await qc.invalidateQueries({
+					queryKey: ['audit-logs', 'event', event.id]
+				})
 			}
 
 			const celebrate = isCreate || isDuplicate
@@ -342,54 +346,62 @@ export function EventDetailSheet({
 												isLoading={isPending}
 											/>
 										) : event ? (
-											<dl className="space-y-4">
-												<DetailRow label="Start">
-													<span className="tabular-nums">
-														{formatInCampusTimeZone(
-															new Date(event.start_date_time),
-															'dd.MM.yyyy HH:mm'
-														)}
-													</span>
-												</DetailRow>
-												<DetailRow label="Ende">
-													<span className="tabular-nums">
-														{formatInCampusTimeZone(
-															new Date(event.end_date_time),
-															'dd.MM.yyyy HH:mm'
-														)}
-													</span>
-												</DetailRow>
-												{event.location ? (
-													<DetailRow label="Ort">{event.location}</DetailRow>
-												) : null}
-												{event.event_url ? (
-													<DetailRow label="Link">
-														<a
-															href={event.event_url}
-															target="_blank"
-															rel="noopener noreferrer"
-															className="inline-flex items-center gap-1 text-primary underline-offset-2 hover:underline break-all"
-														>
-															{event.event_url}
-															<ExternalLink className="size-3.5 shrink-0" />
-														</a>
+											<>
+												<dl className="space-y-4">
+													<DetailRow label="Start">
+														<span className="tabular-nums">
+															{formatInCampusTimeZone(
+																new Date(event.start_date_time),
+																'dd.MM.yyyy HH:mm'
+															)}
+														</span>
 													</DetailRow>
-												) : null}
-												{event.description_de ? (
-													<DetailRow label="Beschreibung">
-														<p className="whitespace-pre-wrap text-sm leading-relaxed">
-															{event.description_de}
-														</p>
+													<DetailRow label="Ende">
+														<span className="tabular-nums">
+															{formatInCampusTimeZone(
+																new Date(event.end_date_time),
+																'dd.MM.yyyy HH:mm'
+															)}
+														</span>
 													</DetailRow>
+													{event.location ? (
+														<DetailRow label="Ort">{event.location}</DetailRow>
+													) : null}
+													{event.event_url ? (
+														<DetailRow label="Link">
+															<a
+																href={event.event_url}
+																target="_blank"
+																rel="noopener noreferrer"
+																className="inline-flex items-center gap-1 text-primary underline-offset-2 hover:underline break-all"
+															>
+																{event.event_url}
+																<ExternalLink className="size-3.5 shrink-0" />
+															</a>
+														</DetailRow>
+													) : null}
+													{event.description_de ? (
+														<DetailRow label="Beschreibung">
+															<p className="whitespace-pre-wrap text-sm leading-relaxed">
+																{event.description_de}
+															</p>
+														</DetailRow>
+													) : null}
+													{event.description_en ? (
+														<DetailRow label="Beschreibung (EN)">
+															<p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+																{event.description_en}
+															</p>
+														</DetailRow>
+													) : null}
+												</dl>
+												{canManage ? (
+													<EventChangeHistory
+														eventId={event.id}
+														enabled={open && !isFormMode}
+													/>
 												) : null}
-												{event.description_en ? (
-													<DetailRow label="Beschreibung (EN)">
-														<p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
-															{event.description_en}
-														</p>
-													</DetailRow>
-												) : null}
-											</dl>
+											</>
 										) : null}
 									</motion.div>
 								</AnimatePresence>
