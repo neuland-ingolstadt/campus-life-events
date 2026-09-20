@@ -1,7 +1,7 @@
 'use client'
 
-import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
+import { formatInTimeZone, fromZonedTime, toZonedTime } from 'date-fns-tz'
 import { Calendar as CalendarIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -33,6 +33,7 @@ import {
 	TooltipTrigger
 } from '@/components/ui/tooltip'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { CAMPUS_TIME_ZONE } from '@/lib/date-time'
 import { cn } from '@/lib/utils'
 
 export type DateTimeFieldProps = {
@@ -53,6 +54,10 @@ const MINUTES = Array.from({ length: 60 }, (_, index) =>
 	String(index).padStart(2, '0')
 )
 
+function timeStringFromDate(date: Date) {
+	return formatInTimeZone(date, CAMPUS_TIME_ZONE, 'HH:mm')
+}
+
 function parseTimeParts(timeString: string) {
 	const [hours = '00', minutes = '00'] = timeString.split(':')
 	const hour = Number(hours)
@@ -67,21 +72,39 @@ function parseTimeParts(timeString: string) {
 	}
 }
 
+function combineCampusDateAndTime(date: Date, timeString: string) {
+	const { hour, minute } = parseTimeParts(timeString)
+	const zoned = toZonedTime(date, CAMPUS_TIME_ZONE)
+	const year = zoned.getFullYear()
+	const month = String(zoned.getMonth() + 1).padStart(2, '0')
+	const day = String(zoned.getDate()).padStart(2, '0')
+	return fromZonedTime(
+		`${year}-${month}-${day}T${hour}:${minute}:00`,
+		CAMPUS_TIME_ZONE
+	)
+}
+
+function campusCalendarDate(date: Date) {
+	const zoned = toZonedTime(date, CAMPUS_TIME_ZONE)
+	return new Date(zoned.getFullYear(), zoned.getMonth(), zoned.getDate())
+}
+
 function TimeSelects({
 	value,
 	onValueChange,
 	disabled = false
 }: {
 	value: string
-	onValueChange: (value: string | null) => void
+	onValueChange: (value: string) => void
 	disabled?: boolean
 }) {
-	const { hour, minute } = parseTimeParts(value || '00:00')
+	const hasTime = value.length > 0
+	const { hour, minute } = parseTimeParts(hasTime ? value : '00:00')
 
 	return (
 		<div className="grid min-w-0 grid-cols-2 gap-2">
 			<Select
-				value={hour}
+				value={hasTime ? hour : undefined}
 				disabled={disabled}
 				onValueChange={(nextHour) => {
 					onValueChange(`${nextHour}:${minute}`)
@@ -90,10 +113,7 @@ function TimeSelects({
 				<SelectTrigger className="w-full min-w-0">
 					<SelectValue placeholder="Std" />
 				</SelectTrigger>
-				<SelectContent
-					position="popper"
-					className="z-[70] max-h-60"
-				>
+				<SelectContent position="popper" className="z-[70] max-h-60">
 					{HOURS.map((option) => (
 						<SelectItem key={option} value={option}>
 							{option}
@@ -102,7 +122,7 @@ function TimeSelects({
 				</SelectContent>
 			</Select>
 			<Select
-				value={minute}
+				value={hasTime ? minute : undefined}
 				disabled={disabled}
 				onValueChange={(nextMinute) => {
 					onValueChange(`${hour}:${nextMinute}`)
@@ -111,10 +131,7 @@ function TimeSelects({
 				<SelectTrigger className="w-full min-w-0">
 					<SelectValue placeholder="Min" />
 				</SelectTrigger>
-				<SelectContent
-					position="popper"
-					className="z-[70] max-h-60"
-				>
+				<SelectContent position="popper" className="z-[70] max-h-60">
 					{MINUTES.map((option) => (
 						<SelectItem key={option} value={option}>
 							{option}
@@ -138,17 +155,10 @@ export default function DateTimeField({
 }: DateTimeFieldProps) {
 	const isMobile = useIsMobile()
 	const [open, setOpen] = useState(false)
-	const [localDate, setLocalDate] = useState<Date | undefined>(value)
-	const [timeString, setTimeString] = useState<string>('')
-
-	useEffect(() => {
-		setLocalDate(value)
-		if (value) {
-			setTimeString(format(value, 'HH:mm'))
-		} else {
-			setTimeString('')
-		}
-	}, [value])
+	const [draftTime, setDraftTime] = useState('')
+	const valueTime = value ? timeStringFromDate(value) : ''
+	const timeString = valueTime || draftTime
+	const selectedDay = value ? campusCalendarDate(value) : undefined
 
 	useEffect(() => {
 		if (disabled) {
@@ -156,45 +166,42 @@ export default function DateTimeField({
 		}
 	}, [disabled])
 
+	useEffect(() => {
+		if (value) {
+			setDraftTime('')
+		}
+	}, [value])
+
 	const dateButtonLabel = useMemo(() => {
-		return localDate
-			? format(localDate, 'PPP', { locale: de })
+		return value
+			? formatInTimeZone(value, CAMPUS_TIME_ZONE, 'PPP', { locale: de })
 			: 'Datum auswählen'
-	}, [localDate])
+	}, [value])
 
 	const handleDateSelect = (date?: Date) => {
 		if (disabled) {
 			return
 		}
-		setLocalDate(date)
 		setOpen(false)
 		if (!date) {
 			onValueChange(undefined)
 			return
 		}
-		if (timeString) {
-			const [hours, minutes] = timeString.split(':').map(Number)
-			const combined = new Date(date)
-			combined.setHours(hours || 0, minutes || 0, 0, 0)
-			onValueChange(combined)
-			return
-		}
-		onValueChange(new Date(date))
+		const time = timeString || '12:00'
+		onValueChange(combineCampusDateAndTime(date, time))
+		setDraftTime('')
 	}
 
-	const handleTimeChange = (newTime: string | null) => {
+	const handleTimeChange = (newTime: string) => {
 		if (disabled) {
 			return
 		}
-		const timeStr = newTime || ''
-		setTimeString(timeStr)
-		if (!localDate || !timeStr) {
+		if (!value) {
+			setDraftTime(newTime)
 			return
 		}
-		const [hours, minutes] = timeStr.split(':').map(Number)
-		const combined = new Date(localDate)
-		combined.setHours(hours || 0, minutes || 0, 0, 0)
-		onValueChange(combined)
+		setDraftTime('')
+		onValueChange(combineCampusDateAndTime(value, newTime))
 	}
 
 	const dateButton = (
@@ -204,7 +211,7 @@ export default function DateTimeField({
 			disabled={disabled}
 			className={cn(
 				'w-full min-w-0 justify-between',
-				!localDate && 'text-muted-foreground'
+				!value && 'text-muted-foreground'
 			)}
 		>
 			<span className="truncate">{dateButtonLabel}</span>
@@ -215,60 +222,67 @@ export default function DateTimeField({
 	const calendar = (
 		<Calendar
 			mode="single"
-			selected={localDate}
+			selected={selectedDay}
 			onSelect={handleDateSelect}
 			locale={de}
+			timeZone={CAMPUS_TIME_ZONE}
 		/>
+	)
+
+	const timeControls = (
+		<div className="min-w-0">
+			<TimeSelects
+				value={timeString}
+				onValueChange={handleTimeChange}
+				disabled={disabled}
+			/>
+		</div>
+	)
+
+	const dateControls = isMobile ? (
+		<Drawer
+			open={open}
+			onOpenChange={(next) => {
+				if (disabled) {
+					return
+				}
+				setOpen(next)
+			}}
+		>
+			<DrawerTrigger asChild>{dateButton}</DrawerTrigger>
+			<DrawerContent className="z-[60]">
+				<DrawerHeader>
+					<DrawerTitle>{label}</DrawerTitle>
+				</DrawerHeader>
+				<div className="flex justify-center px-4 pb-6">{calendar}</div>
+			</DrawerContent>
+		</Drawer>
+	) : (
+		<Popover
+			open={open}
+			onOpenChange={(next) => {
+				if (disabled) {
+					return
+				}
+				setOpen(next)
+			}}
+			modal
+		>
+			<PopoverTrigger asChild>{dateButton}</PopoverTrigger>
+			<PopoverContent
+				className="z-[60] w-auto p-0"
+				align="start"
+				collisionPadding={16}
+			>
+				{calendar}
+			</PopoverContent>
+		</Popover>
 	)
 
 	const controls = (
 		<div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
-			{isMobile ? (
-				<Drawer
-					open={open}
-					onOpenChange={(next) => {
-						if (disabled) {
-							return
-						}
-						setOpen(next)
-					}}
-				>
-					<DrawerTrigger asChild>{dateButton}</DrawerTrigger>
-					<DrawerContent className="z-[60]">
-						<DrawerHeader>
-							<DrawerTitle>{label}</DrawerTitle>
-						</DrawerHeader>
-						<div className="flex justify-center px-4 pb-6">{calendar}</div>
-					</DrawerContent>
-				</Drawer>
-			) : (
-				<Popover
-					open={open}
-					onOpenChange={(next) => {
-						if (disabled) {
-							return
-						}
-						setOpen(next)
-					}}
-					modal
-				>
-					<PopoverTrigger asChild>{dateButton}</PopoverTrigger>
-					<PopoverContent
-						className="z-[60] w-auto p-0"
-						align="start"
-						collisionPadding={16}
-					>
-						{calendar}
-					</PopoverContent>
-				</Popover>
-			)}
-			<div className="min-w-0">
-				<TimeSelects
-					value={timeString}
-					onValueChange={handleTimeChange}
-					disabled={disabled}
-				/>
-			</div>
+			{dateControls}
+			{timeControls}
 		</div>
 	)
 
