@@ -84,6 +84,7 @@ export function EventDetailSheet({
 	const [saving, setSaving] = useState(false)
 	const [saveArmed, setSaveArmed] = useState(false)
 	const [showSuccess, setShowSuccess] = useState(false)
+	const [formDirty, setFormDirty] = useState(false)
 	const formModeFocusRef = useRef<HTMLDivElement>(null)
 
 	const isCreate = mode === 'create'
@@ -91,11 +92,21 @@ export function EventDetailSheet({
 	const isEdit = mode === 'edit' && canManage && event !== null
 	const isFormMode = isCreate || isEdit || isDuplicate
 
+	const handleDirtyChange = useCallback((dirty: boolean) => {
+		setFormDirty(dirty)
+	}, [])
+
 	useEffect(() => {
 		if (!open) {
 			setShowSuccess(false)
 		}
 	}, [open])
+
+	useEffect(() => {
+		if (!isFormMode) {
+			setFormDirty(false)
+		}
+	}, [isFormMode])
 
 	useEffect(() => {
 		if (!open || !isFormMode) {
@@ -359,6 +370,7 @@ export function EventDetailSheet({
 												initialValues={duplicateInitialValues}
 												onSave={onSave}
 												isLoading={isPending}
+												onDirtyChange={handleDirtyChange}
 											/>
 										) : event ? (
 											<>
@@ -522,7 +534,12 @@ export function EventDetailSheet({
 								</Button>
 								<Button
 									type="button"
-									disabled={!saveArmed || isPending || showSuccess}
+									disabled={
+										!saveArmed ||
+										isPending ||
+										showSuccess ||
+										(isEdit && !formDirty)
+									}
 									onClick={() => {
 										const form = document.getElementById('event-sheet-form')
 										if (form instanceof HTMLFormElement) {
