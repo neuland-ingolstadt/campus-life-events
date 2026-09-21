@@ -104,7 +104,8 @@ export function EventForm({
 	isLoading = false,
 	initialValues,
 	formId,
-	hideSubmitButton = false
+	hideSubmitButton = false,
+	onDirtyChange
 }: {
 	event?: Event | null
 	onSave: (
@@ -114,6 +115,7 @@ export function EventForm({
 	initialValues?: EventFormOverrides
 	formId?: string
 	hideSubmitButton?: boolean
+	onDirtyChange?: (dirty: boolean) => void
 }) {
 	const [startDate, setStartDate] = useState<Date>()
 	const [endDate, setEndDate] = useState<Date>()
@@ -324,17 +326,25 @@ export function EventForm({
 
 	useEffect(() => {
 		if (startDate) {
-			form.setValue('start_date_time', startDate)
+			form.setValue('start_date_time', startDate, { shouldDirty: false })
 		}
 		if (endDate) {
-			form.setValue('end_date_time', endDate)
+			form.setValue('end_date_time', endDate, { shouldDirty: false })
 		}
 	}, [startDate, endDate, form])
 
 	const { isDirty } = form.formState
 	useUnsavedChangesWarning(isDirty)
 
+	useEffect(() => {
+		onDirtyChange?.(isDirty)
+	}, [isDirty, onDirtyChange])
+
 	const onSubmit = async (values: EventFormValues) => {
+		if (isEditingExisting && !isDirty) {
+			return
+		}
+
 		const startDateTime = startDate || values.start_date_time
 		const endDateTime = endDate || values.end_date_time
 
@@ -766,7 +776,7 @@ export function EventForm({
 					<div className="flex justify-end pt-2">
 						<Button
 							type="submit"
-							disabled={isLoading}
+							disabled={isLoading || (isEditingExisting && !isDirty)}
 							size="lg"
 							className="px-8"
 						>

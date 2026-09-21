@@ -278,6 +278,35 @@ pub(crate) async fn update_event_with_user(
         publish_web.unwrap_or(existing_event.publish_web),
     );
 
+    let next_title_de = title_de.as_ref().unwrap_or(&existing_event.title_de);
+    let next_title_en = title_en.as_ref().unwrap_or(&existing_event.title_en);
+    let next_description_de = description_de
+        .as_deref()
+        .or(existing_event.description_de.as_deref());
+    let next_description_en = description_en
+        .as_deref()
+        .or(existing_event.description_en.as_deref());
+    let next_event_url = event_url.as_deref().or(existing_event.event_url.as_deref());
+    let next_location = location.as_deref().or(existing_event.location.as_deref());
+
+    let content_unchanged = next_title_de == existing_event.title_de.as_str()
+        && next_title_en == existing_event.title_en.as_str()
+        && next_description_de == existing_event.description_de.as_deref()
+        && next_description_en == existing_event.description_en.as_deref()
+        && effective_start == existing_event.start_date_time
+        && effective_end == existing_event.end_date_time
+        && next_event_url == existing_event.event_url.as_deref()
+        && next_location == existing_event.location.as_deref()
+        && effective_host_only == existing_event.host_only
+        && effective_publish_app == existing_event.publish_app
+        && effective_publish_newsletter == existing_event.publish_newsletter
+        && effective_publish_in_ical == existing_event.publish_in_ical
+        && effective_publish_web == existing_event.publish_web;
+
+    if content_unchanged {
+        return Ok(existing_event);
+    }
+
     let mut builder = QueryBuilder::<Postgres>::new("UPDATE events SET updated_at = NOW()");
     if let Some(title_de) = title_de {
         builder.push(", title_de = ").push_bind(title_de);
