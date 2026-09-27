@@ -18,58 +18,105 @@
     {
       "groupName": "frontend major updates",
       "groupSlug": "frontend-major",
-      "matchManagers": ["bun"],
+      "matchManagers": [
+        "bun"
+      ],
       "minimumReleaseAge": "3 days",
-      "matchUpdateTypes": ["major"],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "matchPackageNames": [
         "!@biomejs/biome"
-      ]
+      ],
+      "automerge": true
     },
     {
       "groupName": "frontend minor and patch updates",
       "groupSlug": "frontend-minor-and-patch",
-      "matchManagers": ["bun"],
+      "matchManagers": [
+        "bun"
+      ],
       "minimumReleaseAge": "3 days",
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
       "matchPackageNames": [
         "!@biomejs/biome"
-      ]
+      ],
+      "automerge": true
     },
     {
       "groupName": "Biome",
       "groupSlug": "biome",
-      "matchPackageNames": ["@biomejs/biome"],
-      "minimumReleaseAge": "3 days"
+      "matchPackageNames": [
+        "@biomejs/biome"
+      ],
+      "minimumReleaseAge": "3 days",
+      "automerge": true
     },
     {
       "groupName": "Rust major updates",
       "groupSlug": "rust-major",
-      "matchManagers": ["cargo"],
-      "matchUpdateTypes": ["major"]
+      "matchManagers": [
+        "cargo"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": true
     },
     {
       "groupName": "Rust minor and patch updates",
       "groupSlug": "rust-minor-and-patch",
-      "matchManagers": ["cargo"],
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"]
+      "matchManagers": [
+        "cargo"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "automerge": true
     },
     {
       "groupName": "Rust major updates",
       "groupSlug": "rust-major",
-      "matchManagers": ["cargo"],
-      "matchDatasources": ["crate"],
+      "matchManagers": [
+        "cargo"
+      ],
+      "matchDatasources": [
+        "crate"
+      ],
       "matchCurrentVersion": "< 1.0.0",
-      "matchUpdateTypes": ["minor"]
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "automerge": true
     },
     {
       "groupName": "Docker images",
       "groupSlug": "docker-images",
-      "matchManagers": ["dockerfile", "docker-compose"]
+      "matchManagers": [
+        "dockerfile",
+        "docker-compose"
+      ],
+      "automerge": true
     },
     {
       "groupName": "GitHub Actions",
       "groupSlug": "github-actions",
-      "matchManagers": ["github-actions"]
+      "matchManagers": [
+        "github-actions"
+      ],
+      "automerge": true
     }
-  ]
+  ],
+  "platformAutomerge": false,
+  "automergeType": "pr",
+  "automergeStrategy": "squash",
+  "automerge": true
 }
