@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16@sha256:f1c3376c26f2609ab9f29f71f824103fe2fcd8ee0346485cb6122a4f93df6f94
+    image: postgres:16@sha256:1a6ab3f5345eb6dbe04a1349529caabdb0ab09293a09590fad07b2246bfa4b54
     container_name: cle-postgres
     environment:
       POSTGRES_USER: cle
@@ -12,7 +12,7 @@ services:
       - pgdatae:/var/lib/postgresql/data
     restart: unless-stopped
   redis:
-    image: redis:8-alpine@sha256:bd999b5cfee25fb24b8320a31fddbd69f462df44c8138c66e369582937beebc0
+    image: redis:8-alpine@sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0
     container_name: cle-redis
     ports:
       - "6379:6379"
