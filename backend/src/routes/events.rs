@@ -1163,7 +1163,7 @@ fn build_newsletter_subject(next_week_start: DateTime<Utc>) -> String {
     let local_start = next_week_start.with_timezone(&Berlin);
     let iso = local_start.iso_week();
     format!(
-        "THI Campus Live Events – Newsletter KW {} {}",
+        "THI Campus Life Events – Newsletter KW {} {}",
         iso.week(),
         iso.year()
     )
