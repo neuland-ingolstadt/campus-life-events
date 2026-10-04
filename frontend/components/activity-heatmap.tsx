@@ -78,31 +78,35 @@ function tooltipText(day: HeatmapDay) {
 }
 
 function endOfWeekSunday(date: Date): Date {
-	const result = new Date(date);
-	result.setDate(result.getDate() + ((7 - result.getDay()) % 7));
-	return result;
+	const result = new Date(date)
+	result.setDate(result.getDate() + ((7 - result.getDay()) % 7))
+	return result
 }
 
 function HeatmapGrid({
 	events,
 	isLoading,
 	monthsPast = 12,
-	monthsFuture = 0,
+	monthsFuture = 0
 }: {
 	events: PublicEventResponse[]
 	isLoading: boolean
 	monthsPast?: number
 	monthsFuture?: number
 }) {
-	const now = new Date(new Date().setHours(0, 0, 0, 0));
-	const startDate = new Date(new Date(now).setMonth(now.getMonth() - monthsPast));
-	const endDate = new Date(new Date(now).setMonth(now.getMonth() + monthsFuture));
-	const endSunday = endOfWeekSunday(endDate);
+	const now = new Date(new Date().setHours(0, 0, 0, 0))
+	const startDate = new Date(
+		new Date(now).setMonth(now.getMonth() - monthsPast)
+	)
+	const endDate = new Date(
+		new Date(now).setMonth(now.getMonth() + monthsFuture)
+	)
+	const endSunday = endOfWeekSunday(endDate)
 
 	const model = useMemo(
 		() => buildActivityHeatmap(events, startDate, endSunday),
-		[events],
-	);
+		[events, startDate, endSunday]
+	)
 	const dayLabels = heatmapDayLabels()
 
 	if (isLoading) {
@@ -165,7 +169,8 @@ function HeatmapGrid({
 													className={cn(
 														'size-2.5 rounded-[3px] ring-1 ring-black/5 transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:ring-white/10',
 														!day.inRange && 'opacity-30',
-														day.isToday && 'ring-2 ring-red-700 dark:ring-red-800',
+														day.isToday &&
+															'ring-2 ring-red-700 dark:ring-red-800',
 														cellClass(day.series, day.level)
 													)}
 													aria-label={tooltipText(day)}
@@ -238,7 +243,12 @@ export function ActivityHeatmap() {
 				</p>
 			</div>
 			<div className="rounded-lg border bg-card p-4 sm:p-5">
-				<HeatmapGrid events={events} isLoading={isLoading} monthsPast={12} monthsFuture={3}/>
+				<HeatmapGrid
+					events={events}
+					isLoading={isLoading}
+					monthsPast={12}
+					monthsFuture={3}
+				/>
 			</div>
 		</section>
 	)
