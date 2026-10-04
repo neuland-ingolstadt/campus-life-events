@@ -121,6 +121,24 @@ export function generateNewsletterHTML(
 			.replace(/'/g, '&#039;')
 	}
 
+	const renderMultilineText = (text: string, style: string) => {
+		const paragraphs = text
+			.split('\n')
+			.map((line) => line.trim())
+			.filter((line) => line.length > 0)
+
+		if (paragraphs.length === 0) {
+			return ''
+		}
+
+		return paragraphs
+			.map((paragraph, index) => {
+				const margin = index === paragraphs.length - 1 ? '0' : '0 0 8px 0'
+				return `<p style="margin:${margin};${style}">${escapeHtml(paragraph)}</p>`
+			})
+			.join('')
+	}
+
 	const weekNumber = getWeekNumber(next_week_start)
 	const weekAfterNumber = getWeekNumber(week_after_start)
 
@@ -182,7 +200,14 @@ export function generateNewsletterHTML(
 										</td>
 									</tr>
 								</table>
-								${event.description_de ? `<p style="color:#374151;line-height:1.6;margin:15px 0 0 0;">${escapeHtml(event.description_de)}</p>` : ''}
+								${
+									event.description_de
+										? `<div style="margin:15px 0 0 0;">${renderMultilineText(
+												event.description_de,
+												'color:#374151;line-height:1.6;'
+											)}</div>`
+										: ''
+								}
 								${
 									event.event_url
 										? `
