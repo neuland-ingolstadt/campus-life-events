@@ -77,14 +77,36 @@ function tooltipText(day: HeatmapDay) {
 	return `${parts.join(', ')} · ${dateLabel}`
 }
 
+function endOfWeekSunday(date: Date): Date {
+	const result = new Date(date)
+	result.setDate(result.getDate() + ((7 - result.getDay()) % 7))
+	return result
+}
+
 function HeatmapGrid({
 	events,
-	isLoading
+	isLoading,
+	monthsPast = 12,
+	monthsFuture = 0
 }: {
 	events: PublicEventResponse[]
 	isLoading: boolean
+	monthsPast?: number
+	monthsFuture?: number
 }) {
-	const model = useMemo(() => buildActivityHeatmap(events), [events])
+	const now = new Date(new Date().setHours(0, 0, 0, 0))
+	const startDate = new Date(
+		new Date(now).setMonth(now.getMonth() - monthsPast)
+	)
+	const endDate = new Date(
+		new Date(now).setMonth(now.getMonth() + monthsFuture)
+	)
+	const endSunday = endOfWeekSunday(endDate)
+
+	const model = useMemo(
+		() => buildActivityHeatmap(events, startDate, endSunday),
+		[events, startDate, endSunday]
+	)
 	const dayLabels = heatmapDayLabels()
 
 	if (isLoading) {
@@ -147,6 +169,8 @@ function HeatmapGrid({
 													className={cn(
 														'size-2.5 rounded-[3px] ring-1 ring-black/5 transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:ring-white/10',
 														!day.inRange && 'opacity-30',
+														day.isToday &&
+															'ring-2 ring-red-700 dark:ring-red-800',
 														cellClass(day.series, day.level)
 													)}
 													aria-label={tooltipText(day)}
@@ -215,11 +239,16 @@ export function ActivityHeatmap() {
 			<div>
 				<h3 className="text-lg font-semibold">Campus-Aktivität</h3>
 				<p className="text-sm text-muted-foreground">
-					Öffentliche Events der letzten 12 Monate
+					Öffentliche Events der letzten 12 und nächsten 3 Monate
 				</p>
 			</div>
 			<div className="rounded-lg border bg-card p-4 sm:p-5">
-				<HeatmapGrid events={events} isLoading={isLoading} />
+				<HeatmapGrid
+					events={events}
+					isLoading={isLoading}
+					monthsPast={12}
+					monthsFuture={3}
+				/>
 			</div>
 		</section>
 	)

@@ -9,6 +9,7 @@ export type HeatmapSeries = 'club' | 'thi' | 'mixed' | 'empty'
 export type HeatmapDay = {
 	dateKey: string
 	date: Date
+	isToday: boolean
 	clubCount: number
 	thiCount: number
 	total: number
@@ -67,16 +68,33 @@ function kindBucket(kind: OrganizerKind): 'club' | 'thi' {
 	return kind === 'THI_DEPARTMENT' ? 'thi' : 'club'
 }
 
+function isToday(date: Date): boolean {
+	const today = new Date()
+	return (
+		date.getFullYear() === today.getFullYear() &&
+		date.getMonth() === today.getMonth() &&
+		date.getDate() === today.getDate()
+	)
+}
+
 export function buildActivityHeatmap(
 	events: PublicEventResponse[],
-	now = new Date(),
-	weekCount = 53
+	startDate = new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
+	endDate = new Date()
 ): ActivityHeatmapModel {
-	const endDate = campusNoon(now)
-	const endDateKey = toCampusDateKey(endDate)
-	const endWeekStart = startOfCampusWeek(endDate)
+	const startDateNoon = campusNoon(startDate)
+	const startDateKey = toCampusDateKey(startDateNoon)
+
+	const endDateNoon = campusNoon(endDate)
+	const endDateKey = toCampusDateKey(endDateNoon)
+
+	const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000
+	const weekCount = Math.ceil(
+		(endDateNoon.getTime() - startDateNoon.getTime()) / MS_PER_WEEK
+	)
+
+	const endWeekStart = startOfCampusWeek(endDateNoon)
 	const startWeekStart = addDays(endWeekStart, -(weekCount - 1) * 7)
-	const startDateKey = toCampusDateKey(startWeekStart)
 
 	const counts = new Map<string, { club: number; thi: number }>()
 
@@ -111,6 +129,7 @@ export function buildActivityHeatmap(
 			days.push({
 				dateKey,
 				date,
+				isToday: isToday(date),
 				clubCount: inRange ? bucket.club : 0,
 				thiCount: inRange ? bucket.thi : 0,
 				total,
