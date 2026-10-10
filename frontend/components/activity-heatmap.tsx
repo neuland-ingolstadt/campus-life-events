@@ -158,7 +158,7 @@ function HeatmapGrid({
 					<p className="text-xs font-medium">{data.clubEventText}</p>
 					{data.clubEvents && (
 						<ul className="space-y-0.5">
-							{data.clubEvents.map((part, i) => (
+							{data.clubEvents.map((part) => (
 								<li key={part} className="text-xs text-muted-foreground">
 									{part}
 								</li>
