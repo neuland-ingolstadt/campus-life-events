@@ -21,6 +21,14 @@ import {
 import { CAMPUS_TIME_ZONE } from '@/lib/date-time'
 import { cn } from '@/lib/utils'
 
+interface TooltipText {
+	dateLable?: string
+	clubEventText?: string
+	clubEvents?: string[]
+	thiEventText?: string
+	thiEvents?: string[]
+}
+
 const CLUB_LEVELS = [
 	'bg-muted',
 	'bg-emerald-200 dark:bg-emerald-950',
@@ -52,7 +60,9 @@ function cellClass(series: HeatmapSeries, level: HeatmapDay['level']) {
 	return MIXED_LEVELS[level]
 }
 
-function tooltipText(day: HeatmapDay) {
+function tooltipText(day: HeatmapDay): TooltipText {
+	const data: TooltipText = {};
+	
 	const dateLabel = formatInTimeZone(
 		day.date,
 		CAMPUS_TIME_ZONE,
@@ -60,21 +70,36 @@ function tooltipText(day: HeatmapDay) {
 		{ locale: de }
 	)
 	if (!day.inRange) {
-		return dateLabel
+		data.dateLable = dateLabel;
+		return data
 	}
 	if (day.total === 0) {
-		return `Keine öffentlichen Events · ${dateLabel}`
+		data.dateLable = `Keine öffentlichen Events · ${dateLabel}`
+		return data
 	}
-	const parts: string[] = []
-	if (day.clubCount > 0) {
-		parts.push(
-			`${day.clubCount} Vereins-Event${day.clubCount === 1 ? '' : 's'}`
-		)
+
+	data.dateLable = dateLabel;
+
+	if (day.clubEvents.length > 0) {
+		data.clubEventText = `${day.clubEvents.length} Vereins-Event${day.clubEvents.length === 1 ? '' : 's'}`
+		
+		data.clubEvents = [];
+		day.clubEvents.forEach(event => {
+			data.clubEvents!.push(
+				`· ${event.title_de} von ${event.organizer_name} `
+			)
+		})
 	}
-	if (day.thiCount > 0) {
-		parts.push(`${day.thiCount} THI-Event${day.thiCount === 1 ? '' : 's'}`)
+	if (day.thiEvents.length > 0) {
+		data.thiEventText =	`${day.thiEvents.length} THI-Event${day.thiEvents.length === 1 ? '' : 's'}`
+
+		data.thiEvents = [];
+		day.thiEvents.forEach(event => {
+			data.thiEvents!.push(`· ${event.title_de} von ${event.organizer_name} `)
+		})
 	}
-	return `${parts.join(', ')} · ${dateLabel}`
+
+	return data
 }
 
 function endOfWeekSunday(date: Date): Date {
@@ -111,6 +136,29 @@ function HeatmapGrid({
 
 	if (isLoading) {
 		return <Skeleton className="h-[148px] w-full rounded-lg" />
+	}
+
+	function DayTooltipContent({ day }: { day: HeatmapDay }) {
+		const data = tooltipText(day);
+
+		return (
+			<>
+				<p>{data.dateLable}</p>
+				<p className="text-[0.9rem] mt-[10px]">{data.thiEventText}</p>
+				{data.thiEvents && <ul>
+					{data.thiEvents.map((part, i) => (
+						<li key={i} className='text-sm'>{part}</li> // text-muted-foreground
+					))}
+				</ul>
+				}
+				<p className="text-[0.9rem] mt-[10px]">{data.clubEventText}</p>
+				{data.clubEvents && <ul>
+					{data.clubEvents.map((part, i) => (
+						<li key={i} className='text-sm'>{part}</li>
+					))}
+				</ul>}
+			</>
+		);
 	}
 
 	return (
@@ -173,11 +221,11 @@ function HeatmapGrid({
 															'ring-2 ring-red-700 dark:ring-red-800',
 														cellClass(day.series, day.level)
 													)}
-													aria-label={tooltipText(day)}
+													// aria-label={tooltipText(day).join(', ')}
 												/>
 											</TooltipTrigger>
 											<TooltipContent side="top">
-												{tooltipText(day)}
+												<DayTooltipContent day={day} />
 											</TooltipContent>
 										</Tooltip>
 									))}
