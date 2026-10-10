@@ -96,7 +96,10 @@ export function buildActivityHeatmap(
 	const endWeekStart = startOfCampusWeek(endDateNoon)
 	const startWeekStart = addDays(endWeekStart, -(weekCount - 1) * 7)
 
-	const eventMap = new Map<string, { club: PublicEventResponse[]; thi: PublicEventResponse[] }>()
+	const eventMap = new Map<
+		string,
+		{ club: PublicEventResponse[]; thi: PublicEventResponse[] }
+	>()
 
 	for (const event of events) {
 		const key = toCampusDateKey(event.start_date_time)
@@ -120,7 +123,9 @@ export function buildActivityHeatmap(
 			const dateKey = toCampusDateKey(date)
 			const inRange = dateKey <= endDateKey
 			const bucketEvents = eventMap.get(dateKey) ?? { club: [], thi: [] }
-			const total = inRange ? bucketEvents.club.length + bucketEvents.thi.length : 0
+			const total = inRange
+				? bucketEvents.club.length + bucketEvents.thi.length
+				: 0
 			if (inRange && total > 0) {
 				clubTotal += bucketEvents.club.length
 				thiTotal += bucketEvents.thi.length
@@ -134,7 +139,9 @@ export function buildActivityHeatmap(
 				thiEvents: inRange ? bucketEvents.thi : [],
 				total,
 				level: inRange ? intensityLevel(total) : 0,
-				series: inRange ? seriesFor(bucketEvents.club.length, bucketEvents.thi.length) : 'empty',
+				series: inRange
+					? seriesFor(bucketEvents.club.length, bucketEvents.thi.length)
+					: 'empty',
 				inRange
 			})
 		}

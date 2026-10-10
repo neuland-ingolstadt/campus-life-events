@@ -61,8 +61,8 @@ function cellClass(series: HeatmapSeries, level: HeatmapDay['level']) {
 }
 
 function tooltipText(day: HeatmapDay): TooltipText {
-	const data: TooltipText = {};
-	
+	const data: TooltipText = {}
+
 	const dateLabel = formatInTimeZone(
 		day.date,
 		CAMPUS_TIME_ZONE,
@@ -70,7 +70,7 @@ function tooltipText(day: HeatmapDay): TooltipText {
 		{ locale: de }
 	)
 	if (!day.inRange) {
-		data.dateLable = dateLabel;
+		data.dateLable = dateLabel
 		return data
 	}
 	if (day.total === 0) {
@@ -78,23 +78,21 @@ function tooltipText(day: HeatmapDay): TooltipText {
 		return data
 	}
 
-	data.dateLable = dateLabel;
+	data.dateLable = dateLabel
 
 	if (day.clubEvents.length > 0) {
 		data.clubEventText = `${day.clubEvents.length} Vereins-Event${day.clubEvents.length === 1 ? '' : 's'}`
-		
-		data.clubEvents = [];
-		day.clubEvents.forEach(event => {
-			data.clubEvents!.push(
-				`· ${event.title_de} von ${event.organizer_name} `
-			)
+
+		data.clubEvents = []
+		day.clubEvents.forEach((event) => {
+			data.clubEvents!.push(`· ${event.title_de} von ${event.organizer_name} `)
 		})
 	}
 	if (day.thiEvents.length > 0) {
-		data.thiEventText =	`${day.thiEvents.length} THI-Event${day.thiEvents.length === 1 ? '' : 's'}`
+		data.thiEventText = `${day.thiEvents.length} THI-Event${day.thiEvents.length === 1 ? '' : 's'}`
 
-		data.thiEvents = [];
-		day.thiEvents.forEach(event => {
+		data.thiEvents = []
+		day.thiEvents.forEach((event) => {
 			data.thiEvents!.push(`· ${event.title_de} von ${event.organizer_name} `)
 		})
 	}
@@ -147,8 +145,8 @@ function HeatmapGrid({
 					<p className="text-xs font-medium">{data.thiEventText}</p>
 					{data.thiEvents && (
 						<ul className="space-y-0.5">
-							{data.thiEvents.map((part, i) => (
-								<li key={i} className="text-xs text-muted-foreground"> {/* text-muted-foreground */}
+							{data.thiEvents.map((part) => (
+								<li key={part} className="text-xs text-muted-foreground">
 									{part}
 								</li>
 							))}
@@ -161,7 +159,7 @@ function HeatmapGrid({
 					{data.clubEvents && (
 						<ul className="space-y-0.5">
 							{data.clubEvents.map((part, i) => (
-								<li key={i} className="text-xs text-muted-foreground">
+								<li key={part} className="text-xs text-muted-foreground">
 									{part}
 								</li>
 							))}
@@ -169,11 +167,11 @@ function HeatmapGrid({
 					)}
 				</div>
 			</div>
-		);
+		)
 	}
 
 	function HeatmapCell({ day }: { day: HeatmapDay }) {
-		const data = tooltipText(day);
+		const data = tooltipText(day)
 
 		return (
 			<Tooltip>
@@ -197,7 +195,7 @@ function HeatmapGrid({
 					<DayTooltipContent data={data} />
 				</TooltipContent>
 			</Tooltip>
-		);
+		)
 	}
 
 	return (
@@ -249,8 +247,10 @@ function HeatmapGrid({
 									className="flex w-2.5 flex-col gap-1"
 								>
 									{week.map((day) => (
-										<HeatmapCell day={day}></HeatmapCell>
-										
+										<HeatmapCell
+											day={day}
+											key={day.date.toString()}
+										></HeatmapCell>
 									))}
 								</div>
 							))}
