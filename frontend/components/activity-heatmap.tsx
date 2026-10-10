@@ -138,26 +138,65 @@ function HeatmapGrid({
 		return <Skeleton className="h-[148px] w-full rounded-lg" />
 	}
 
-	function DayTooltipContent({ day }: { day: HeatmapDay }) {
+	function DayTooltipContent({ data }: { data: TooltipText }) {
+		return (
+			<div className="flex flex-col gap-3">
+				<p className="text-sm font-medium leading-snug">{data.dateLable}</p>
+
+				<div className="space-y-1">
+					<p className="text-xs font-medium">{data.thiEventText}</p>
+					{data.thiEvents && (
+						<ul className="space-y-0.5">
+							{data.thiEvents.map((part, i) => (
+								<li key={i} className="text-xs text-muted-foreground"> {/* text-muted-foreground */}
+									{part}
+								</li>
+							))}
+						</ul>
+					)}
+				</div>
+
+				<div className="space-y-1">
+					<p className="text-xs font-medium">{data.clubEventText}</p>
+					{data.clubEvents && (
+						<ul className="space-y-0.5">
+							{data.clubEvents.map((part, i) => (
+								<li key={i} className="text-xs text-muted-foreground">
+									{part}
+								</li>
+							))}
+						</ul>
+					)}
+				</div>
+			</div>
+		);
+	}
+
+	function HeatmapCell({ day }: { day: HeatmapDay }) {
 		const data = tooltipText(day);
 
 		return (
-			<>
-				<p>{data.dateLable}</p>
-				<p className="text-[0.9rem] mt-[10px]">{data.thiEventText}</p>
-				{data.thiEvents && <ul>
-					{data.thiEvents.map((part, i) => (
-						<li key={i} className='text-sm'>{part}</li> // text-muted-foreground
-					))}
-				</ul>
-				}
-				<p className="text-[0.9rem] mt-[10px]">{data.clubEventText}</p>
-				{data.clubEvents && <ul>
-					{data.clubEvents.map((part, i) => (
-						<li key={i} className='text-sm'>{part}</li>
-					))}
-				</ul>}
-			</>
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<button
+						type="button"
+						aria-label={`${data.dateLable}: ${data.thiEventText}, ${data.clubEventText}`}
+						className={cn(
+							'size-2.5 rounded-[3px] ring-1 ring-black/5 transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:ring-white/10',
+							!day.inRange && 'opacity-30',
+							day.isToday && 'ring-2 ring-red-700 dark:ring-red-800',
+							cellClass(day.series, day.level)
+						)}
+					/>
+				</TooltipTrigger>
+				<TooltipContent
+					side="top"
+					className="rounded-lg border bg-card p-4 text-left text-card-foreground shadow-md"
+					arrowClassName="bg-card fill-card"
+				>
+					<DayTooltipContent data={data} />
+				</TooltipContent>
+			</Tooltip>
 		);
 	}
 
@@ -210,24 +249,8 @@ function HeatmapGrid({
 									className="flex w-2.5 flex-col gap-1"
 								>
 									{week.map((day) => (
-										<Tooltip key={day.dateKey}>
-											<TooltipTrigger asChild>
-												<button
-													type="button"
-													className={cn(
-														'size-2.5 rounded-[3px] ring-1 ring-black/5 transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:ring-white/10',
-														!day.inRange && 'opacity-30',
-														day.isToday &&
-															'ring-2 ring-red-700 dark:ring-red-800',
-														cellClass(day.series, day.level)
-													)}
-													// aria-label={tooltipText(day).join(', ')}
-												/>
-											</TooltipTrigger>
-											<TooltipContent side="top">
-												<DayTooltipContent day={day} />
-											</TooltipContent>
-										</Tooltip>
+										<HeatmapCell day={day}></HeatmapCell>
+										
 									))}
 								</div>
 							))}
