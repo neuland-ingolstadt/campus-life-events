@@ -85,7 +85,7 @@ function tooltipText(day: HeatmapDay): TooltipText {
 
 		data.clubEvents = []
 		day.clubEvents.forEach((event) => {
-			data.clubEvents!.push(`· ${event.title_de} von ${event.organizer_name} `)
+			data.clubEvents?.push(`· ${event.title_de} von ${event.organizer_name} `)
 		})
 	}
 	if (day.thiEvents.length > 0) {
@@ -93,7 +93,7 @@ function tooltipText(day: HeatmapDay): TooltipText {
 
 		data.thiEvents = []
 		day.thiEvents.forEach((event) => {
-			data.thiEvents!.push(`· ${event.title_de} von ${event.organizer_name} `)
+			data.thiEvents?.push(`· ${event.title_de} von ${event.organizer_name} `)
 		})
 	}
 
