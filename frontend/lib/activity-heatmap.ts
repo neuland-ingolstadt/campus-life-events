@@ -10,8 +10,8 @@ export type HeatmapDay = {
 	dateKey: string
 	date: Date
 	isToday: boolean
-	clubCount: number
-	thiCount: number
+	clubEvents: PublicEventResponse[]
+	thiEvents: PublicEventResponse[]
 	total: number
 	level: 0 | 1 | 2 | 3 | 4
 	series: HeatmapSeries
@@ -96,15 +96,18 @@ export function buildActivityHeatmap(
 	const endWeekStart = startOfCampusWeek(endDateNoon)
 	const startWeekStart = addDays(endWeekStart, -(weekCount - 1) * 7)
 
-	const counts = new Map<string, { club: number; thi: number }>()
+	const eventMap = new Map<
+		string,
+		{ club: PublicEventResponse[]; thi: PublicEventResponse[] }
+	>()
 
 	for (const event of events) {
 		const key = toCampusDateKey(event.start_date_time)
 		if (key < startDateKey || key > endDateKey) continue
 
-		const bucket = counts.get(key) ?? { club: 0, thi: 0 }
-		bucket[kindBucket(event.organizer_kind)] += 1
-		counts.set(key, bucket)
+		const bucketEvents = eventMap.get(key) ?? { club: [], thi: [] }
+		bucketEvents[kindBucket(event.organizer_kind)].push(event)
+		eventMap.set(key, bucketEvents)
 	}
 
 	const weeks: HeatmapDay[][] = []
@@ -119,22 +122,26 @@ export function buildActivityHeatmap(
 			const date = addDays(weekStart, dow)
 			const dateKey = toCampusDateKey(date)
 			const inRange = dateKey <= endDateKey
-			const bucket = counts.get(dateKey) ?? { club: 0, thi: 0 }
-			const total = inRange ? bucket.club + bucket.thi : 0
+			const bucketEvents = eventMap.get(dateKey) ?? { club: [], thi: [] }
+			const total = inRange
+				? bucketEvents.club.length + bucketEvents.thi.length
+				: 0
 			if (inRange && total > 0) {
-				clubTotal += bucket.club
-				thiTotal += bucket.thi
+				clubTotal += bucketEvents.club.length
+				thiTotal += bucketEvents.thi.length
 				activeDays += 1
 			}
 			days.push({
 				dateKey,
 				date,
 				isToday: isToday(date),
-				clubCount: inRange ? bucket.club : 0,
-				thiCount: inRange ? bucket.thi : 0,
+				clubEvents: inRange ? bucketEvents.club : [],
+				thiEvents: inRange ? bucketEvents.thi : [],
 				total,
 				level: inRange ? intensityLevel(total) : 0,
-				series: inRange ? seriesFor(bucket.club, bucket.thi) : 'empty',
+				series: inRange
+					? seriesFor(bucketEvents.club.length, bucketEvents.thi.length)
+					: 'empty',
 				inRange
 			})
 		}
