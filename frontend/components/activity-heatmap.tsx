@@ -192,7 +192,7 @@ function HeatmapGrid({
 				<TooltipContent
 					side="top"
 					className="rounded-lg border bg-card p-4 text-left text-card-foreground shadow-md"
-					arrowClassName="bg-card fill-card"
+					arrowClassName="bg-card fill-card border-b border-r -translate-y-1/2"
 				>
 					<DayTooltipContent data={data} />
 				</TooltipContent>
