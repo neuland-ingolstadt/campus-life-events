@@ -1,10 +1,10 @@
-FROM oven/bun:latest@sha256:ec06c3b6cea04192ae6770c434f668ca41d343ad19fa6472216c7b48be39c598 AS deps
+FROM oven/bun:latest@sha256:1d22548f177f4ff38e0c15baa3c2c46c6c2060ba2d1bc573bb4720b407548f1d AS deps
 WORKDIR /app
 
 COPY bun.lock package.json ./
 RUN bun install --frozen-lockfile 
 
-FROM node:24.22.1-alpine@sha256:6a1c190e17215d844926b0677f4bf87273ff7d5e54db06d3b5b5863ab0b09a3d AS builder
+FROM node:24.22.1-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS builder
 WORKDIR /app
 
 ARG COMMIT_HASH
@@ -19,7 +19,7 @@ RUN realpath .
 
 RUN npm run build
 
-FROM node:24.22.1-alpine@sha256:6a1c190e17215d844926b0677f4bf87273ff7d5e54db06d3b5b5863ab0b09a3d AS runner
+FROM node:24.22.1-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
