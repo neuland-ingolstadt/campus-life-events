@@ -32,6 +32,24 @@ pub struct AuthUserResponse {
 }
 
 #[derive(Debug, Serialize, ToSchema)]
+pub struct OrganizerHealthResponse {
+    pub organizer_id: i64,
+    pub previous_login_at: Option<DateTime<Utc>>,
+    pub last_login_at: Option<DateTime<Utc>>,
+    pub future_events_count: i64,
+    pub peer_future_events_median: Option<f64>,
+    pub future_events_vs_peer_ratio: Option<f64>,
+    pub peer_sample_size: i64,
+    pub profile_fields_filled: i32,
+    pub profile_fields_total: i32,
+    pub profile_completeness: f64,
+    pub peer_profile_complete_share: Option<f64>,
+    pub show_login_nudge: bool,
+    pub show_event_nudge: bool,
+    pub show_profile_nudge: bool,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
 pub struct ApiTokenSummaryResponse {
     pub id: i64,
     pub label: String,

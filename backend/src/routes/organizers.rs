@@ -5,7 +5,8 @@ use axum::{
     response::IntoResponse,
     routing::get,
 };
-use sqlx::{Postgres, QueryBuilder};
+use chrono::{DateTime, Duration, Utc};
+use sqlx::{FromRow, Postgres, QueryBuilder};
 use tracing::{error, info, instrument, warn};
 
 use crate::{
@@ -13,13 +14,221 @@ use crate::{
     dto::{CreateOrganizerRequest, UpdateOrganizerRequest},
     error::AppError,
     models::{AccountType, Organizer, OrganizerInviteRow, OrganizerKind, OrganizerWithInvite},
-    responses::{ErrorResponse, OrganizerWithStatsResponse, SetupTokenResponse},
+    responses::{
+        ErrorResponse, OrganizerHealthResponse, OrganizerWithStatsResponse, SetupTokenResponse,
+    },
 };
 
 use super::shared::{
     AuthedUser, SessionOrganizerKindScope, current_user_from_headers, generate_setup_token_value,
     refresh_organizer_activity_stats, session_organizer_kind_scope,
 };
+
+const PROFILE_FIELDS_TOTAL: i32 = 4;
+const MIN_PEER_SAMPLE: i64 = 3;
+const LOGIN_NUDGE_AFTER_DAYS: i64 = 14;
+
+#[derive(Debug, FromRow)]
+struct OrganizerHealthRow {
+    organizer_id: i64,
+    description_de: Option<String>,
+    description_en: Option<String>,
+    website_url: Option<String>,
+    location: Option<String>,
+    instagram_url: Option<String>,
+    linkedin_url: Option<String>,
+    future_events_count: i64,
+    previous_login_at: Option<DateTime<Utc>>,
+    last_login_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, FromRow)]
+struct PeerHealthRow {
+    future_events_count: i64,
+    description_de: Option<String>,
+    description_en: Option<String>,
+    website_url: Option<String>,
+    location: Option<String>,
+    instagram_url: Option<String>,
+    linkedin_url: Option<String>,
+}
+
+fn profile_fields_filled(
+    description_de: &Option<String>,
+    description_en: &Option<String>,
+    website_url: &Option<String>,
+    location: &Option<String>,
+    instagram_url: &Option<String>,
+    linkedin_url: &Option<String>,
+) -> i32 {
+    let has_description = description_de
+        .as_ref()
+        .is_some_and(|s| !s.trim().is_empty())
+        || description_en
+            .as_ref()
+            .is_some_and(|s| !s.trim().is_empty());
+    let has_website = website_url.as_ref().is_some_and(|s| !s.trim().is_empty());
+    let has_location = location.as_ref().is_some_and(|s| !s.trim().is_empty());
+    let has_social = instagram_url.as_ref().is_some_and(|s| !s.trim().is_empty())
+        || linkedin_url.as_ref().is_some_and(|s| !s.trim().is_empty());
+    i32::from(has_description)
+        + i32::from(has_website)
+        + i32::from(has_location)
+        + i32::from(has_social)
+}
+
+fn median_f64(values: &mut [f64]) -> Option<f64> {
+    if values.is_empty() {
+        return None;
+    }
+    values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    let mid = values.len() / 2;
+    if values.len().is_multiple_of(2) {
+        Some((values[mid - 1] + values[mid]) / 2.0)
+    } else {
+        Some(values[mid])
+    }
+}
+
+#[utoipa::path(
+    get,
+    path = "/api/v1/organizers/me/health",
+    tag = "Organizers",
+    responses(
+        (status = 200, description = "Own organizer health vs anonymized peers", body = OrganizerHealthResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 404, description = "No organizer for this account", body = ErrorResponse)
+    )
+)]
+#[instrument(skip(state, headers))]
+pub(crate) async fn get_organizer_health(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Json<OrganizerHealthResponse>, AppError> {
+    let user = current_user_from_headers(&headers, &state).await?;
+    let Some(organizer_id) = user.organizer_id else {
+        return Err(AppError::not_found("No organizer linked to this account"));
+    };
+
+    let own = sqlx::query_as::<_, OrganizerHealthRow>(
+        r#"
+        SELECT
+            o.id AS organizer_id,
+            o.description_de,
+            o.description_en,
+            o.website_url,
+            o.location,
+            o.instagram_url,
+            o.linkedin_url,
+            COALESCE(stats.future_events_count, 0) AS future_events_count,
+            a.previous_login_at,
+            a.last_login_at
+        FROM organizers o
+        LEFT JOIN organizer_activity_stats stats ON stats.organizer_id = o.id
+        LEFT JOIN accounts a ON a.id = $2
+        WHERE o.id = $1
+        "#,
+    )
+    .bind(organizer_id)
+    .bind(user.account_id)
+    .fetch_optional(&state.db)
+    .await?
+    .ok_or_else(|| AppError::not_found("Organizer not found"))?;
+
+    let peers = sqlx::query_as::<_, PeerHealthRow>(
+        r#"
+        SELECT
+            COALESCE(stats.future_events_count, 0) AS future_events_count,
+            o.description_de,
+            o.description_en,
+            o.website_url,
+            o.location,
+            o.instagram_url,
+            o.linkedin_url
+        FROM organizers o
+        LEFT JOIN organizer_activity_stats stats ON stats.organizer_id = o.id
+        WHERE o.organizer_kind = (
+            SELECT organizer_kind FROM organizers WHERE id = $1
+        )
+          AND o.id <> $1
+        "#,
+    )
+    .bind(organizer_id)
+    .fetch_all(&state.db)
+    .await?;
+
+    let peer_sample_size = peers.len() as i64;
+    let mut peer_future_counts: Vec<f64> =
+        peers.iter().map(|p| p.future_events_count as f64).collect();
+    let peer_future_events_median = if peer_sample_size >= MIN_PEER_SAMPLE {
+        median_f64(&mut peer_future_counts)
+    } else {
+        None
+    };
+
+    let peer_complete_count = peers
+        .iter()
+        .filter(|p| {
+            profile_fields_filled(
+                &p.description_de,
+                &p.description_en,
+                &p.website_url,
+                &p.location,
+                &p.instagram_url,
+                &p.linkedin_url,
+            ) == PROFILE_FIELDS_TOTAL
+        })
+        .count() as f64;
+    let peer_profile_complete_share = if peer_sample_size >= MIN_PEER_SAMPLE {
+        Some(peer_complete_count / peer_sample_size as f64)
+    } else {
+        None
+    };
+
+    let profile_fields_filled = profile_fields_filled(
+        &own.description_de,
+        &own.description_en,
+        &own.website_url,
+        &own.location,
+        &own.instagram_url,
+        &own.linkedin_url,
+    );
+    let profile_completeness = f64::from(profile_fields_filled) / f64::from(PROFILE_FIELDS_TOTAL);
+
+    let future_events_vs_peer_ratio = match peer_future_events_median {
+        Some(median) if median > 0.0 && own.future_events_count > 0 => {
+            Some(median / own.future_events_count as f64)
+        }
+        Some(median) if median > 0.0 && own.future_events_count == 0 => None,
+        _ => None,
+    };
+
+    let show_event_nudge = match peer_future_events_median {
+        Some(median) => median >= 1.0 && (own.future_events_count as f64) < median,
+        None => false,
+    };
+    let show_profile_nudge = profile_fields_filled < PROFILE_FIELDS_TOTAL;
+    let show_login_nudge = own
+        .previous_login_at
+        .is_some_and(|ts| Utc::now() - ts > Duration::days(LOGIN_NUDGE_AFTER_DAYS));
+
+    Ok(Json(OrganizerHealthResponse {
+        organizer_id: own.organizer_id,
+        previous_login_at: own.previous_login_at,
+        last_login_at: own.last_login_at,
+        future_events_count: own.future_events_count,
+        peer_future_events_median,
+        future_events_vs_peer_ratio,
+        peer_sample_size,
+        profile_fields_filled,
+        profile_fields_total: PROFILE_FIELDS_TOTAL,
+        profile_completeness,
+        peer_profile_complete_share,
+        show_login_nudge,
+        show_event_nudge,
+        show_profile_nudge,
+    }))
+}
 
 pub(crate) async fn update_organizer_with_user(
     state: &AppState,
@@ -541,6 +750,7 @@ pub(crate) fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(list_organizers).post(create_organizer))
         .route("/admin", get(list_organizers_admin))
+        .route("/me/health", get(get_organizer_health))
         .route(
             "/{id}",
             get(get_organizer)

@@ -26,6 +26,21 @@ use crate::{
 
 use super::shared::{current_user_from_headers, get_cookie, session_cookie_attributes};
 
+async fn record_account_login(state: &AppState, account_id: i64) -> Result<(), AppError> {
+    sqlx::query(
+        r#"
+        UPDATE accounts
+        SET previous_login_at = last_login_at,
+            last_login_at = NOW()
+        WHERE id = $1
+        "#,
+    )
+    .bind(account_id)
+    .execute(&state.db)
+    .await?;
+    Ok(())
+}
+
 async fn organizer_kind_for_organizer(
     state: &AppState,
     organizer_id: Option<i64>,
@@ -110,6 +125,8 @@ pub(crate) async fn login(
     )
     .execute(&state.db)
     .await?;
+
+    record_account_login(&state, id).await?;
 
     let attrs = session_cookie_attributes();
     let cookie_str = format!(
@@ -232,6 +249,8 @@ pub(crate) async fn init_account(
     )
     .execute(&state.db)
     .await?;
+
+    record_account_login(&state, account_id).await?;
 
     let attrs = session_cookie_attributes();
     let cookie_str = format!(
