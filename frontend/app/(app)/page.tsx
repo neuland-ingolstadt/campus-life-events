@@ -4,7 +4,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { addDays, formatDistanceStrict, startOfDay } from 'date-fns'
 import { de } from 'date-fns/locale'
 import {
-	AlertTriangle,
 	Calendar,
 	ChevronRight,
 	Clock,
@@ -26,8 +25,8 @@ import {
 	type EventSheetMode
 } from '@/components/events/event-detail-sheet'
 import { EventVisibilityIndicator } from '@/components/events/event-status-badges'
+import { OrganizerHealthCard } from '@/components/organizer-health-card'
 import QuickActions from '@/components/quick-actions'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -87,12 +86,6 @@ export default function Dashboard() {
 	const currentUserOrganizer = organizerList.find(
 		(o) => o.id === user?.organizer_id
 	)
-
-	const isProfileIncomplete =
-		currentUserOrganizer &&
-		((!currentUserOrganizer.description_de &&
-			!currentUserOrganizer.description_en) ||
-			!currentUserOrganizer.website_url)
 
 	const userEvents = events.filter((e) => e.organizer_id === user?.organizer_id)
 	const userUpcomingEvents = useMemo(
@@ -188,28 +181,11 @@ export default function Dashboard() {
 					</p>
 				</div>
 
-				{isProfileIncomplete ? (
-					<Alert className="border-amber-500/40 bg-amber-500/10 text-foreground [&>svg]:text-amber-700 dark:[&>svg]:text-amber-400">
-						<AlertTriangle />
-						<AlertTitle>Organisationsprofil vervollständigen</AlertTitle>
-						<AlertDescription className="gap-3">
-							<p>
-								Beschreibung oder Website fehlen noch. Vervollständige dein
-								Profil, damit andere Vereine euch besser finden.
-							</p>
-							<Button asChild size="sm" className="mt-1 w-fit">
-								<Link
-									href={
-										currentUserOrganizer
-											? `/organizers?edit=${currentUserOrganizer.id}`
-											: '/organizers'
-									}
-								>
-									Profil bearbeiten
-								</Link>
-							</Button>
-						</AlertDescription>
-					</Alert>
+				{organizerId ? (
+					<OrganizerHealthCard
+						organizerId={organizerId}
+						onCreateEvent={openCreate}
+					/>
 				) : null}
 
 				<div className="space-y-3">

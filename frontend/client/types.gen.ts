@@ -264,6 +264,23 @@ export type OrganizerWithStatsResponse = {
     website_url?: string | null;
 };
 
+export type OrganizerHealthResponse = {
+    organizer_id: number;
+    previous_login_at?: string | null;
+    last_login_at?: string | null;
+    future_events_count: number;
+    peer_future_events_median?: number | null;
+    future_events_vs_peer_ratio?: number | null;
+    peer_sample_size: number;
+    profile_fields_filled: number;
+    profile_fields_total: number;
+    profile_completeness: number;
+    peer_profile_complete_share?: number | null;
+    show_login_nudge: boolean;
+    show_event_nudge: boolean;
+    show_profile_nudge: boolean;
+};
+
 export type PaginatedEventsResponse = {
     items: Array<Event>;
     total: number;
@@ -1113,6 +1130,35 @@ export type CreateOrganizerResponses = {
 };
 
 export type CreateOrganizerResponse = CreateOrganizerResponses[keyof CreateOrganizerResponses];
+
+export type GetOrganizerHealthData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/organizers/me/health';
+};
+
+export type GetOrganizerHealthErrors = {
+    /**
+     * Unauthorized
+     */
+    401: ErrorResponse;
+    /**
+     * No organizer for this account
+     */
+    404: ErrorResponse;
+};
+
+export type GetOrganizerHealthError = GetOrganizerHealthErrors[keyof GetOrganizerHealthErrors];
+
+export type GetOrganizerHealthResponses = {
+    /**
+     * Own organizer health vs anonymized peers
+     */
+    200: OrganizerHealthResponse;
+};
+
+export type GetOrganizerHealthResponse = GetOrganizerHealthResponses[keyof GetOrganizerHealthResponses];
 
 export type ListOrganizersAdminData = {
     body?: never;
