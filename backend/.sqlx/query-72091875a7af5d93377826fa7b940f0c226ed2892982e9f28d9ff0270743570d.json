@@ -26,7 +26,6 @@
             "kind": {
               "Enum": [
                 "UI",
-                "MCP",
                 "API"
               ]
             }

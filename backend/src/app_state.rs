@@ -8,5 +8,4 @@ pub struct AppState {
     pub email: Option<EmailClient>,
     pub cache: Option<CacheService>,
     pub api_token_hmac_key: Option<[u8; 32]>,
-    pub oauth_token_hmac_key: Option<[u8; 32]>,
 }

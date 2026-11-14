@@ -21,13 +21,11 @@ import type {
 	Organizer as ApiOrganizer
 } from '@/client/types.gen'
 import { ActivityHeatmap } from '@/components/activity-heatmap'
-import { DashboardMcpTeaser } from '@/components/dashboard-mcp-teaser'
 import {
 	EventDetailSheet,
 	type EventSheetMode
 } from '@/components/events/event-detail-sheet'
 import { EventVisibilityIndicator } from '@/components/events/event-status-badges'
-import { McpAnnounceDialog } from '@/components/mcp-announce-dialog'
 import QuickActions from '@/components/quick-actions'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -173,7 +171,6 @@ export default function Dashboard() {
 
 	return (
 		<div className="flex flex-col min-h-screen">
-			<McpAnnounceDialog />
 			<header className="sticky top-0 z-50 flex h-16 shrink-0 items-center gap-2 border-b bg-background/95 px-4">
 				<SidebarTrigger className="-ml-1" />
 				<div className="flex items-center gap-2">
@@ -182,20 +179,13 @@ export default function Dashboard() {
 			</header>
 
 			<div className="flex-1 space-y-8 p-4 md:p-8 pt-6 mb-12">
-				<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-					<div>
-						<h2 className="text-3xl font-bold tracking-tight">
-							{user ? `Willkommen zurück, ${user.display_name}` : 'Willkommen'}
-						</h2>
-						<p className="text-muted-foreground mt-1">
-							Verwalte deine Events und dein Organisationsprofil
-						</p>
-					</div>
-					{user?.account_type === 'ORGANIZER' && (
-						<div className="shrink-0 sm:pt-1">
-							<DashboardMcpTeaser />
-						</div>
-					)}
+				<div>
+					<h2 className="text-3xl font-bold tracking-tight">
+						{user ? `Willkommen zurück, ${user.display_name}` : 'Willkommen'}
+					</h2>
+					<p className="text-muted-foreground mt-1">
+						Verwalte deine Events und dein Organisationsprofil
+					</p>
 				</div>
 
 				{isProfileIncomplete ? (

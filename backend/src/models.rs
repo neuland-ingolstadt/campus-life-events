@@ -55,7 +55,6 @@ pub enum AuditType {
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum AuditSource {
     Ui,
-    Mcp,
     Api,
 }
 

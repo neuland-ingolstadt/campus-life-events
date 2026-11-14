@@ -35,8 +35,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
 			if (
 				typeof window !== 'undefined' &&
 				res.status === 401 &&
-				window.location.pathname !== '/login' &&
-				!window.location.pathname.startsWith('/oauth/')
+				window.location.pathname !== '/login'
 			) {
 				window.location.href = '/login'
 			}

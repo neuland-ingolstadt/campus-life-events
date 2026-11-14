@@ -27,7 +27,6 @@ import { PartyPopper } from './animate-ui/icons/party-popper'
 import { Radio } from './animate-ui/icons/radio'
 import { Send } from './animate-ui/icons/send'
 import { Settings } from './animate-ui/icons/settings'
-import { Sparkles } from './animate-ui/icons/sparkles'
 import { Users } from './animate-ui/icons/users'
 import NeulandPalm from './neuland-palm'
 
@@ -124,12 +123,6 @@ export function DashboardSidebar() {
 				url: '/analytics',
 				icon: ChartColumnIncreasing,
 				isActive: (p) => p.startsWith('/analytics')
-			},
-			{
-				title: 'KI & MCP',
-				url: '/ai-setup',
-				icon: Sparkles,
-				isActive: (p) => p.startsWith('/ai-setup')
 			},
 			{
 				title: 'Einstellungen',

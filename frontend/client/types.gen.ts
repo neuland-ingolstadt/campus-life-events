@@ -51,7 +51,7 @@ export type AuditLogEntry = {
     user_id?: number | null;
 };
 
-export type AuditSource = 'UI' | 'MCP' | 'API';
+export type AuditSource = 'UI' | 'API';
 
 export type AuditType = 'CREATE' | 'UPDATE' | 'DELETE';
 
@@ -61,7 +61,7 @@ export type AuthUserResponse = {
     can_access_newsletter: boolean;
     display_name: string;
     organizer_id?: number | null;
-    organizer_kind?: null | OrganizerKind;
+    organizer_kind?: OrganizerKind | null;
 };
 
 export type ChangePasswordRequest = {
@@ -170,19 +170,19 @@ export type ListAuditLogsQuery = {
 };
 
 export type ListEventsQuery = {
-    direction?: null | SortDirection;
+    direction?: SortDirection | null;
     limit?: number | null;
     offset?: number | null;
     organizer_id?: number | null;
-    organizer_kind?: null | OrganizerKind;
+    organizer_kind?: OrganizerKind | null;
     overlaps_end?: string | null;
     overlaps_start?: string | null;
     query?: string | null;
-    sort?: null | EventSort;
+    sort?: EventSort | null;
     starts_from?: string | null;
     starts_to?: string | null;
     upcoming_only?: boolean | null;
-    visibility?: null | EventVisibility;
+    visibility?: EventVisibility | null;
 };
 
 export type ListMyEventsQuery = {
@@ -192,7 +192,7 @@ export type ListMyEventsQuery = {
 };
 
 export type ListPublicOrganizersQuery = {
-    organizer_kind?: null | OrganizerKind;
+    organizer_kind?: OrganizerKind | null;
 };
 
 export type LocationSuggestionsResponse = {
@@ -211,16 +211,6 @@ export type NewsletterDataResponse = {
     next_week_start: string;
     subject: string;
     week_after_start: string;
-};
-
-export type OAuthSessionSummaryResponse = {
-    access_expires_at: string;
-    client_id: string;
-    client_name?: string | null;
-    created_at: string;
-    id: number;
-    last_used_at?: string | null;
-    refresh_expires_at: string;
 };
 
 export type Organizer = {
@@ -730,84 +720,6 @@ export type MeResponses = {
 };
 
 export type MeResponse = MeResponses[keyof MeResponses];
-
-export type RevokeAllOauthSessionsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/auth/oauth-sessions';
-};
-
-export type RevokeAllOauthSessionsErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type RevokeAllOauthSessionsResponses = {
-    /**
-     * All sessions revoked
-     */
-    204: void;
-};
-
-export type RevokeAllOauthSessionsResponse = RevokeAllOauthSessionsResponses[keyof RevokeAllOauthSessionsResponses];
-
-export type ListOauthSessionsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/v1/auth/oauth-sessions';
-};
-
-export type ListOauthSessionsErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-};
-
-export type ListOauthSessionsResponses = {
-    /**
-     * Active MCP OAuth sessions for the current account
-     */
-    200: Array<OAuthSessionSummaryResponse>;
-};
-
-export type ListOauthSessionsResponse = ListOauthSessionsResponses[keyof ListOauthSessionsResponses];
-
-export type RevokeOauthSessionData = {
-    body?: never;
-    path: {
-        /**
-         * OAuth session (token) id
-         */
-        id: number;
-    };
-    query?: never;
-    url: '/api/v1/auth/oauth-sessions/{id}';
-};
-
-export type RevokeOauthSessionErrors = {
-    /**
-     * Not authenticated
-     */
-    401: unknown;
-    /**
-     * Not found
-     */
-    404: unknown;
-};
-
-export type RevokeOauthSessionResponses = {
-    /**
-     * Revoked
-     */
-    204: void;
-};
-
-export type RevokeOauthSessionResponse = RevokeOauthSessionResponses[keyof RevokeOauthSessionResponses];
 
 export type LookupSetupTokenData = {
     body: SetupTokenLookupRequest;

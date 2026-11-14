@@ -10,7 +10,6 @@ import type { AuditLogEntry, OrganizerWithInvite } from '@/client/types.gen'
 import { Users } from '@/components/animate-ui/icons/users'
 import { AuditDetailsModal } from '@/components/audit-details-modal'
 import { CreateOrganizerDialog } from '@/components/create-organizer-dialog'
-import { DashboardMcpTeaser } from '@/components/dashboard-mcp-teaser'
 import { InviteAdminDialog } from '@/components/invite-admin-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -169,18 +168,15 @@ export function AdminDashboardClient() {
 							bestehende zu verwalten und Änderungen im System nachzuvollziehen.
 						</p>
 					</div>
-					<div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-start lg:pt-1">
-						<DashboardMcpTeaser />
-						<div className="flex gap-2">
-							<Button
-								variant="outline"
-								size="sm"
-								className="flex items-center gap-2"
-								onClick={onRefresh}
-							>
-								<RefreshCw className="h-4 w-4" /> Aktualisieren
-							</Button>
-						</div>
+					<div className="flex shrink-0 gap-2 lg:pt-1">
+						<Button
+							variant="outline"
+							size="sm"
+							className="flex items-center gap-2"
+							onClick={onRefresh}
+						>
+							<RefreshCw className="h-4 w-4" /> Aktualisieren
+						</Button>
 					</div>
 				</div>
 

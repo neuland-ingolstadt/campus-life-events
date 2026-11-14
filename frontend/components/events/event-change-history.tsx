@@ -3,17 +3,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { formatDistanceToNowStrict } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { ChevronDown, Sparkles } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useMemo, useState } from 'react'
 import { listAuditLogs } from '@/client'
-import type { AuditLogEntry, AuditSource } from '@/client/types.gen'
+import type { AuditLogEntry } from '@/client/types.gen'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger
-} from '@/components/ui/tooltip'
 import { formatInCampusTimeZone } from '@/lib/date-time'
 import {
 	type AuditFieldChange,
@@ -28,7 +23,6 @@ type TimelineEntry = {
 	id: number
 	at: string
 	type: AuditLogEntry['type']
-	source: AuditSource
 	summary: string
 	changes: AuditFieldChange[]
 }
@@ -43,7 +37,6 @@ function buildTimeline(entries: AuditLogEntry[]): TimelineEntry[] {
 			id: entry.id,
 			at: entry.at,
 			type: entry.type,
-			source: entry.source ?? 'UI',
 			summary: summarizeAuditEntry(entry.type, changes),
 			changes
 		}
@@ -61,28 +54,10 @@ function absoluteLabel(at: string) {
 	return formatInCampusTimeZone(new Date(at), 'EEEE, dd.MM.yyyy · HH:mm')
 }
 
-function SourceIcon({ source }: { source: AuditSource }) {
-	if (source !== 'MCP') {
-		return null
-	}
-	return (
-		<Tooltip>
-			<TooltipTrigger asChild>
-				<span className="inline-flex size-4 shrink-0 items-center justify-center rounded-sm text-muted-foreground">
-					<Sparkles className="size-3.5" aria-hidden />
-					<span className="sr-only">via KI (MCP)</span>
-				</span>
-			</TooltipTrigger>
-			<TooltipContent side="top">via KI (MCP)</TooltipContent>
-		</Tooltip>
-	)
-}
-
 function EntryTitle({ entry }: { entry: TimelineEntry }) {
 	return (
 		<p className="inline-flex min-w-0 items-center gap-1.5 text-sm font-medium leading-snug text-foreground">
 			<span className="truncate">{entry.summary}</span>
-			<SourceIcon source={entry.source} />
 		</p>
 	)
 }
