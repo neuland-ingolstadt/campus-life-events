@@ -106,6 +106,68 @@ function endOfWeekSunday(date: Date): Date {
 	return result
 }
 
+function DayTooltipContent({ data }: { data: TooltipText }) {
+	return (
+		<div className="flex flex-col gap-3">
+			<p className="text-sm font-medium leading-snug">{data.dateLable}</p>
+
+			<div className="space-y-1">
+				<p className="text-xs font-medium">{data.thiEventText}</p>
+				{data.thiEvents && (
+					<ul className="space-y-0.5">
+						{data.thiEvents.map((part) => (
+							<li key={part} className="text-xs text-muted-foreground">
+								{part}
+							</li>
+						))}
+					</ul>
+				)}
+			</div>
+
+			<div className="space-y-1">
+				<p className="text-xs font-medium">{data.clubEventText}</p>
+				{data.clubEvents && (
+					<ul className="space-y-0.5">
+						{data.clubEvents.map((part) => (
+							<li key={part} className="text-xs text-muted-foreground">
+								{part}
+							</li>
+						))}
+					</ul>
+				)}
+			</div>
+		</div>
+	)
+}
+
+function HeatmapCell({ day }: { day: HeatmapDay }) {
+	const data = tooltipText(day)
+
+	return (
+		<Tooltip>
+			<TooltipTrigger asChild>
+				<button
+					type="button"
+					aria-label={`${data.dateLable}: ${data.thiEventText}, ${data.clubEventText}`}
+					className={cn(
+						'size-2.5 rounded-[3px] ring-1 ring-black/5 transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:ring-white/10',
+						!day.inRange && 'opacity-30',
+						day.isToday && 'ring-2 ring-red-700 dark:ring-red-800',
+						cellClass(day.series, day.level)
+					)}
+				/>
+			</TooltipTrigger>
+			<TooltipContent
+				side="top"
+				className="rounded-lg border bg-card p-4 text-left text-card-foreground shadow-md"
+				arrowClassName="bg-card fill-card border-b border-r -translate-y-1/2"
+			>
+				<DayTooltipContent data={data} />
+			</TooltipContent>
+		</Tooltip>
+	)
+}
+
 function HeatmapGrid({
 	events,
 	isLoading,
@@ -134,68 +196,6 @@ function HeatmapGrid({
 
 	if (isLoading) {
 		return <Skeleton className="h-[148px] w-full rounded-lg" />
-	}
-
-	function DayTooltipContent({ data }: { data: TooltipText }) {
-		return (
-			<div className="flex flex-col gap-3">
-				<p className="text-sm font-medium leading-snug">{data.dateLable}</p>
-
-				<div className="space-y-1">
-					<p className="text-xs font-medium">{data.thiEventText}</p>
-					{data.thiEvents && (
-						<ul className="space-y-0.5">
-							{data.thiEvents.map((part) => (
-								<li key={part} className="text-xs text-muted-foreground">
-									{part}
-								</li>
-							))}
-						</ul>
-					)}
-				</div>
-
-				<div className="space-y-1">
-					<p className="text-xs font-medium">{data.clubEventText}</p>
-					{data.clubEvents && (
-						<ul className="space-y-0.5">
-							{data.clubEvents.map((part) => (
-								<li key={part} className="text-xs text-muted-foreground">
-									{part}
-								</li>
-							))}
-						</ul>
-					)}
-				</div>
-			</div>
-		)
-	}
-
-	function HeatmapCell({ day }: { day: HeatmapDay }) {
-		const data = tooltipText(day)
-
-		return (
-			<Tooltip>
-				<TooltipTrigger asChild>
-					<button
-						type="button"
-						aria-label={`${data.dateLable}: ${data.thiEventText}, ${data.clubEventText}`}
-						className={cn(
-							'size-2.5 rounded-[3px] ring-1 ring-black/5 transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:ring-white/10',
-							!day.inRange && 'opacity-30',
-							day.isToday && 'ring-2 ring-red-700 dark:ring-red-800',
-							cellClass(day.series, day.level)
-						)}
-					/>
-				</TooltipTrigger>
-				<TooltipContent
-					side="top"
-					className="rounded-lg border bg-card p-4 text-left text-card-foreground shadow-md"
-					arrowClassName="bg-card fill-card border-b border-r -translate-y-1/2"
-				>
-					<DayTooltipContent data={data} />
-				</TooltipContent>
-			</Tooltip>
-		)
 	}
 
 	return (
