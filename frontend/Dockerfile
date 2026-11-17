@@ -4,7 +4,7 @@ WORKDIR /app
 COPY bun.lock package.json ./
 RUN bun install --frozen-lockfile 
 
-FROM node:26.13.1-alpine@sha256:6bd9ab43c0ec0190ca7b2d193906cb8b7edf6e7f4afa43ddeccd6452710bffb5 AS builder
+FROM node:26.13.1-bookworm-slim@sha256:5df79989ed685e09f0a98019db4cebfb22fb9df1a53c0161664a011f7ff6b0f1 AS builder
 WORKDIR /app
 
 ARG COMMIT_HASH
@@ -15,17 +15,17 @@ COPY . .
 
 ENV NEXT_SHARP_PATH=/app/node_modules/sharp
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN realpath . 
+RUN realpath .
 
 RUN npm run build
 
-FROM node:26.13.1-alpine@sha256:6bd9ab43c0ec0190ca7b2d193906cb8b7edf6e7f4afa43ddeccd6452710bffb5 AS runner
+FROM node:26.13.1-bookworm-slim@sha256:5df79989ed685e09f0a98019db4cebfb22fb9df1a53c0161664a011f7ff6b0f1 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN groupadd --system --gid 1001 nodejs
+RUN useradd --system --uid 1001 --gid nodejs nextjs
 
 COPY --from=builder /app/public ./public
 
