@@ -18,7 +18,7 @@ tokio = { version = "=1.54.1", features = ["full"] }
 tower-http = { version = "=0.7.1", features = ["cors", "set-header"] }
 uuid = { version = "=1.29.3", features = ["serde", "v4"] }
 thiserror = "=2.0.21"
-redis = { version = "=1.8.2", features = ["tokio-comp"] }
+redis = { version = "=1.8.3", features = ["tokio-comp"] }
 utoipa = { version = "=6.0.0", features = ["chrono", "uuid"] }
 utoipa-swagger-ui = { version = "=10.0.2", features = ["axum", "vendored"] }
 tracing = "=0.1.44"
@@ -27,7 +27,7 @@ argon2 = "=0.6.0"
 password-hash = { version = "=0.6.1", features = ["phc", "getrandom"] }
 getrandom = "=0.4.3"
 time = "=0.3.55"
-cookie = "=0.18.2"
+cookie = "=0.18.3"
 password_policy = "=0.1.0"
 lettre = { version = "=0.11.24", default-features = false, features = ["builder", "smtp-transport", "tokio1", "tokio1-rustls", "rustls-native-certs", "aws-lc-rs"] }
 base64 = "=0.23.1"
