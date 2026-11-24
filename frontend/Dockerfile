@@ -4,7 +4,7 @@ WORKDIR /app
 COPY bun.lock package.json ./
 RUN bun install --frozen-lockfile 
 
-FROM node:26.13.1-bookworm-slim@sha256:b822af76043e2656ffc172072036fe0968a3c09a692e4ad05eb9348ad5dbdf4c AS builder
+FROM node:26.13.1-bookworm-slim@sha256:0042e17d232a87a2cd485be1da7900fca4d10a4ad11b29e9285da1d2e54798c9 AS builder
 WORKDIR /app
 
 ARG COMMIT_HASH
@@ -19,7 +19,7 @@ RUN realpath .
 
 RUN npm run build
 
-FROM node:26.13.1-bookworm-slim@sha256:b822af76043e2656ffc172072036fe0968a3c09a692e4ad05eb9348ad5dbdf4c AS runner
+FROM node:26.13.1-bookworm-slim@sha256:0042e17d232a87a2cd485be1da7900fca4d10a4ad11b29e9285da1d2e54798c9 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
